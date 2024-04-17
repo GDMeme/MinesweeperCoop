@@ -1,1 +1,0 @@
-Images taken from https://minesweeper.online
