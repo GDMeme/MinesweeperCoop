@@ -1,7 +1,8 @@
 let pressed = false;
 
-let cellmouseout = function() { // since this needs to be removed later
-    e.className = "cell closed"
+let cellmouseout = function(event) { // since this needs to be removed later
+    console.log('mouseout!!' + event.currentTarget.className)
+    event.currentTarget.className = "cell closed"
 }
 
 document.addEventListener("mousedown", function() {
@@ -26,6 +27,7 @@ document.querySelectorAll(".cell").forEach(e => {
     
     e.addEventListener('mouseup', function() {
         e.className = "cell type1"; // TODO: determine the number that should be displayed
+        console.log('mouseup!!' + e.id);
         e.removeEventListener("mouseout", cellmouseout);
     })
 })
