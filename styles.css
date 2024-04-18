@@ -18,6 +18,10 @@
     background-image:url("images/pressed.png");
 }
 
+.flagged
+ {
+    background-image:url("images/flag.png");
+ }
 .type1 {
     background-image:url("images/type1.png");
 }
