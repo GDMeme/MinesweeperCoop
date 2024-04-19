@@ -15,13 +15,16 @@
 }
 
 .pressed {
-    background-image:url("images/pressed.png");
+    background-image: url("images/pressed.png");
 }
 
-.flagged
- {
-    background-image:url("images/flag.png");
+.flagged {
+    background-image: url("images/flag.png");
  }
 .type1 {
-    background-image:url("images/type1.png");
+    background-image: url("images/type1.png");
+}
+
+.exploded {
+    background-image: url("images/mine_red.png")
 }
