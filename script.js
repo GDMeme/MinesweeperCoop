@@ -1,16 +1,18 @@
 // Globals
-let pressed = false;
+let leftPressed = false;
 
 document.addEventListener("dragstart", (event) => {
     event.preventDefault();
 });
 
-document.addEventListener("mousedown", function() {
-    pressed = true;
+document.addEventListener("mousedown", function(event) {
+    if (event.button === 0) { // left mouse button
+        leftPressed = true;
+    }
 });
 
 document.addEventListener("mouseup", function() {
-    pressed = false;
+    leftPressed = false;
 });
 
 // Setup
@@ -19,9 +21,9 @@ let cellmouseout = function(event) {
 };
 
 let cellmousedown = function(event) {
-    if (event.which === 1 && event.currentTarget.className != "cell flagged") { // left mouse button
+    if (event.button === 0 && event.currentTarget.className != "cell flagged") { // left mouse button
         event.currentTarget.className = "cell pressed";
-    } else if (event.which === 3) { // right mouse button
+    } else if (event.button === 2) { // right mouse button
         if (event.currentTarget.className != "cell type1") { // TODO: regex for all numbers
             if (event.currentTarget.className == "cell flagged") {
                 event.currentTarget.className = "cell closed";
@@ -45,7 +47,7 @@ let cellmouseup = function(event) {
 let cellmouseenter = function(event) {
     if (event.currentTarget.className != "cell type1") { // TODO: regex for all numbers
         event.currentTarget.addEventListener("mousedown", cellmousedown);
-        if (pressed) { 
+        if (leftPressed) { 
             event.currentTarget.className = "cell pressed";
         };
     }
