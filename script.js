@@ -68,6 +68,9 @@ connect().then(function(ws) {
                 }
                 setupCells();
                 break;
+            case "test":
+                console.log("test succeeded");
+                break;
             default: 
                 console.log("How did you get here" + message);
         } 

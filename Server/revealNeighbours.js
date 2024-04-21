@@ -28,6 +28,7 @@ export function revealNeighbours(minePlacements, currentX, currentY, rows, colum
             tileStatus = calculateTileStatus(minePlacements, newX, newY, rows, columns);
             if (!visited.has(newCoordinate.join()) && tileStatus === 0) {
                 frontier.push(newCoordinate.join());
+                ws.send(JSON.stringify({type: "test"}));
             }
             ws.send(JSON.stringify({type: "revealCell", id: "cell" + newCoordinate.join("_"), tileStatus})); // TODO: make this better lol
         }
