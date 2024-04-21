@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { createServer } from 'https';
 
 import { calculateTileStatus } from './calculateTileStatus.js';
+import { revealNeighbours } from './revealNeighbours.js'
 
 const server = createServer({
     cert: readFileSync('cert.pem'),
@@ -20,6 +21,7 @@ let rows;
 let columns;
 let x;
 let y;
+let tileStatus;
 
 wss.on('connection', function (ws) {
     ws.on('error', console.error);
@@ -40,7 +42,12 @@ wss.on('connection', function (ws) {
                 if (minePlacements.has(y * columns + x)) {
                     ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
                 } else {
-                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: calculateTileStatus(minePlacements, x, y, rows, columns)})); // TODO: make this better lol
+                    tileStatus = calculateTileStatus(minePlacements, x, y, rows, columns);
+                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
+                    if (tileStatus === 0) {
+                        revealNeighbours(minePlacements, x, y, rows, columns, ws, true); // true as flag for first time
+                    }
+                    
                 }
                 break;
             case "generateBoard":
