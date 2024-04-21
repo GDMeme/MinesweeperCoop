@@ -14,6 +14,7 @@
 
 .pull-left {
     float: left;
+    width: max-content;
 }
 
 .input-data {

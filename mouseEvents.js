@@ -1,5 +1,5 @@
 export function cellmouseout(event) {
-    if (event.currentTarget.className === "cell pressed") {
+    if (event.currentTarget.className === "cell pressed" && window.leftPressed) {
         event.currentTarget.className = "cell closed";
     }
 };

@@ -3,7 +3,7 @@ export function generateBoard() {
     let columns = parseInt(document.querySelector('#customcolumns').value);
     let mines = parseInt(document.querySelector('#custommines').value);
     
-    if (rows * columns < mines || isNaN(rows) || isNaN(columns) || isNaN(mines)) { // Not possible to generate board
+    if (rows * columns <= mines || isNaN(rows) || isNaN(columns) || isNaN(mines)) { // Not possible to generate board
         // TODO: Add some HTML here to tell user
         console.log("Bad input");
         return;
