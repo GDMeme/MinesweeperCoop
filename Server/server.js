@@ -1,17 +1,17 @@
 import { WebSocketServer } from 'ws';
-import { readFileSync } from 'fs';
-import { createServer } from 'https';
+//import { readFileSync } from 'fs';
+import { createServer } from 'http';
 
 import { calculateTileStatus } from './calculateTileStatus.js';
 import { revealNeighbours } from './revealNeighbours.js'
 
 const server = createServer({
-    cert: readFileSync('cert.pem'),
-    key: readFileSync('key.pem'),
-    passphrase: 'fdsa'
+    //cert: readFileSync('cert.pem'),
+    //key: readFileSync('key.pem'),
+    //passphrase: 'fdsa'
 });
 
-server.listen(8080);
+server.listen(10000);
 
 const wss = new WebSocketServer({ server });
 
