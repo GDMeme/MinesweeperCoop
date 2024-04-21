@@ -1,3 +1,21 @@
+.clear {
+    clear: both;
+}
+
+.table {
+    display: table;
+}
+
+.table-cell {
+    display: table-cell;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.pull-left {
+    float: left;
+}
+
 .cell {
     float: left;
     background-size: 100%;

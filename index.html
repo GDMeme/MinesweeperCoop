@@ -3,9 +3,29 @@
     <head>
         <link rel="stylesheet" href="styles.css">
     </head>
-    <div id="window">
+    <div id="inputs" class="table">
+        <div class="table-cell">
+            <label for="customrows">Rows:</label>
+            <input style="display:inline-block; vertical-align: middle" size="3" id="customrows">
+        </div>
+        <div class="table-cell">
+            <label for="customcolumns">Columns:</label>
+            <input style="display:inline-block; vertical-align: middle" size="3" id="customcolumns">
+        </div>
+        <div class="table-cell">
+            <label for="custommines">Mines:</label>
+            <input size="3" id="custommines">
+        </div>
+        <div class="table-cell">
+            <button id="generate">Generate Board</button>
+        </div>
+    </div>
+    <br>
+    <div class="pull-left" id="game">
         <div class="cell closed" id="one"></div>
         <div class="cell closed" id="two"></div>
-    </div>
+        <div class="clear"></div>
+        <div class="cell closed" id="three"></div>
+    </div>    
     <script src="./script.js" type="module"></script>
 </html>

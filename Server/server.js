@@ -28,6 +28,8 @@ wss.on('connection', function (ws) {
                 ws.send(JSON.stringify({type: "revealCell", id: "one", tileStatus: 1})); // TODO: make this better lol
             } else if (message.id === 'two') {
                 ws.send(JSON.stringify({type: "revealCell", id: "two", tileStatus: "bomb"}));
+            } else if (message.id === 'three') {
+                ws.send(JSON.stringify({type: "revealCell", id: "three", tileStatus: "bomb"}));
             }
         }
     });
