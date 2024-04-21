@@ -1,13 +1,13 @@
 import { WebSocketServer } from 'ws';
-import { readFileSync } from 'fs';
-import { createServer } from 'https';
+//import { readFileSync } from 'fs';
+import { createServer } from 'http';
 
 import { calculateTileStatus } from './calculateTileStatus.js';
 
 const server = createServer({
-    cert: readFileSync('cert.pem'),
-    key: readFileSync('key.pem'),
-    passphrase: 'fdsa'
+    //cert: readFileSync('cert.pem'),
+    //key: readFileSync('key.pem'),
+    //passphrase: 'fdsa'
 });
 
 server.listen(8080);
