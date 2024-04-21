@@ -5,6 +5,7 @@ import { generateBoard } from './generateBoard.js'
 // Globals (Nothing will go wrong)
 window.leftPressed = false;
 window.ws = null;
+window.lost = false;
 
 document.addEventListener("dragstart", (event) => {
     event.preventDefault();
@@ -41,13 +42,15 @@ connect().then(function(ws) {
                 console.log("revealCell received");
                 if (isNaN(message.tileStatus)) { // bomb    
                     console.log("exploded")            
-                    document.querySelector(`#${message.id}`).className = "cell exploded"
+                    document.querySelector(`#${message.id}`).className = "cell exploded";
+                    window.lost = true;
                 } else {
                     console.log("revealed real tile")
                     document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 }
                 break;
             case "generatedBoard":
+                window.lost = false;
                 let reference = document.querySelector("#game");
                 reference.innerHTML = ""
                 for (let i = 0; i < message.rows; i++) {

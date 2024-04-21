@@ -5,6 +5,9 @@ export function cellmouseout(event) {
 };
 
 export function cellmousedown(event) {
+    if (window.lost) {
+        return;
+    }
     if (event.button === 0) {
         if (event.currentTarget.className === "cell closed") { // left mouse button
             event.currentTarget.className = "cell pressed";
@@ -24,6 +27,9 @@ export function cellmousedown(event) {
 };
 
 export function cellmouseup(event) {
+    if (window.lost) {
+        return;
+    }
     if (event.which === 1 && event.currentTarget.className !== "cell flagged" && event.currentTarget.className !== "cell exploded" && event.currentTarget.className !== "cell type1") { // TODO: regex for all numbers
         console.log("revealing cell");
         revealCell(event);
