@@ -1,5 +1,6 @@
 import { connect } from './connect.js';
 import { setupCells } from './setupCells.js';
+import { generateBoard } from './generateBoard.js'
 
 // Globals (Nothing will go wrong)
 window.leftPressed = false;
@@ -19,10 +20,9 @@ document.addEventListener("mouseup", function() {
     window.leftPressed = false;
 });
 
-let test = document.getElementById("game");
-const newnode = document.createElement("div");
-newnode.innerHTML = "HI"
-test.insertBefore(newnode, null)
+document.querySelector('#generateboard').onclick = function() {
+    generateBoard();
+}
 
 // Setup
 
@@ -30,21 +30,43 @@ connect().then(function(ws) {
     window.ws = ws;
     console.log("connected to server"); 
     
-    setupCells();
-    
     ws.addEventListener("message", (message) => {
         message = JSON.parse(message.data);
         console.log("message: ", message);
-        if (message.type === "niceTry") {
-            console.log("lol");
-        } else if (message.type === "revealCell") {
-            if (isNaN(message.tileStatus)) { // bomb    
-                console.log("exploded")            
-                document.querySelector(`#${message.id}`).className = "cell exploded"
-            } else {
-                console.log("revealed real tile")
-                document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
-            }
+        switch (message.type) {
+            case "niceTry":
+                console.log("lol");
+                break;
+            case "revealCell":
+                console.log("revealCell received");
+                if (isNaN(message.tileStatus)) { // bomb    
+                    console.log("exploded")            
+                    document.querySelector(`#${message.id}`).className = "cell exploded"
+                } else {
+                    console.log("revealed real tile")
+                    document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
+                }
+                break;
+            case "generatedBoard":
+                let reference = document.querySelector("#game");
+                reference.innerHTML = ""
+                for (let i = 0; i < message.rows; i++) {
+                    for (let j = 0; j < message.columns; j++) {
+                        const newNode = document.createElement("div");
+                        newNode.className = "cell closed";
+                        newNode.dataset.x = j;
+                        newNode.dataset.y = i;
+                        newNode.id = "cell" + j + "_" + i;
+                        reference.insertBefore(newNode, null);
+                    }
+                    const newNode = document.createElement("div");
+                    newNode.className = "clear";
+                    reference.insertBefore(newNode, null);
+                }
+                setupCells();
+                break;
+            default: 
+                console.log("How did you get here" + message);
         } 
     });
 });

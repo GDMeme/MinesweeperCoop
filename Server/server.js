@@ -2,6 +2,8 @@ import { WebSocketServer } from 'ws';
 import { readFileSync } from 'fs';
 import { createServer } from 'https';
 
+import { calculateTileStatus } from './calculateTileStatus.js';
+
 const server = createServer({
     cert: readFileSync('cert.pem'),
     key: readFileSync('key.pem'),
@@ -11,6 +13,13 @@ const server = createServer({
 server.listen(8080);
 
 const wss = new WebSocketServer({ server });
+
+// * Assume 1 game for now
+let minePlacements = new Set();
+let rows;
+let columns;
+let x;
+let y;
 
 wss.on('connection', function (ws) {
     ws.on('error', console.error);
@@ -22,18 +31,33 @@ wss.on('connection', function (ws) {
             ws.send(JSON.stringify({type: "niceTry"}));
         }
         console.log(message);
-        if (message.type === "revealCell") {
-            console.log("got here");
-            if (message.id === 'one') { // TODO: No hardcoding.
-                ws.send(JSON.stringify({type: "revealCell", id: "one", tileStatus: 1})); // TODO: make this better lol
-            } else if (message.id === 'two') {
-                ws.send(JSON.stringify({type: "revealCell", id: "two", tileStatus: "bomb"}));
-            } else if (message.id === 'three') {
-                ws.send(JSON.stringify({type: "revealCell", id: "three", tileStatus: "bomb"}));
-            }
+        switch (message.type) {
+            case "revealCell":
+                x = parseInt(message.x);
+                y = parseInt(message.y);
+                console.log("User revealed a cell");
+                console.log(y * columns + x);
+                if (minePlacements.has(y * columns + x)) {
+                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
+                } else {
+                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: calculateTileStatus(minePlacements, x, y, rows, columns)})); // TODO: make this better lol
+                }
+                break;
+            case "generateBoard":
+                minePlacements.clear();
+                rows = message.rows;
+                columns = message.columns;
+                while (minePlacements.size < message.mines) {
+                    minePlacements.add(Math.floor(Math.random() * (rows * columns)));
+                }
+                console.log("minePlacements: ", minePlacements)
+                ws.send(JSON.stringify({type: "generatedBoard", rows, columns}));
+                break;
+            default:
+                ws.send(JSON.stringify({type: "niceTry"}));
         }
     });
     ws.on('close', function () {
-        // do something
+        // TODO: do something
     });
 });

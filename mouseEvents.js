@@ -41,5 +41,5 @@ export function cellmouseenter(event) {
 
 let revealCell = function(event) {
     console.log("id: ", event.currentTarget.id);
-    window.ws.send(JSON.stringify({type: "revealCell", id: event.currentTarget.id})); // TODO: change this later
+    window.ws.send(JSON.stringify({type: "revealCell", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
 }

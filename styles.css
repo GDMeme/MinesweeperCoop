@@ -16,6 +16,11 @@
     float: left;
 }
 
+.input-data {
+    display: inline-block;
+    vertical-align: "middle";
+}
+
 .cell {
     float: left;
     background-size: 100%;
@@ -38,9 +43,22 @@
 
 .flagged {
     background-image: url("images/flag.png");
- }
+}
+ 
+.type0 {
+    background-image: url("images/type0.png");
+}
+ 
 .type1 {
     background-image: url("images/type1.png");
+}
+
+.type2 {
+    background-image: url("images/type2.png");
+}
+
+.type3 {
+    background-image: url("images/type3.png");
 }
 
 .exploded {
