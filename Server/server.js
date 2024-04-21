@@ -10,7 +10,7 @@ const server = createServer({
     //passphrase: 'fdsa'
 });
 
-server.listen(8080);
+server.listen(10000);
 
 const wss = new WebSocketServer({ server });
 

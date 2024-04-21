@@ -1,5 +1,5 @@
 IMAGE=minesweeper-coop:v1.0
-PORT=8080
+PORT=10000
 
 default:
 	echo default
