@@ -49,6 +49,20 @@ connect().then(function(ws) {
                     document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 }
                 break;
+            case "revealCells":
+                let data = JSON.parse(message.data);
+                console.log(JSON.parse(message.data));
+                for (let i = 0; i < data.length; i++) {
+                    if (isNaN(data[i].value)) { // bomb    
+                        console.log("exploded")            
+                        document.querySelector(`#cell${data[i].key}`).className = "cell exploded";
+                        window.lost = true;
+                    } else {
+                        console.log("revealed real tile")
+                        document.querySelector(`#cell${data[i].key}`).className = `cell type${data[i].value}`;
+                    }
+                }
+                break;
             case "generatedBoard":
                 window.lost = false;
                 let reference = document.querySelector("#game");
@@ -67,9 +81,6 @@ connect().then(function(ws) {
                     reference.insertBefore(newNode, null);
                 }
                 setupCells();
-                break;
-            case "test":
-                console.log("test succeeded");
                 break;
             default: 
                 console.log("How did you get here" + message);

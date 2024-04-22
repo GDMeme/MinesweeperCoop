@@ -1,6 +1,6 @@
 export function connect() {
     return new Promise(function(resolve, reject) {
-        var ws = new WebSocket('wss://minesweepercoop-6gn2.onrender.com');
+        var ws = new WebSocket('wss://localhost:8080');
         // document.getElementById('connectionfailed').style.display = "none";
         // document.getElementById('loader').style.display = "inline";
         // document.getElementById('waitingforserver').style.display = "block";

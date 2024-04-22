@@ -6,6 +6,8 @@ import * as C from './constants.js';
 let frontier = [];
 const visited = new Set();
 let tileStatus;
+const map = new Map();
+const mapToArray = [];
 
 export function revealNeighbours(minePlacements, currentX, currentY, rows, columns, ws, flag) {
     if (flag) {
@@ -28,9 +30,14 @@ export function revealNeighbours(minePlacements, currentX, currentY, rows, colum
             tileStatus = calculateTileStatus(minePlacements, newX, newY, rows, columns);
             if (!visited.has(newCoordinate.join()) && tileStatus === 0) {
                 frontier.push(newCoordinate.join());
-                ws.send(JSON.stringify({type: "test"}));
             }
-            ws.send(JSON.stringify({type: "revealCell", id: "cell" + newCoordinate.join("_"), tileStatus})); // TODO: make this better lol
+            if (!map.has(newCoordinate.join("_"))) {
+                map.set(newCoordinate.join("_"), tileStatus);
+            }
         }
     }
+    for (const [key, value] of map.entries()) {
+        mapToArray.push({key: key, value: value});
+    }
+    ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(mapToArray)})); // TODO: make this better lol
 }
