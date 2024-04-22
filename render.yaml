@@ -1,0 +1,15 @@
+# Exported from Render on 2024-04-21T21:46:19Z
+services:
+- type: web
+  name: MinesweeperCoop
+  runtime: docker
+  repo: https://github.com/GDMeme/MinesweeperCoop
+  branch: server
+  plan: free
+  region: oregon
+  dockerContext: .
+  dockerfilePath: ./Dockerfile
+  buildFilter:
+    paths:
+    - Server/**
+version: "1"
