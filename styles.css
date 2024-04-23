@@ -62,6 +62,26 @@
     background-image: url("images/type3.png");
 }
 
+.type4 {
+    background-image: url("images/type4.png");
+}
+
+.type5 {
+    background-image: url("images/type5.png");
+}
+
+.type6 {
+    background-image: url("images/type6.png");
+}
+
+.type7 {
+    background-image: url("images/type7.png");
+}
+
+.type8 {
+    background-image: url("images/type8.png");
+}
+
 .exploded {
     background-image: url("images/mine_red.png")
 }
