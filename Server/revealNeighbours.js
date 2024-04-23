@@ -7,12 +7,14 @@ let frontier = [];
 const visited = new Set();
 let tileStatus;
 const map = new Map();
-const mapToArray = [];
+let mapToArray = [];
 
 export function revealNeighbours(minePlacements, currentX, currentY, rows, columns, ws, flag) {
     if (flag) {
         frontier = [[currentX, currentY].join()];
         visited.clear();
+        map.clear();
+        mapToArray = [];
     }
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
