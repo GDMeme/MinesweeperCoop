@@ -16,6 +16,9 @@ export function cellmousedown(event) {
             // TODO: chord
         }
     } else if (event.button === 2) { // right mouse button
+        if (event.currentTarget.className.match('^(cell type)[0-8]$')) { // already revealed
+            return;
+        }
         if (event.currentTarget.className !== "cell type1" && event.currentTarget.className !== "cell exploded") { // TODO: regex for all numbers
             if (event.currentTarget.className === "cell flagged") {
                 event.currentTarget.className = "cell closed";
