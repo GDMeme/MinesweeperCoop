@@ -45,7 +45,6 @@ connect().then(function(ws) {
                     document.querySelector(`#${message.id}`).className = "cell exploded";
                     window.lost = true;
                 } else {
-                    console.log("revealed real tile")
                     document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 }
                 break;
@@ -58,7 +57,6 @@ connect().then(function(ws) {
                         document.querySelector(`#cell${data[i].key}`).className = "cell exploded";
                         window.lost = true;
                     } else {
-                        console.log("revealed real tile")
                         document.querySelector(`#cell${data[i].key}`).className = `cell type${data[i].value}`;
                     }
                 }
