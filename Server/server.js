@@ -70,6 +70,7 @@ wss.on('connection', function (ws) {
                 rows = message.rows;
                 columns = message.columns;
                 mines = message.mines;
+                firstClick = true;
                 while (minePlacements.size < mines) {
                     minePlacements.add(Math.floor(Math.random() * (rows * columns)));
                 }
