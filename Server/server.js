@@ -19,9 +19,13 @@ const wss = new WebSocketServer({ server });
 let minePlacements = new Set();
 let rows;
 let columns;
+let mines; 
 let x;
 let y;
 let tileStatus;
+let firstClick = true; // Cannot die on first click
+let tempMine;
+let cellID;
 
 wss.on('connection', function (ws) {
     ws.on('error', console.error);
@@ -38,10 +42,20 @@ wss.on('connection', function (ws) {
                 x = parseInt(message.x);
                 y = parseInt(message.y);
                 console.log("User revealed a cell");
-                console.log(y * columns + x);
-                if (minePlacements.has(y * columns + x)) {
+                cellID = y * columns + x;
+                console.log("cellID: ", cellID);
+                if (minePlacements.has(cellID) && !firstClick) {
                     ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
                 } else {
+                    if (minePlacements.has(cellID) && firstClick) { // First click was a mine
+                        minePlacements.delete(cellID);
+                        while (minePlacements.size < mines) { // Generate a mine that isn't in the same spot
+                            tempMine = Math.floor(Math.random() * (rows * columns));
+                            if (tempMine !== cellID) {
+                                minePlacements.add(tempMine);
+                            }
+                        }
+                    }
                     tileStatus = calculateTileStatus(minePlacements, x, y, rows, columns);
                     ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
                     if (tileStatus === 0) {
@@ -49,12 +63,14 @@ wss.on('connection', function (ws) {
                     }
                     
                 }
+                firstClick = false;
                 break;
             case "generateBoard":
                 minePlacements.clear();
                 rows = message.rows;
                 columns = message.columns;
-                while (minePlacements.size < message.mines) {
+                mines = message.mines;
+                while (minePlacements.size < mines) {
                     minePlacements.add(Math.floor(Math.random() * (rows * columns)));
                 }
                 console.log("minePlacements: ", minePlacements)
