@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import { calculateTileStatus } from './calculateTileStatus.js';
 import { revealNeighbours } from './revealNeighbours.js'
 
+// render.com provides tls certs
 const server = createServer({
     //cert: readFileSync('cert.pem'),
     //key: readFileSync('key.pem'),
