@@ -40,7 +40,7 @@ export function cellmouseup(event) {
 };
 
 export function cellmouseenter(event) {
-    if (event.currentTarget.className.match('^(cell type)[0-8]$') && event.currentTarget.className !== "cell exploded" && event.currentTarget.className !== "cell flagged") { // TODO: regex for all numbers
+    if (!event.currentTarget.className.match('^(cell type)[0-8]$') && event.currentTarget.className !== "cell exploded" && event.currentTarget.className !== "cell flagged") { // TODO: regex for all numbers
         event.currentTarget.addEventListener("mousedown", cellmousedown);
         if (window.leftPressed) { 
             event.currentTarget.className = "cell pressed";
