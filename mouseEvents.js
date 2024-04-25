@@ -33,7 +33,7 @@ export function cellmouseup(event) {
     if (window.lost) {
         return;
     }
-    if (event.which === 1 && event.currentTarget.className !== "cell flagged" && event.currentTarget.className !== "cell exploded" && event.currentTarget.className.match('^(cell type)[0-8]$')) { // TODO: regex for all numbers
+    if (event.which === 1 && event.currentTarget.className !== "cell flagged" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-8]$')) { // TODO: regex for all numbers
         console.log("revealing cell");
         revealCell(event);
     }
