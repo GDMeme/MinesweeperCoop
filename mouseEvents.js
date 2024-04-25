@@ -19,7 +19,7 @@ export function cellmousedown(event) {
         if (event.currentTarget.className.match('^(cell type)[0-8]$')) { // already revealed
             return;
         }
-        if (event.currentTarget.className !== "cell type1" && event.currentTarget.className !== "cell exploded") { // TODO: regex for all numbers
+        if (event.currentTarget.className !== "cell exploded") { // TODO: regex for all numbers
             if (event.currentTarget.className === "cell flagged") {
                 event.currentTarget.className = "cell closed";
             } else {
@@ -33,14 +33,14 @@ export function cellmouseup(event) {
     if (window.lost) {
         return;
     }
-    if (event.which === 1 && event.currentTarget.className !== "cell flagged" && event.currentTarget.className !== "cell exploded" && event.currentTarget.className !== "cell type1") { // TODO: regex for all numbers
+    if (event.which === 1 && event.currentTarget.className !== "cell flagged" && event.currentTarget.className !== "cell exploded" && event.currentTarget.className.match('^(cell type)[0-8]$')) { // TODO: regex for all numbers
         console.log("revealing cell");
         revealCell(event);
     }
 };
 
 export function cellmouseenter(event) {
-    if (event.currentTarget.className !== "cell type1" && event.currentTarget.className !== "cell exploded" && event.currentTarget.className !== "cell flagged") { // TODO: regex for all numbers
+    if (event.currentTarget.className.match('^(cell type)[0-8]$') && event.currentTarget.className !== "cell exploded" && event.currentTarget.className !== "cell flagged") { // TODO: regex for all numbers
         event.currentTarget.addEventListener("mousedown", cellmousedown);
         if (window.leftPressed) { 
             event.currentTarget.className = "cell pressed";
