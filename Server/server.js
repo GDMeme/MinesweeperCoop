@@ -1,5 +1,4 @@
 import { WebSocketServer } from 'ws';
-//import { readFileSync } from 'fs';
 import { createServer } from 'http';
 
 import { calculateTileStatus } from './calculateTileStatus.js';
