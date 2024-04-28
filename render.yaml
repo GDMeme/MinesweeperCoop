@@ -4,12 +4,12 @@ services:
   name: MinesweeperCoop
   runtime: docker
   repo: https://github.com/GDMeme/MinesweeperCoop
-  branch: server
+  branch: main
   plan: free
   region: oregon
   dockerContext: .
   dockerfilePath: ./Dockerfile
   buildFilter:
     paths:
-    - Server/*.js
+    - Server/**
 version: "1"
