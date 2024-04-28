@@ -40,7 +40,7 @@ connect().then(function(ws) {
                 break;
             case "revealCell":
                 console.log("revealCell received");
-                if (isNaN(message.tileStatus)) { // bomb    
+                if (isNaN(message.tileStatus)) { // bomb found   
                     console.log("exploded")            
                     document.querySelector(`#${message.id}`).className = "cell exploded";
                     window.lost = true;
@@ -52,7 +52,7 @@ connect().then(function(ws) {
                 let data = JSON.parse(message.data);
                 console.log(JSON.parse(message.data));
                 for (let i = 0; i < data.length; i++) {
-                    if (isNaN(data[i].value)) { // bomb    
+                    if (isNaN(data[i].value)) { // bomb found   
                         console.log("exploded")            
                         document.querySelector(`#cell${data[i].key}`).className = "cell exploded";
                         window.lost = true;
