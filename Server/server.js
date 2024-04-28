@@ -45,7 +45,7 @@ wss.on('connection', function (ws) {
                 } else {
                     if (minePlacements.has(cellID) && firstClick) { // First click was a mine
                         minePlacements.delete(cellID);
-                        while (minePlacements.size < mines) { // Generate a mine that isn't in the same spot
+                        while (minePlacements.size < mines) { // Generate a mine in a different place
                             tempMine = Math.floor(Math.random() * (rows * columns));
                             if (tempMine !== cellID) {
                                 minePlacements.add(tempMine);
