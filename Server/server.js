@@ -1,6 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
+import { MinesweeperGame } from './MinesweeperGame.js';
 import { calculateTileStatus } from './calculateTileStatus.js';
 import { revealNeighbours } from './revealNeighbours.js'
 
@@ -11,24 +12,8 @@ server.listen(10000);
 
 const wss = new WebSocketServer({ server });
 
-// * Assume 1 game for now
-class MinesweeperGame {
-    constructor() {
-        this.minePlacements = new Set();
-        this.rows;
-        this.columns;
-        this.mines; 
-        this.x;
-        this.y;
-        this.tileStatus;
-        this.firstClick = true; // Cannot die on first click
-        this.tempMine;
-        this.cellID;
-        this.cellsRevealed = new Set();
-    }
-}
-
-let newGame = new MinesweeperGame(); 
+const games = []; // Stores all the current games
+const WStoGamesIdx = new Map(); // Maps client websocket to specific index in games
 
 wss.on('connection', function (ws) {
     ws.on('error', console.error);
@@ -41,55 +26,72 @@ wss.on('connection', function (ws) {
         }
         console.log(message);
         switch (message.type) {
-            case "revealCell":
-                newGame.x = parseInt(message.x);
-                newGame.y = parseInt(message.y);
-                newGame.cellID = newGame.y * newGame.columns + newGame.x;
-                console.log("User revealed a cell, newGame.cellID: ", newGame.cellID);
-                if (newGame.minePlacements.has(newGame.cellID) && !newGame.firstClick) {
-                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + newGame.x + "_" + newGame.y, tileStatus: "bomb"}));
+            case "revealCell": {
+                const gamesIdx = WStoGamesIdx.get(ws);
+                const game = games[gamesIdx];
+                if (game.lost) {
+                    return;
+                }
+                const x = parseInt(message.x);
+                const y = parseInt(message.y);
+                const cellID = y * game.columns + x;
+                console.log("User revealed a cell, game.cellID: ", cellID);
+                if (game.minePlacements.has(cellID) && !game.firstClick) {
+                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
+                    game.lost = true;
                 } else {
-                    if (newGame.minePlacements.has(newGame.cellID) && newGame.firstClick) { // First click was a mine
-                        newGame.minePlacements.delete(newGame.cellID);
-                        while (newGame.minePlacements.size < newGame.mines) { // Generate a mine in a different place
-                            newGame.tempMine = Math.floor(Math.random() * (newGame.rows * newGame.columns));
-                            if (newGame.tempMine !== newGame.cellID) {
-                                newGame.minePlacements.add(newGame.tempMine);
+                    if (game.minePlacements.has(cellID) && game.firstClick) { // First click was a mine
+                        game.minePlacements.delete(cellID);
+                        while (game.minePlacements.size < game.mines) { // Generate a mine in a different place
+                            let newMine = Math.floor(Math.random() * (game.rows * game.columns));
+                            if (newMine !== cellID) {
+                                game.minePlacements.add(newMine);
                             }
                         }
                     }
-                    newGame.tileStatus = calculateTileStatus(newGame.minePlacements, newGame.x, newGame.y, newGame.rows, newGame.columns);
-                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + newGame.x + "_" + newGame.y, tileStatus: newGame.tileStatus}));
-                    newGame.cellsRevealed.add([newGame.x, newGame.y].join());
-                    if (newGame.tileStatus === 0) {
-                        revealNeighbours(newGame.minePlacements, newGame.x, newGame.y, newGame.rows, newGame.columns, newGame.cellsRevealed, ws, true); // true as flag for first tile
+                    const tileStatus = calculateTileStatus(game.minePlacements, x, y, game.rows, game.columns);
+                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
+                    game.cellsRevealed.add([x, y].join());
+                    if (tileStatus === 0) {
+                        revealNeighbours(game.minePlacements, x, y, game.rows, game.columns, game.cellsRevealed, ws, true); // true as flag for first tile
                     }
-                    if ((newGame.rows * newGame.columns) - newGame.cellsRevealed.size === newGame.minePlacements.size) {
+                    if ((game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size) { // Check if all cells revealed
                         console.log("sending win");
                         ws.send(JSON.stringify({type: "win"}));
                     }   
                 }
-                console.log("size of newGame.cellsRevealed: ", newGame.cellsRevealed.size);
-                newGame.firstClick = false;
+                console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
+                game.firstClick = false;
                 break;
-            case "generateBoard":
-                newGame.minePlacements.clear();
-                newGame.cellsRevealed.clear();
-                newGame.rows = message.rows;
-                newGame.columns = message.columns;
-                newGame.mines = message.mines;
-                newGame.firstClick = true;
-                while (newGame.minePlacements.size < newGame.mines) {
-                    newGame.minePlacements.add(Math.floor(Math.random() * (newGame.rows * newGame.columns)));
+            }
+            case "generateBoard": {
+                const gamesLength = games.push(new MinesweeperGame());
+                console.log("gamesLength: ", gamesLength);
+                WStoGamesIdx.set(ws, gamesLength - 1); // -1 because 0 indexed
+                console.log(WStoGamesIdx);
+                const game = games[gamesLength - 1];
+                game.rows = message.rows;
+                game.columns = message.columns;
+                game.mines = message.mines;
+                while (game.minePlacements.size < game.mines) { // Randomly generate mines
+                    game.minePlacements.add(Math.floor(Math.random() * (game.rows * game.columns)));
                 }
-                console.log("newGame.minePlacements: ", newGame.minePlacements)
-                ws.send(JSON.stringify({type: "generatedBoard", rows: newGame.rows, columns: newGame.columns}));
+                console.log("game.minePlacements: ", game.minePlacements)
+                ws.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns}));
                 break;
+            }
             default:
                 ws.send(JSON.stringify({type: "niceTry"}));
         }
     });
     ws.on('close', function () {
-        // TODO: do something.
+        const gamesIdx = WStoGamesIdx.get(ws);
+        // TODO: Will be different in multiplayer
+        if (gamesIdx !== undefined) {
+            games.splice(gamesIdx, 1);
+            WStoGamesIdx.delete(ws);
+            console.log("Removing gamesIdx: ", gamesIdx);
+            console.log("games: ", games);
+        }
     });
 });
