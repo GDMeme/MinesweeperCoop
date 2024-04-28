@@ -56,7 +56,7 @@ wss.on('connection', function (ws) {
                     ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
                     cellsRevealed.add([x, y].join());
                     if (tileStatus === 0) {
-                        revealNeighbours(minePlacements, x, y, rows, columns, cellsRevealed, ws, true); // true as flag for first time
+                        revealNeighbours(minePlacements, x, y, rows, columns, cellsRevealed, ws, true); // true as flag for first tile
                     }
                     if ((rows * columns) - cellsRevealed.size === minePlacements.size) {
                         console.log("sending win");
