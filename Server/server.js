@@ -84,6 +84,6 @@ wss.on('connection', function (ws) {
         }
     });
     ws.on('close', function () {
-        // TODO: do something
+        // TODO: do something.
     });
 });
