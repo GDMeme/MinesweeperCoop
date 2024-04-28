@@ -62,6 +62,7 @@ connect().then(function(ws) {
                 }
                 break;
             case "generatedBoard":
+                document.querySelector("#win").style.display = "none"; // TODO: Change later
                 window.lost = false;
                 let reference = document.querySelector("#game");
                 reference.innerHTML = ""
@@ -79,6 +80,10 @@ connect().then(function(ws) {
                     reference.insertBefore(newNode, null);
                 }
                 setupCells();
+                break;
+            case "win":
+                console.log("You win");
+                document.querySelector("#win").style.display = "block"; // TODO: Change later
                 break;
             default: 
                 console.log("How did you get here" + message);

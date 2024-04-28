@@ -9,7 +9,7 @@ let tileStatus;
 const map = new Map();
 let mapToArray = [];
 
-export function revealNeighbours(minePlacements, currentX, currentY, rows, columns, ws, flag) {
+export function revealNeighbours(minePlacements, currentX, currentY, rows, columns, cellsRevealed, ws, flag) {
     if (flag) {
         frontier = [[currentX, currentY].join()];
         visited.clear();
@@ -18,9 +18,6 @@ export function revealNeighbours(minePlacements, currentX, currentY, rows, colum
     }
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
-        // console.log("currentx: ", currentX);
-        // console.log("currenty: ", currentY);
-        // console.log(frontier);
         visited.add([currentX, currentY].join());
         for (const [x, y] of C.directionArray) {
             const newX = currentX + x;
@@ -35,11 +32,12 @@ export function revealNeighbours(minePlacements, currentX, currentY, rows, colum
             }
             if (!map.has(newCoordinate.join("_"))) {
                 map.set(newCoordinate.join("_"), tileStatus);
+                cellsRevealed.add(newCoordinate.join());
             }
         }
     }
     for (const [key, value] of map.entries()) {
         mapToArray.push({key: key, value: value});
     }
-    ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(mapToArray)})); // TODO: make this better lol
+    ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(mapToArray)}));
 }

@@ -27,6 +27,7 @@ let tileStatus;
 let firstClick = true; // Cannot die on first click
 let tempMine;
 let cellID;
+let cellsRevealed = new Set();
 
 wss.on('connection', function (ws) {
     ws.on('error', console.error);
@@ -42,9 +43,8 @@ wss.on('connection', function (ws) {
             case "revealCell":
                 x = parseInt(message.x);
                 y = parseInt(message.y);
-                console.log("User revealed a cell");
                 cellID = y * columns + x;
-                console.log("cellID: ", cellID);
+                console.log("User revealed a cell, cellID: ", cellID);
                 if (minePlacements.has(cellID) && !firstClick) {
                     ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
                 } else {
@@ -59,15 +59,21 @@ wss.on('connection', function (ws) {
                     }
                     tileStatus = calculateTileStatus(minePlacements, x, y, rows, columns);
                     ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
+                    cellsRevealed.add([x, y].join());
                     if (tileStatus === 0) {
-                        revealNeighbours(minePlacements, x, y, rows, columns, ws, true); // true as flag for first time
+                        revealNeighbours(minePlacements, x, y, rows, columns, cellsRevealed, ws, true); // true as flag for first time
                     }
-                    
+                    if ((rows * columns) - cellsRevealed.size === minePlacements.size) {
+                        console.log("sending win");
+                        ws.send(JSON.stringify({type: "win"}));
+                    }   
                 }
+                console.log("size of cellsRevealed: ", cellsRevealed.size);
                 firstClick = false;
                 break;
             case "generateBoard":
                 minePlacements.clear();
+                cellsRevealed.clear();
                 rows = message.rows;
                 columns = message.columns;
                 mines = message.mines;

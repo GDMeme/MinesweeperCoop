@@ -22,6 +22,10 @@
     vertical-align: "middle";
 }
 
+.nodisplay {
+    display: none;
+}
+
 .cell {
     float: left;
     background-size: 100%;
