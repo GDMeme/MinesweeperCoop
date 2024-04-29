@@ -1,4 +1,4 @@
-import { connect } from './devconnect.js';
+import { connect } from './connect.js';
 import { setupCells } from './setupCells.js';
 import { generateBoard } from './generateBoard.js'
 
