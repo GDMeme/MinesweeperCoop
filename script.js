@@ -60,11 +60,13 @@ connect().then(function(ws) {
                     if (currentCell.className === 'cell flag') {
                         if (data[i].value !== 'bomb') {
                             console.log("misflag!");
-                        window.lost = true;
-                        document.querySelector("#lose").style.display = "block"; // TODO: Change later
-                        currentCell.className = 'cell misflag';
-                        ws.send(JSON.stringify({type: 'gameOver'}));
-                        continue;
+                            window.lost = true;
+                            document.querySelector("#lose").style.display = "block"; // TODO: Change later
+                            currentCell.className = 'cell misflag';
+                            ws.send(JSON.stringify({type: 'gameOver'}));
+                            continue;
+                        } else {
+                            continue; // TODO: make the logic here better
                         }
                     } 
                     currentCell.className = data[i].value === 'bomb' ? `cell exploded` : `cell type${data[i].value}`;
@@ -91,7 +93,7 @@ connect().then(function(ws) {
                 }
                 setupCells();
                 break;
-            case "win":
+            case "win": // TODO: On win or lose, make the cells mouse events do nothing
                 console.log("You win");
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
                 break;
