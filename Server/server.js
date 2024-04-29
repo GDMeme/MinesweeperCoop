@@ -4,7 +4,7 @@ import { createServer } from 'http';
 import { MinesweeperGame } from './MinesweeperGame.js';
 import { calculateTileStatus } from './calculateTileStatus.js';
 import { revealNeighbours } from './revealNeighbours.js';
-import { checkWin } from '../util/commonFunctions.js';
+import { checkWin } from './util/commonFunctions.js';
 
 // render.com provides tls certs
 const server = createServer();

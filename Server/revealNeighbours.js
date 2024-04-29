@@ -1,7 +1,7 @@
 import { calculateTileStatus } from './calculateTileStatus.js';
-import { coordinateOutOfBounds } from '../util/commonFunctions.js';
+import { coordinateOutOfBounds } from './util/commonFunctions.js';
 
-import * as C from "../util/constants.js";
+import * as C from "./util/constants.js";
 
 let frontier = [];
 const visited = new Set();

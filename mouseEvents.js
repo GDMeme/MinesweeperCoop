@@ -1,5 +1,5 @@
-import { coordinateOutOfBounds } from "./util/commonFunctions.js";
-import * as C from "./util/constants.js";
+import { coordinateOutOfBounds } from "./server/util/commonFunctions.js";
+import * as C from "./server/util/constants.js";
 
 export function cellmouseout(event) {
     if (event.currentTarget.className === "cell pressed" && window.leftPressed) {
