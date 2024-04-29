@@ -1,21 +1,19 @@
 import { calculateTileStatus } from './calculateTileStatus.js';
-import { coordinateOutOfBounds } from './coordinateOutOfBounds.js';
+import { coordinateOutOfBounds } from '../util/commonFunctions.js';
 
-import * as C from './constants.js';
+import * as C from "../util/constants.js";
 
 let frontier = [];
 const visited = new Set();
 let tileStatus;
-const map = new Map();
-let mapToArray = [];
+const numberMap = new Map();
+let numberMapToArray = [];
 
-export function revealNeighbours(minePlacements, currentX, currentY, rows, columns, cellsRevealed, ws, flag) {
-    if (flag) {
-        frontier = [[currentX, currentY].join()];
-        visited.clear();
-        map.clear();
-        mapToArray = [];
-    }
+export function revealNeighbours(minePlacements, currentX, currentY, rows, columns, cellsRevealed, ws) {
+    frontier = [[currentX, currentY].join()];
+    visited.clear();
+    numberMap.clear();
+    numberMapToArray = [];
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
         visited.add([currentX, currentY].join());
@@ -30,14 +28,16 @@ export function revealNeighbours(minePlacements, currentX, currentY, rows, colum
             if (!visited.has(newCoordinate.join()) && tileStatus === 0) {
                 frontier.push(newCoordinate.join());
             }
-            if (!map.has(newCoordinate.join("_"))) {
-                map.set(newCoordinate.join("_"), tileStatus);
-                cellsRevealed.add(newCoordinate.join());
+            if (!numberMap.has(newCoordinate.join("_"))) {
+                numberMap.set(newCoordinate.join("_"), tileStatus);
+                if (tileStatus !== "bomb") {
+                    cellsRevealed.add(newCoordinate.join());
+                }
             }
         }
     }
-    for (const [key, value] of map.entries()) {
-        mapToArray.push({key: key, value: value});
+    for (const [key, value] of numberMap.entries()) {
+        numberMapToArray.push({key, value});
     }
-    ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(mapToArray)}));
+    ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(numberMapToArray)}));
 }

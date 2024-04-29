@@ -46,7 +46,7 @@
     background-image: url("images/pressed.png");
 }
 
-.flagged {
+.flag {
     background-image: url("images/flag.png");
 }
  
@@ -88,4 +88,8 @@
 
 .exploded {
     background-image: url("images/mine_red.png")
+}
+
+.misflag {
+    background-image: url("images/mine_wrong.png");
 }

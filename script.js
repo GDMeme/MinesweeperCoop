@@ -1,4 +1,4 @@
-import { connect } from './connect.js';
+import { connect } from './devconnect.js';
 import { setupCells } from './setupCells.js';
 import { generateBoard } from './generateBoard.js'
 
@@ -6,6 +6,8 @@ import { generateBoard } from './generateBoard.js'
 window.leftPressed = false;
 window.ws = null;
 window.lost = false;
+window.rows = -1; // Temporary default value
+window.columns = -1;
 
 document.addEventListener("dragstart", (event) => {
     event.preventDefault();
@@ -44,25 +46,33 @@ connect().then(function(ws) {
                     console.log("exploded")            
                     document.querySelector(`#${message.id}`).className = "cell exploded";
                     window.lost = true;
+                    document.querySelector("#lose").style.display = "block"; // TODO: Change later
                 } else {
                     document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 }
                 break;
             case "revealCells":
+                let currentCell;
                 let data = JSON.parse(message.data);
                 console.log(JSON.parse(message.data));
                 for (let i = 0; i < data.length; i++) {
-                    if (isNaN(data[i].value)) { // bomb found   
-                        console.log("exploded")            
-                        document.querySelector(`#cell${data[i].key}`).className = "cell exploded";
+                    currentCell = document.querySelector(`#cell${data[i].key}`);
+                    if (currentCell.className === 'cell flag') {
+                        if (data[i].value !== 'bomb') {
+                            console.log("misflag!");
                         window.lost = true;
-                    } else {
-                        document.querySelector(`#cell${data[i].key}`).className = `cell type${data[i].value}`;
-                    }
+                        document.querySelector("#lose").style.display = "block"; // TODO: Change later
+                        currentCell.className = 'cell misflag';
+                        ws.send(JSON.stringify({type: 'gameOver'}));
+                        continue;
+                        }
+                    } 
+                    currentCell.className = data[i].value === 'bomb' ? `cell exploded` : `cell type${data[i].value}`;
                 }
                 break;
             case "generatedBoard":
                 document.querySelector("#win").style.display = "none"; // TODO: Change later
+                document.querySelector("#lose").style.display = "none"; // TODO: Change later
                 window.lost = false;
                 let reference = document.querySelector("#game");
                 reference.innerHTML = ""

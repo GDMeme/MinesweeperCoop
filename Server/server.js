@@ -3,7 +3,8 @@ import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
 import { calculateTileStatus } from './calculateTileStatus.js';
-import { revealNeighbours } from './revealNeighbours.js'
+import { revealNeighbours } from './revealNeighbours.js';
+import { checkWin } from '../util/commonFunctions.js';
 
 // render.com provides tls certs
 const server = createServer();
@@ -30,6 +31,7 @@ wss.on('connection', function (ws) {
                 const gamesIdx = WStoGamesIdx.get(ws);
                 const game = games[gamesIdx];
                 if (game.lost) {
+                    ws.send(JSON.stringify({type: "niceTry"}));
                     return;
                 }
                 const x = parseInt(message.x);
@@ -53,15 +55,28 @@ wss.on('connection', function (ws) {
                     ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
                     game.cellsRevealed.add([x, y].join());
                     if (tileStatus === 0) {
-                        revealNeighbours(game.minePlacements, x, y, game.rows, game.columns, game.cellsRevealed, ws, true); // true as flag for first tile
+                        revealNeighbours(game.minePlacements, x, y, game.rows, game.columns, game.cellsRevealed, ws);
                     }
-                    if ((game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size) { // Check if all cells revealed
-                        console.log("sending win");
-                        ws.send(JSON.stringify({type: "win"}));
-                    }   
+                    checkWin(game, ws);
                 }
                 console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
                 game.firstClick = false;
+                break;
+            }
+            case "revealChord": {
+                const gamesIdx = WStoGamesIdx.get(ws);
+                const game = games[gamesIdx];
+                const x = parseInt(message.x);
+                const y = parseInt(message.y);
+                const cellID = y * game.columns + x;
+                if (game.minePlacements.has(cellID)) { // Just to be safe, check if the number they chorded was a mine
+                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
+                    game.lost = true;
+                }
+                // Reveal the rest of the chord even if they hit a mine
+                revealNeighbours(game.minePlacements, x, y, game.rows, game.columns, game.cellsRevealed, ws);
+                checkWin(game, ws);
+                console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
                 break;
             }
             case "generateBoard": {
