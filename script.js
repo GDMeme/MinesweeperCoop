@@ -116,13 +116,13 @@ connect().then(function(ws) {
             case "mouseMoved":
                 console.log("Someone's mouse moved");
                 let currentMouse;
-                if (!document.querySelector(`#mouse${message.id}`)) { // Check if it's a new player
+                if (!document.querySelector(`#mouse${message.wsID}`)) { // Check if it's a new player
                     const newNode = document.createElement("div");
                     newNode.className = "mousepointer";
                     document.body.appendChild(newNode);
-                    newNode.id = `mouse${message.id}`;
+                    newNode.id = `mouse${message.wsID}`;
                 }
-                currentMouse = document.querySelector(`#mouse${message.id}`);
+                currentMouse = document.querySelector(`#mouse${message.wsID}`);
                 currentMouse.style.left = parseInt(message.x) - 10 + 'px'; // Offset for image
                 currentMouse.style.top = parseInt(message.y) - 2 + 'px';
                 break;
