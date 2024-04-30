@@ -9,7 +9,7 @@ export function cellmouseout(event) {
 };
 
 export function cellmousedown(event) {
-    if (window.lost) {
+    if (window.lost || window.won) {
         return;
     }
     if (event.button === 0) { // left mouse button
@@ -33,7 +33,7 @@ export function cellmousedown(event) {
 };
 
 export function cellmouseup(event) {
-    if (window.lost) {
+    if (window.lost || window.won) {
         return;
     }
     if (event.which === 1 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-8]$')) {
