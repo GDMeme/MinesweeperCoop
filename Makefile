@@ -4,7 +4,7 @@ PORT=10000
 default:
 	echo default
 run:
-	cd Server && npm install && npm start server.sh
+	cd Server && npm install && npm start
 build: clean
 	docker image rm $$(docker images | grep minesweeper-coop | head -2 | tail -1 | awk '{print $$3}') || \
 	echo "no image found"
