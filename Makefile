@@ -4,7 +4,7 @@ PORT=10000
 default:
 	echo default
 run:
-	cd Server && npm install && npm start
+	cd server && npm install && npm start
 build: clean remove
 	docker build -t $(IMAGE) .
 clean:

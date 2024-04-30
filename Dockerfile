@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-COPY Server /srv
+COPY server /srv
 COPY util /util
 
 WORKDIR /srv

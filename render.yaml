@@ -11,5 +11,5 @@ services:
   dockerfilePath: ./Dockerfile
   buildFilter:
     paths:
-    - Server/**
+    - server/**
 version: "1"
