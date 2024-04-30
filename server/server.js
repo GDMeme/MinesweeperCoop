@@ -16,7 +16,14 @@ const wss = new WebSocketServer({ server });
 const games = []; // Stores all the current games
 const WStoGamesIdx = new Map(); // Maps client websocket to specific index in games
 
+const allWS = []; // TODO: Refactor this later once game rooms are working
+let ID = 0;
+
 wss.on('connection', function (ws) {
+    allWS.push(ws); // TODO: Refactor when game rooms work
+    ws.ID = ID++; // Unique ws identifier to track mouse movement
+    console.log("allWS.length: ", allWS.length);
+    
     ws.on('error', console.error);
 
     ws.on('message', function (message) {
@@ -25,14 +32,24 @@ wss.on('connection', function (ws) {
         } catch (e) {
             ws.send(JSON.stringify({type: "niceTry"}));
         }
-        console.log(message);
+        if (message.type !== "mouseMove") { // No spamming.
+            console.log(message);
+        }
         switch (message.type) {
+            case "mouseMove": {
+                for (let i = 0; i < allWS.length; i++) {
+                    if (allWS[i] !== ws) { // If player who moved mouse sent the message, don't send mouseMoved message
+                        allWS[i].send(JSON.stringify({type: "mouseMoved", x: message.x, y: message.y, wsID: ws.ID}));
+                    }
+                }
+                break;
+            }
             case "revealCell": {
                 const gamesIdx = WStoGamesIdx.get(ws);
                 const game = games[gamesIdx];
                 if (game.lost) {
                     ws.send(JSON.stringify({type: "niceTry"}));
-                    return;
+                    break;
                 }
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
@@ -83,7 +100,6 @@ wss.on('connection', function (ws) {
                 const gamesLength = games.push(new MinesweeperGame());
                 console.log("gamesLength: ", gamesLength);
                 WStoGamesIdx.set(ws, gamesLength - 1); // -1 because 0 indexed
-                console.log(WStoGamesIdx);
                 const game = games[gamesLength - 1];
                 game.rows = message.rows;
                 game.columns = message.columns;
@@ -92,7 +108,7 @@ wss.on('connection', function (ws) {
                     game.minePlacements.add(Math.floor(Math.random() * (game.rows * game.columns)));
                 }
                 console.log("game.minePlacements: ", game.minePlacements)
-                ws.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns}));
+                ws.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns, ws}));
                 break;
             }
             default:
@@ -107,6 +123,12 @@ wss.on('connection', function (ws) {
             WStoGamesIdx.delete(ws);
             console.log("Removing gamesIdx: ", gamesIdx);
             console.log("games: ", games);
+        }
+        
+        
+        allWS.splice(allWS.indexOf(ws), 1); // TODO: Refactor when game rooms work
+        if (allWS.length === 0) {
+            ID = 0; // Reset ID counter if no one is connected
         }
     });
 });
