@@ -10,6 +10,8 @@ window.won = false;
 window.rows = -1; // Temporary default value
 window.columns = -1;
 
+let timerFlag = true; // true: Ready to send next mouse movement
+
 document.addEventListener("dragstart", (event) => {
     event.preventDefault();
 });
@@ -22,6 +24,16 @@ document.addEventListener("mousedown", function(event) {
 
 document.addEventListener("mouseup", function() {
     window.leftPressed = false;
+});
+
+document.addEventListener("mousemove", function(event) {
+    if (window.ws && timerFlag) {
+        ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y}));
+        timerFlag = false;
+        setTimeout(() => {
+            timerFlag = true;    
+        }, 20); // Wait 20ms before sending another mouseMove message
+    } 
 });
 
 document.querySelector('#generateboard').onclick = function() {
@@ -94,11 +106,25 @@ connect().then(function(ws) {
                     reference.insertBefore(newNode, null);
                 }
                 setupCells();
+                console.log("ws: ", message.ws);
                 break;
             case "win": // TODO: On win or lose, make the cells mouse events do nothing
                 console.log("You win");
                 window.won = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
+                break;
+            case "mouseMoved":
+                console.log("Someone's mouse moved");
+                let currentMouse;
+                if (!document.querySelector(`#mouse${message.id}`)) { // Check if it's a new player
+                    const newNode = document.createElement("div");
+                    newNode.className = "mousepointer";
+                    document.body.appendChild(newNode);
+                    newNode.id = `mouse${message.id}`;
+                }
+                currentMouse = document.querySelector(`#mouse${message.id}`);
+                currentMouse.style.left = parseInt(message.x) - 10 + 'px'; // Offset for image
+                currentMouse.style.top = parseInt(message.y) - 2 + 'px';
                 break;
             default: 
                 console.log("How did you get here" + message);

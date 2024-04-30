@@ -93,3 +93,12 @@
 .misflag {
     background-image: url("images/mine_wrong.png");
 }
+
+.mousepointer {
+    position: absolute;
+    pointer-events: none;
+    background-image: url("images/mouse.png");
+    background-size: 100%;
+    width: 38px;
+    height: 38px;
+}
