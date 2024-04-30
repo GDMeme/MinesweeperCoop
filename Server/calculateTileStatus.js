@@ -1,6 +1,6 @@
-import { coordinateOutOfBounds } from "./util/commonFunctions.js";
+import { coordinateOutOfBounds } from "../util/commonFunctions.js";
 
-import * as C from "./util/constants.js";
+import * as C from "../util/constants.js";
 
 export function calculateTileStatus(minePlacements, currentX, currentY, rows, columns) {
     let tileStatus = 0;
