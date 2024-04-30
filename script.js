@@ -6,6 +6,7 @@ import { generateBoard } from './generateBoard.js'
 window.leftPressed = false;
 window.ws = null;
 window.lost = false;
+window.won = false;
 window.rows = -1; // Temporary default value
 window.columns = -1;
 
@@ -76,6 +77,7 @@ connect().then(function(ws) {
                 document.querySelector("#win").style.display = "none"; // TODO: Change later
                 document.querySelector("#lose").style.display = "none"; // TODO: Change later
                 window.lost = false;
+                window.won = false;
                 let reference = document.querySelector("#game");
                 reference.innerHTML = ""
                 for (let i = 0; i < message.rows; i++) {
@@ -95,6 +97,7 @@ connect().then(function(ws) {
                 break;
             case "win": // TODO: On win or lose, make the cells mouse events do nothing
                 console.log("You win");
+                window.won = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
                 break;
             default: 
