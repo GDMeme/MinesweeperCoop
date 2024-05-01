@@ -27,7 +27,7 @@ document.addEventListener("mouseup", function() {
 });
 
 document.addEventListener("mousemove", function(event) {
-    if (window.ws && timerFlag) {
+    if (window.ws && timerFlag && document.hasFocus()) { // Tab should be focused to track mouse movement
         ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y}));
         timerFlag = false;
         setTimeout(() => {

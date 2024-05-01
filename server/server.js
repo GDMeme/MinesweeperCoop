@@ -22,6 +22,7 @@ let ID = 0;
 wss.on('connection', function (ws) {
     allWS.push(ws); // TODO: Refactor when game rooms work
     ws.ID = ID++; // Unique ws identifier to track mouse movement
+    console.log("ws.ID: ", ws.ID);
     console.log("allWS.length: ", allWS.length);
     
     ws.on('error', console.error);
@@ -39,6 +40,7 @@ wss.on('connection', function (ws) {
             case "mouseMove": {
                 for (let i = 0; i < allWS.length; i++) {
                     if (allWS[i] !== ws) { // If player who moved mouse sent the message, don't send mouseMoved message
+                        console.log('wsID here: ', ws.ID);
                         allWS[i].send(JSON.stringify({type: "mouseMoved", x: message.x, y: message.y, wsID: ws.ID}));
                     }
                 }
