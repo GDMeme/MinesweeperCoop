@@ -2,7 +2,8 @@ import { coordinateOutOfBounds } from "../util/commonFunctions.js";
 
 import * as C from "../util/constants.js";
 
-export function calculateTileStatus(minePlacements, currentX, currentY, rows, columns) {
+export function calculateTileStatus(game, currentX, currentY) {
+    const {minePlacements, rows, columns} = game;
     let tileStatus = 0;
     if (minePlacements.has(currentY * columns + currentX)) { // For chording, need to know which tiles are bombs
         return "bomb";

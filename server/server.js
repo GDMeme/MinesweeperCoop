@@ -13,17 +13,17 @@ server.listen(10000);
 
 const wss = new WebSocketServer({ server });
 
-const games = []; // Stores all the current games
-const WStoGamesIdx = new Map(); // Maps client websocket to specific index in games
+const games = []; // * Push to const is not functional? But who cares
+const WStoGameID = new Map(); // Maps client websocket to a specific game ID
+const WStoPlayerName = new Map(); // Client must enter their player name before they connect to the server
 
-const allWS = []; // TODO: Refactor this later once game rooms are working
-let ID = 0;
+// * Do these need to be atomic?
+let gameIDCounter = 0;
+let wsIDCounter = 0; // Unique ws identifier to track mouse movement
 
 wss.on('connection', function (ws) {
-    allWS.push(ws); // TODO: Refactor when game rooms work
-    ws.ID = ID++; // Unique ws identifier to track mouse movement
+    ws.ID = wsIDCounter++;
     console.log("ws.ID: ", ws.ID);
-    console.log("allWS.length: ", allWS.length);
     
     ws.on('error', console.error);
 
@@ -33,22 +33,74 @@ wss.on('connection', function (ws) {
         } catch (e) {
             ws.send(JSON.stringify({type: "niceTry"}));
         }
-        if (message.type !== "mouseMove") { // No spamming.
+        if (message.type !== "mouseMove") { // No spamming logs.
             console.log(message);
         }
+        
+        // Convoluted but it's fine
+        const gameID = WStoGameID.get(ws); 
+        let game = undefined;
+        if (gameID) {
+            const gameIndex = findGameIndex(games, gameID);
+            game = games[gameIndex];
+        }
+        
         switch (message.type) {
+            case "newConnection": {
+                WStoPlayerName.set(ws, message.playerName);
+                break;
+            }
+            case "createRoom": {
+                // * * Check if they are in another room
+                if (WStoGameID.get(ws) !== undefined) {
+                    ws.send(JSON.stringify({type: 'niceTry'}));
+                    break;
+                }
+                const gamesLength = games.push(new MinesweeperGame()); // No race condition
+                console.log("gamesLength: ", gamesLength);
+                const game = games[gamesLength - 1];
+                game.ID = ++gameIDCounter;
+                console.log("game.ID: ", game.ID);
+                console.log("gameIDCounter: ", gameIDCounter);
+                game.wsPlayers.push(ws);
+                WStoGameID.set(ws, game.ID);
+                break;
+            }
+            case "joinedRoom": {
+                // Check if they are already in a room
+                if (game !== undefined) {
+                    console.log("Client was already in a room and tried to join another room");
+                    ws.send(JSON.stringify({type: 'niceTry'}));
+                    break;
+                }
+                WStoGameID.set(ws, message.gameID);
+                console.log("message.gameID: ", message.gameID);
+                const gameIndex = findGameIndex(games, message.gameID);
+                game = games[gameIndex];
+                for (const currentWS of game.wsPlayers) {
+                    // Send message to new player as well
+                    currentWS.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(ws)})); 
+                    ws.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(currentWS)}));
+                }
+                game.wsPlayers.push(ws); // Add the new player to the game
+                break;
+            }
+            case "requestGames": { // TODO: Don't send the entire games object because it contains minePlacements
+                ws.send(JSON.stringify({type: "sendGames", games}));
+            }
             case "mouseMove": {
-                for (let i = 0; i < allWS.length; i++) {
-                    if (allWS[i] !== ws) { // If player who moved mouse sent the message, don't send mouseMoved message
-                        console.log('wsID here: ', ws.ID);
-                        allWS[i].send(JSON.stringify({type: "mouseMoved", x: message.x, y: message.y, wsID: ws.ID}));
+                if (!game) {
+                    console.log("no game detected!");
+                    break;
+                }
+                for (const currentWS of game.wsPlayers) {
+                    if (currentWS !== ws) { // If player who moved mouse sent the message, don't send mouseMoved message
+                        currentWS.send(JSON.stringify({type: "mouseMoved", x: message.x, y: message.y, wsID: ws.ID})); // Send ID of client who moved
                     }
                 }
                 break;
             }
             case "revealCell": {
-                const gamesIdx = WStoGamesIdx.get(ws);
-                const game = games[gamesIdx];
                 if (game.lost) {
                     ws.send(JSON.stringify({type: "niceTry"}));
                     break;
@@ -58,33 +110,35 @@ wss.on('connection', function (ws) {
                 const cellID = y * game.columns + x;
                 console.log("User revealed a cell, game.cellID: ", cellID);
                 if (game.minePlacements.has(cellID) && !game.firstClick) {
-                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
-                    game.lost = true;
+                    for (const currentWS of game.wsPlayers) {
+                        currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
+                        game.lost = true;
+                    }
                 } else {
                     if (game.minePlacements.has(cellID) && game.firstClick) { // First click was a mine
                         game.minePlacements.delete(cellID);
                         while (game.minePlacements.size < game.mines) { // Generate a mine in a different place
                             let newMine = Math.floor(Math.random() * (game.rows * game.columns));
                             if (newMine !== cellID) {
-                                game.minePlacements.add(newMine);
+                                game.minePlacements.add(newMine); // Try to add the new mine (could still be duplicate)
                             }
                         }
                     }
-                    const tileStatus = calculateTileStatus(game.minePlacements, x, y, game.rows, game.columns);
-                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
-                    game.cellsRevealed.add([x, y].join());
-                    if (tileStatus === 0) {
-                        revealNeighbours(game.minePlacements, x, y, game.rows, game.columns, game.cellsRevealed, ws);
+                    const tileStatus = calculateTileStatus(game, x, y);
+                    for (const currentWS of game.wsPlayers) {
+                        currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
                     }
-                    checkWin(game, ws);
+                    game.cellsRevealed.add([x, y].join()); // adds a comma in between
+                    if (tileStatus === 0) {
+                        revealNeighbours(game, x, y, ws.ID);
+                    }
+                    checkWin(game);
                 }
                 console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
                 game.firstClick = false;
                 break;
             }
             case "revealChord": {
-                const gamesIdx = WStoGamesIdx.get(ws);
-                const game = games[gamesIdx];
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
                 const cellID = y * game.columns + x;
@@ -93,24 +147,23 @@ wss.on('connection', function (ws) {
                     game.lost = true;
                 }
                 // Reveal the rest of the chord even if they hit a mine
-                revealNeighbours(game.minePlacements, x, y, game.rows, game.columns, game.cellsRevealed, ws);
-                checkWin(game, ws);
+                revealNeighbours(game, x, y, ws.ID);
+                checkWin(game);
                 console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
                 break;
             }
             case "generateBoard": {
-                const gamesLength = games.push(new MinesweeperGame());
-                console.log("gamesLength: ", gamesLength);
-                WStoGamesIdx.set(ws, gamesLength - 1); // -1 because 0 indexed
-                const game = games[gamesLength - 1];
                 game.rows = message.rows;
                 game.columns = message.columns;
                 game.mines = message.mines;
                 while (game.minePlacements.size < game.mines) { // Randomly generate mines
                     game.minePlacements.add(Math.floor(Math.random() * (game.rows * game.columns)));
                 }
-                console.log("game.minePlacements: ", game.minePlacements)
-                ws.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns, ws}));
+                console.log("game.minePlacements: ", game.minePlacements);
+                // TODO: Make a function like "sendWSEveryone" instead of for loop
+                for (const currentWS of game.wsPlayers) {
+                    currentWS.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns, ws}));
+                }
                 break;
             }
             default:
@@ -118,19 +171,26 @@ wss.on('connection', function (ws) {
         }
     });
     ws.on('close', function () {
-        const gamesIdx = WStoGamesIdx.get(ws);
-        // TODO: Will be different in multiplayer
-        if (gamesIdx !== undefined) {
-            games.splice(gamesIdx, 1);
-            WStoGamesIdx.delete(ws);
-            console.log("Removing gamesIdx: ", gamesIdx);
-            console.log("games: ", games);
+        const gameID = WStoGameID.get(ws); 
+        if (gameID) {
+            const gameIndex = findGameIndex(games, gameID);
+            const game = games[gameIndex];
+            
+            // If not the last player to leave room
+            if (game.wsPlayers.length === 1) {
+                games.splice(gameIndex, 1); // No race condition
+            } else {
+                game.wsPlayers.splice(game.wsPlayers.findIndex(e => e === ws) , 1); // Remove player from wsPlayers array
+            }
+            
+            WStoGameID.delete(ws);
+            WStoPlayerName.delete(ws);
         }
-        
-        
-        allWS.splice(allWS.indexOf(ws), 1); // TODO: Refactor when game rooms work
-        if (allWS.length === 0) {
-            ID = 0; // Reset ID counter if no one is connected
+        if (WStoPlayerName.size === 0) { // This works because clients must enter their name before connecting to the server
+            wsIDCounter = 0; // Reset ID counter if no one is connected
+        }
+        if (games.length === 0) {
+            gameIDCounter = 0; // Reset ID counter if there are no games
         }
     });
 });

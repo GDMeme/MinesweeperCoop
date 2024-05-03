@@ -12,12 +12,10 @@ export function cellmousedown(event) {
     if (window.lost || window.won) {
         return;
     }
-    if (event.button === 0) { // left mouse button
-        if (event.currentTarget.className === "cell closed") {
-            event.currentTarget.className = "cell pressed";
-        } else if (event.currentTarget.className.match('^(cell type)[0-8]$')) {
-            pressCellsAround(event);
-        }
+    if (event.button === 0 && event.currentTarget.className === "cell closed") { // left mouse button
+        event.currentTarget.className = "cell pressed";
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-8]$')) { // left or middle mouse button
+        pressCellsAround(event);
     } else if (event.button === 2) { // right mouse button
         if (event.currentTarget.className.match('^(cell type)[0-8]$')) { // already revealed
             return;
@@ -40,7 +38,7 @@ export function cellmouseup(event) {
         console.log("revealing cell");
         revealCell(event);
     } else if (event.which === 1 && event.currentTarget.className.match('^(cell type)[0-8]$')) { // Chording
-        const tileNumber = parseInt(event.currentTarget.className.split('type')[1]);
+        const tileNumber = parseInt(event.currentTarget.className.split('type')[1]); // Get the tile number
         console.log("tileNumber is: ", tileNumber);
         const currentX = parseInt(event.currentTarget.dataset.x);
         const currentY = parseInt(event.currentTarget.dataset.y);

@@ -3,7 +3,51 @@
     <head>
         <link rel="stylesheet" href="styles.css">
     </head>
-    <div id="inputs" class="table">
+    <div id="playersetup" class="setup">
+        <label for="playername">Enter your name:</label>
+        <input class="input-data" size="15" maxlength="18" id="playername">
+        <button id="submitplayername">Submit!</button>
+    </div>
+    <div id="roombuttons" class="nodisplay">
+        <label>Do you want to create a room or join a room?</label>
+        <br>
+        <button id="createroom">
+            Create Room!
+        </button>
+        <button id="joinroom">
+            Join Room!
+        </button>
+    </div>
+    <div id="roomsetup" class="nodisplay">
+        <label for="roomname">Enter the name of your room!</label>
+        <br>
+        <input class="input-data" size="21" maxlength="24" id="roomname">
+        <br>
+        <button id="submitroomname">Submit!</button>
+    </div>
+    <!-- Not used atm -->
+    <div id="availableroomstext" class="nodisplay">
+        <button id="refreshrooms">Refresh</button>
+        <br>
+        Click a button to join a room!
+    </div>
+    <div id="availablerooms"></div>
+    <div id="noavailablerooms" style="display: none; font-size: large"><b>No available rooms found!</b></div>
+    <div id="players" class="nodisplay">
+        <u>Players:</u>
+        <div id="playerlist">
+            <!-- Don't put a div when adding new players, just make the player list horizontal -->
+        </div>
+    </div>
+    <!-- goback button does nothing atm -->
+    <div id="goback" class="nodisplay">
+        <br>
+        <button id="goback">Go Back</button>
+        <br>
+    </div>
+    <!-- loader does nothing atm -->
+    <div class="loader" id="loader" id="nodisplay"></div>
+    <div id="inputs" class="nodisplay">
         <div class="table-cell">
             <label for="customrows">Rows:</label>
             <input class="input-data" min="1" max="100" size="3" id="customrows">

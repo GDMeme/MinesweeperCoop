@@ -1,5 +1,7 @@
 export class MinesweeperGame {
     constructor() {
+        this.name; // Name of the game room
+        this.ID;
         this.minePlacements = new Set();
         this.rows;
         this.columns;

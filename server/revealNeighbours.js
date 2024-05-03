@@ -9,7 +9,8 @@ let tileStatus;
 const numberMap = new Map();
 let numberMapToArray = [];
 
-export function revealNeighbours(minePlacements, currentX, currentY, rows, columns, cellsRevealed, ws) {
+export function revealNeighbours(game, currentX, currentY, wsID) {
+    const {rows, columns, cellsRevealed, wsPlayers} = game;
     frontier = [[currentX, currentY].join()];
     visited.clear();
     numberMap.clear();
@@ -24,7 +25,7 @@ export function revealNeighbours(minePlacements, currentX, currentY, rows, colum
             if (coordinateOutOfBounds(newCoordinate, rows, columns)) {
                 continue;
             }
-            tileStatus = calculateTileStatus(minePlacements, newX, newY, rows, columns);
+            tileStatus = calculateTileStatus(game, newX, newY);
             if (!visited.has(newCoordinate.join()) && tileStatus === 0) {
                 frontier.push(newCoordinate.join());
             }
@@ -39,5 +40,7 @@ export function revealNeighbours(minePlacements, currentX, currentY, rows, colum
     for (const [key, value] of numberMap.entries()) {
         numberMapToArray.push({key, value});
     }
-    ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(numberMapToArray)}));
+    for (const ws of wsPlayers) {
+        ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(numberMapToArray), wsID}));
+    }
 }
