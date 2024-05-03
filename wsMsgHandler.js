@@ -66,7 +66,7 @@ export function wsMsgHandler(ws) {
                 setupCells();
                 console.log("ws: ", message.ws);
                 break;
-            case "win": // TODO: On win or lose, make the cells mouse events do nothing
+            case "win":
                 console.log("You win");
                 window.won = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
