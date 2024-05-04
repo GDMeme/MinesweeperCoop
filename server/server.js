@@ -2,6 +2,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
+import { revealCell } from './revealCell.js';
 import { findGameIndex } from '../util/commonFunctions.js';
 
 // render.com provides tls certs
