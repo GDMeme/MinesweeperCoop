@@ -79,15 +79,15 @@ export function initialSetup() {
     }
     
     // You can press "enter" instead of the submit button when submitting your name
-    document.getElementById('gameName').addEventListener("keypress", function(event) {
+    document.getElementById('gamename').addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
             event.preventDefault();
-            document.getElementById('submitgameName').click();
+            document.getElementById('submitgamename').click();
         }
     });
     
     document.querySelector('#submitgamename').onclick = function() {
-        window.gameName = document.querySelector('#gameName').value;
+        window.gameName = document.querySelector('#gamename').value;
         document.querySelector('#roomsetup').style.display = "none";
         document.querySelector('#inputs').className = "table";
         
