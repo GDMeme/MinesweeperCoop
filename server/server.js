@@ -118,6 +118,7 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 // Reveal the rest of the chord even if they hit a mine
+                console.log(message.cellsToReveal);
                 for (const coordinate of message.cellsToReveal) {
                     const [currentX, currentY] = coordinate.split(",").map(e => parseInt(e));
                     revealCell(game, currentX, currentY);
