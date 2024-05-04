@@ -29,6 +29,8 @@ export function initialSetup() {
         window.leftPressed = false;
     });
     
+    let timerFlag = true;
+    
     document.addEventListener("mousemove", function(event) {
         if (window.ws && timerFlag && document.hasFocus() && window.roomName !== null) { // Tab should be focused to track mouse movement
             ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y}));

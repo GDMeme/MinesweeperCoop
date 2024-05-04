@@ -9,7 +9,6 @@ window.rows = -1; // Temporary default value
 window.columns = -1;
 window.playerName = null;
 window.roomName = null;
-window.timerFlag = true; // true: Ready to send next mouse movement
 window.playerList = [];
 
 // Setup
