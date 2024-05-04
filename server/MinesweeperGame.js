@@ -10,5 +10,6 @@ export class MinesweeperGame {
         this.cellsRevealed = new Set();
         this.lost = false;
         this.wsPlayers = [];
+        this.flaggedIDs = new Set();
     }
 }

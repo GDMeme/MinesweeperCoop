@@ -2,9 +2,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
-import { calculateTileStatus } from './calculateTileStatus.js';
-import { revealNeighbours } from './revealNeighbours.js';
-import { checkWin, findGameIndex } from '../util/commonFunctions.js';
+import { findGameIndex } from '../util/commonFunctions.js';
 
 // render.com provides tls certs
 const server = createServer();
@@ -60,6 +58,7 @@ wss.on('connection', function (ws) {
                 console.log("gamesLength: ", gamesLength);
                 const game = games[gamesLength - 1];
                 game.ID = ++gameIDCounter;
+                game.name = message.gameName;
                 console.log("game.ID: ", game.ID);
                 console.log("gameIDCounter: ", gameIDCounter);
                 game.wsPlayers.push(ws);
@@ -89,13 +88,13 @@ wss.on('connection', function (ws) {
                 ws.send(JSON.stringify({type: "sendGames", games}));
             }
             case "mouseMove": {
-                if (!game) {
+                if (game === undefined) {
                     console.log("no game detected!");
                     break;
                 }
                 for (const currentWS of game.wsPlayers) {
                     if (currentWS !== ws) { // If player who moved mouse sent the message, don't send mouseMoved message
-                        currentWS.send(JSON.stringify({type: "mouseMoved", x: message.x, y: message.y, wsID: ws.ID})); // Send ID of client who moved
+                        currentWS.send(JSON.stringify({type: "mouseMoved", x: message.x, y: message.y, wsID: currentWS.ID})); // Send ID of client who moved
                     }
                 }
                 break;
@@ -107,48 +106,21 @@ wss.on('connection', function (ws) {
                 }
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
-                const cellID = y * game.columns + x;
-                console.log("User revealed a cell, game.cellID: ", cellID);
-                if (game.minePlacements.has(cellID) && !game.firstClick) {
-                    for (const currentWS of game.wsPlayers) {
-                        currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
-                        game.lost = true;
-                    }
-                } else {
-                    if (game.minePlacements.has(cellID) && game.firstClick) { // First click was a mine
-                        game.minePlacements.delete(cellID);
-                        while (game.minePlacements.size < game.mines) { // Generate a mine in a different place
-                            let newMine = Math.floor(Math.random() * (game.rows * game.columns));
-                            if (newMine !== cellID) {
-                                game.minePlacements.add(newMine); // Try to add the new mine (could still be duplicate)
-                            }
-                        }
-                    }
-                    const tileStatus = calculateTileStatus(game, x, y);
-                    for (const currentWS of game.wsPlayers) {
-                        currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
-                    }
-                    game.cellsRevealed.add([x, y].join()); // adds a comma in between
-                    if (tileStatus === 0) {
-                        revealNeighbours(game, x, y, ws.ID);
-                    }
-                    checkWin(game);
-                }
-                console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
-                game.firstClick = false;
+                revealCell(game, x, y);
                 break;
             }
             case "revealChord": {
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
-                const cellID = y * game.columns + x;
-                if (game.minePlacements.has(cellID)) { // Just to be safe, check if the number they chorded was a mine
-                    ws.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
-                    game.lost = true;
+                if (game.firstClick) {
+                    revealCell(game, x, y);
+                    break;
                 }
                 // Reveal the rest of the chord even if they hit a mine
-                revealNeighbours(game, x, y, ws.ID);
-                checkWin(game);
+                for (const coordinate of message.cellsToReveal) {
+                    const [currentX, currentY] = coordinate.split(",").map(e => parseInt(e));
+                    revealCell(game, currentX, currentY);
+                }
                 console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
                 break;
             }

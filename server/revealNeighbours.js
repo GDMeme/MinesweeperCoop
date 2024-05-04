@@ -4,20 +4,18 @@ import { coordinateOutOfBounds } from '../util/commonFunctions.js';
 import * as C from "../util/constants.js";
 
 let frontier = [];
-const visited = new Set();
 let tileStatus;
-const numberMap = new Map();
-let numberMapToArray = [];
+const tileStatusMap = new Map();
+let tileStatusMapToArray = [];
 
-export function revealNeighbours(game, currentX, currentY, wsID) {
+export function revealNeighbours(game, currentX, currentY) {
     const {rows, columns, cellsRevealed, wsPlayers} = game;
     frontier = [[currentX, currentY].join()];
-    visited.clear();
-    numberMap.clear();
-    numberMapToArray = [];
+    tileStatusMap.clear();
+    tileStatusMapToArray = [];
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
-        visited.add([currentX, currentY].join());
+        cellsRevealed.add([currentX, currentY].join());
         for (const [x, y] of C.directionArray) {
             const newX = currentX + x;
             const newY = currentY + y;
@@ -25,22 +23,18 @@ export function revealNeighbours(game, currentX, currentY, wsID) {
             if (coordinateOutOfBounds(newCoordinate, rows, columns)) {
                 continue;
             }
-            tileStatus = calculateTileStatus(game, newX, newY);
-            if (!visited.has(newCoordinate.join()) && tileStatus === 0) {
+            tileStatus = calculateTileStatus(game, newX, newY); // Guaranteed not to be a bomb
+            if (!cellsRevealed.has(newCoordinate.join()) && tileStatus === 0) {
                 frontier.push(newCoordinate.join());
             }
-            if (!numberMap.has(newCoordinate.join("_"))) {
-                numberMap.set(newCoordinate.join("_"), tileStatus);
-                if (tileStatus !== "bomb") {
-                    cellsRevealed.add(newCoordinate.join());
-                }
-            }
+            tileStatusMap.set(newCoordinate.join("_"), tileStatus);
+            cellsRevealed.add(newCoordinate.join());
         }
     }
-    for (const [key, value] of numberMap.entries()) {
-        numberMapToArray.push({key, value});
+    for (const [key, value] of tileStatusMap.entries()) {
+        tileStatusMapToArray.push({key, value});
     }
     for (const ws of wsPlayers) {
-        ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(numberMapToArray), wsID}));
+        ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(tileStatusMapToArray)}));
     }
 }

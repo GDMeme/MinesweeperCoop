@@ -32,7 +32,7 @@ export function initialSetup() {
     let timerFlag = true;
     
     document.addEventListener("mousemove", function(event) {
-        if (window.ws && timerFlag && document.hasFocus() && window.roomName !== null) { // Tab should be focused to track mouse movement
+        if (window.ws && timerFlag && document.hasFocus() && window.gameName !== null) { // Tab should be focused to track mouse movement
             ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y}));
             timerFlag = false;
             setTimeout(() => {
@@ -79,20 +79,20 @@ export function initialSetup() {
     }
     
     // You can press "enter" instead of the submit button when submitting your name
-    document.getElementById('roomname').addEventListener("keypress", function(event) {
+    document.getElementById('gameName').addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
             event.preventDefault();
-            document.getElementById('submitroomname').click();
+            document.getElementById('submitgameName').click();
         }
     });
     
-    document.querySelector('#submitroomname').onclick = function() {
-        window.roomName = document.querySelector('#roomname').value;
+    document.querySelector('#submitgamename').onclick = function() {
+        window.gameName = document.querySelector('#gameName').value;
         document.querySelector('#roomsetup').style.display = "none";
         document.querySelector('#inputs').className = "table";
         
         // TODO: Empty room name results in a room name of "undefined"
-        window.ws.send(JSON.stringify({type: "createRoom", roomName: window.roomName}))
+        window.ws.send(JSON.stringify({type: "createRoom", gameName: window.gameName}))
     }
     
     document.querySelector('#generateboard').onclick = function() {

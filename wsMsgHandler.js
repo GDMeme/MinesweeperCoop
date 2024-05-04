@@ -48,6 +48,8 @@ export function wsMsgHandler(ws) {
                 document.querySelector("#lose").style.display = "none"; // TODO: Change later
                 window.lost = false;
                 window.won = false;
+                window.rows = message.rows;
+                window.columns = message.columns;
                 let reference = document.querySelector("#game");
                 reference.innerHTML = ""
                 for (let i = 0; i < message.rows; i++) {
@@ -92,6 +94,7 @@ export function wsMsgHandler(ws) {
                     document.getElementById('availablerooms').appendChild(gameButton);
                     gameButton.onclick = function() {
                         ws.send(JSON.stringify({type: 'joinedRoom', gameID: game.ID}));
+                        window.gameName = game.name;
                         for (const child of document.querySelector('#availablerooms').children) {
                             child.remove();
                         }

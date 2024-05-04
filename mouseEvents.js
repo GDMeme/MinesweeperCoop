@@ -10,6 +10,7 @@ export function cellmouseout(event) {
 
 export function cellmousedown(event) {
     if (window.lost || window.won) {
+        console.log("you lost or won, no more clicking")
         return;
     }
     if (event.button === 0 && event.currentTarget.className === "cell closed") { // left mouse button
@@ -44,6 +45,7 @@ export function cellmouseup(event) {
         const currentY = parseInt(event.currentTarget.dataset.y);
         let flagCounter = 0;
         let currentCell;
+        const cellsToReveal = [[event.currentTarget.dataset.x, event.currentTarget.dataset.y].join()]; // * Pushing to const is not functional but who cares
         for (const [x, y] of C.directionArray) {
             const newCoordinate = [currentX + x, currentY + y];
             if (coordinateOutOfBounds(newCoordinate, window.rows, window.columns)) {
@@ -52,10 +54,12 @@ export function cellmouseup(event) {
             currentCell = document.querySelector(`#cell${newCoordinate[0]}_${newCoordinate[1]}`);
             if (currentCell.className === "cell flag") {
                 flagCounter++;
+            } else if (currentCell.className === "cell pressed") {
+                cellsToReveal.push(newCoordinate.join());
             }
         }
         if (flagCounter === tileNumber) {
-            window.ws.send(JSON.stringify({type: "revealChord", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
+            window.ws.send(JSON.stringify({type: "revealChord", cellsToReveal, x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
         } else {
             closeCellsAround(event);
         }
