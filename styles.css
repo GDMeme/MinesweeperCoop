@@ -1,9 +1,11 @@
 * {
     text-align: center;
+    color: white;
 }
 
 button {
     margin: 10px 10px 10px 10px;
+    color: black;
 }
 
 .clear {

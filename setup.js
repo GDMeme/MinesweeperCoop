@@ -15,6 +15,9 @@ export function setupCells() { // * Does this function belong here? Little bit c
 };
 
 export function initialSetup() {
+    
+    document.body.style.backgroundColor = "#121212";
+    
     document.addEventListener("dragstart", (event) => {
         event.preventDefault();
     });
