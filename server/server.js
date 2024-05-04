@@ -129,6 +129,11 @@ wss.on('connection', function (ws) {
                 game.rows = message.rows;
                 game.columns = message.columns;
                 game.mines = message.mines;
+                game.minePlacements.clear();
+                game.cellsRevealed.clear();
+                game.firstClick = true;
+                game.lost = false;
+                game.flaggedIDs.clear();
                 while (game.minePlacements.size < game.mines) { // Randomly generate mines
                     game.minePlacements.add(Math.floor(Math.random() * (game.rows * game.columns)));
                 }

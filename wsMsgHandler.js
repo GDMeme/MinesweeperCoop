@@ -66,7 +66,7 @@ export function wsMsgHandler(ws) {
                     reference.insertBefore(newNode, null);
                 }
                 setupCells();
-                console.log("ws: ", message.ws);
+                console.log("ws: ", message.ws); // Use this to determine who generated the new board
                 break;
             case "win":
                 console.log("You win");
