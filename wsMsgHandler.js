@@ -83,8 +83,8 @@ export function wsMsgHandler(ws) {
                     newNode.id = `mouse${message.wsID}`;
                 }
                 currentMouse = document.querySelector(`#mouse${message.wsID}`);
-                currentMouse.style.left = parseInt(message.x) - 10 + 'px'; // Offset for image
-                currentMouse.style.top = parseInt(message.y) - 2 + 'px';
+                currentMouse.style.left = parseInt(message.x) + message.scrollX - 10 + 'px'; // Offset for image
+                currentMouse.style.top = parseInt(message.y) + message.scrollY - 2 + 'px';
                 break;
             case "sendGames":
                 for (const game of message.games) {

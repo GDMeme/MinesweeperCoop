@@ -33,7 +33,7 @@ export function initialSetup() {
     
     document.addEventListener("mousemove", function(event) {
         if (window.ws && timerFlag && document.hasFocus() && window.gameName !== null) { // Tab should be focused to track mouse movement
-            ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y}));
+            ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y, scrollY: window.scrollY, scrollX: window.scrollX}));
             timerFlag = false;
             setTimeout(() => {
                 timerFlag = true;    
