@@ -1,9 +1,10 @@
 FROM node:20-alpine
 
-COPY server /srv
+COPY server /server
 COPY util /util
 
-WORKDIR /srv
+WORKDIR /server
+COPY package*.json ./
 RUN npm install
 
 EXPOSE 10000
