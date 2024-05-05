@@ -1,5 +1,5 @@
 import { WebSocketServer } from 'ws';
-import { createServer } from 'https';
+import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
 import { revealCell } from './revealCell.js';
