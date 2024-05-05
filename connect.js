@@ -6,6 +6,7 @@ export function connect() {
         // document.getElementById('waitingforserver').style.display = "block";
         // document.body.style.backgroundColor = "#645a5a";
         ws.onopen = function() {
+            console.log("connection opened");
             // document.getElementById('loader').style.display = "none";
             // document.getElementById('waitingforserver').style.display = "none";
             resolve(ws);
@@ -15,6 +16,7 @@ export function connect() {
             // document.getElementById('loader').style.display = "none";
             // document.getElementById('waitingforserver').style.display = "none";
             // document.getElementById('connectionfailed').style.display = "inline";
+            console.log("some websocket error: ", err);
             reject(err);
         };
     });
