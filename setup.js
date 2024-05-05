@@ -16,14 +16,14 @@ export function setupCells() { // * Does this function belong here? Little bit c
 
 export function initialSetup() {
     
-    tryNewWSConnection();
-    
     const tryNewWSConnection = function () {
         connect().then(function(ws) {
             console.log("Tried to make a new websocket connection");
         });
         setTimeout(tryNewWSConnection, 15000);
     }
+    
+    tryNewWSConnection();
     
     document.body.style.backgroundColor = "#121212";
     
