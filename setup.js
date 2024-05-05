@@ -19,6 +19,7 @@ export function initialSetup() {
     const tryNewWSConnection = function () {
         connect().then(function(ws) {
             console.log("Tried to make a new websocket connection");
+            ws.close();
         });
         setTimeout(tryNewWSConnection, 15000);
     }
