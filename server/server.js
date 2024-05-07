@@ -20,8 +20,19 @@ const WStoPlayerName = new Map(); // Client must enter their player name before 
 let gameIDCounter = 0;
 let wsIDCounter = 0; // Unique ws identifier to track mouse movement
 
+const wss = new WebSocketServer({ server });
+
+const games = []; // * Push to const is not functional? But who cares
+const WStoGameID = new Map(); // Maps client websocket to a specific game ID
+const WStoPlayerName = new Map(); // Client must enter their player name before they connect to the server
+
+// * Do these need to be atomic?
+let gameIDCounter = 0;
+let wsIDCounter = 0; // Unique ws identifier to track mouse movement
+
 wss.on('connection', function (ws) {
     ws.ID = wsIDCounter++;
+    console.log("ws.ID: ", ws.ID);
     
     ws.on('error', console.error);
 
@@ -30,6 +41,9 @@ wss.on('connection', function (ws) {
             message = JSON.parse(message);
         } catch (e) {
             ws.send(JSON.stringify({type: "niceTry"}));
+        }
+        if (message.type !== "mouseMove") { // No spamming logs.
+            console.log(message);
         }
         
         // Convoluted but it's fine
@@ -74,9 +88,12 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 const gamesLength = games.push(new MinesweeperGame()); // No race condition
+                console.log("gamesLength: ", gamesLength);
                 const game = games[gamesLength - 1];
                 game.ID = ++gameIDCounter;
                 game.name = message.gameName;
+                console.log("game.ID: ", game.ID);
+                console.log("gameIDCounter: ", gameIDCounter);
                 game.wsPlayers.push(ws);
                 WStoGameID.set(ws, game.ID);
                 break;
@@ -84,10 +101,12 @@ wss.on('connection', function (ws) {
             case "joinedRoom": {
                 // Check if they are already in a room
                 if (game !== undefined) {
+                    console.log("Client was already in a room and tried to join another room");
                     ws.send(JSON.stringify({type: 'niceTry'}));
                     break;
                 }
                 WStoGameID.set(ws, message.gameID);
+                console.log("message.gameID: ", message.gameID);
                 const gameIndex = findGameIndex(games, message.gameID);
                 game = games[gameIndex];
                 for (const currentWS of game.wsPlayers) {
@@ -103,6 +122,7 @@ wss.on('connection', function (ws) {
             }
             case "mouseMove": {
                 if (game === undefined) {
+                    console.log("no game detected!");
                     break;
                 }
                 for (const currentWS of game.wsPlayers) {
@@ -134,6 +154,7 @@ wss.on('connection', function (ws) {
                     const [currentX, currentY] = coordinate.split(",").map(e => parseInt(e));
                     revealCell(game, currentX, currentY);
                 }
+                console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
                 break;
             }
             case "generateBoard": {
@@ -148,6 +169,7 @@ wss.on('connection', function (ws) {
                 while (game.minePlacements.size < game.mines) { // Randomly generate mines
                     game.minePlacements.add(Math.floor(Math.random() * (game.rows * game.columns)));
                 }
+                console.log("game.minePlacements: ", game.minePlacements);
                 // TODO: Make a function like "sendWSEveryone" instead of for loop
                 for (const currentWS of game.wsPlayers) {
                     currentWS.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns, ws}));
