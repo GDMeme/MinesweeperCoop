@@ -106,6 +106,12 @@ export function wsMsgHandler(ws) {
                 window.playerList.push(message.name);
                 document.querySelector('#playerlist').innerHTML = window.playerList.join(", ");
                 break;
+            case "unflag": // * Race condition if cell was already revealed?
+                document.querySelector(`#${message.id}`).className = "cell closed";
+                break;
+            case "placeFlag": // * Race condition if cell was already revealed?
+                document.querySelector(`#${message.id}`).className = "cell flag";
+                break;
             default: 
                 console.log("How did you get here" + message);
         } 

@@ -24,8 +24,11 @@ export function cellmousedown(event) {
         if (event.currentTarget.className !== "cell exploded") {
             if (event.currentTarget.className === "cell flag") {
                 event.currentTarget.className = "cell closed";
+                console.log("unflagged a tile");
+                window.ws.send(JSON.stringify({type: "unflag", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
             } else {
                 event.currentTarget.className = "cell flag";
+                window.ws.send(JSON.stringify({type: "placeFlag", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
             }
         }
     }
