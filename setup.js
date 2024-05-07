@@ -21,7 +21,7 @@ export function initialSetup() {
             console.log("Tried to make a new websocket connection");
             ws.close();
         });
-        setTimeout(tryNewWSConnection, 600000); // 10 minutes
+        setTimeout(tryNewWSConnection, 300000); // 5 minutes
     }
     
     tryNewWSConnection();
