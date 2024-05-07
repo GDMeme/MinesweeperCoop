@@ -20,16 +20,6 @@ const WStoPlayerName = new Map(); // Client must enter their player name before 
 let gameIDCounter = 0;
 let wsIDCounter = 0; // Unique ws identifier to track mouse movement
 
-const wss = new WebSocketServer({ server });
-
-const games = []; // * Push to const is not functional? But who cares
-const WStoGameID = new Map(); // Maps client websocket to a specific game ID
-const WStoPlayerName = new Map(); // Client must enter their player name before they connect to the server
-
-// * Do these need to be atomic?
-let gameIDCounter = 0;
-let wsIDCounter = 0; // Unique ws identifier to track mouse movement
-
 wss.on('connection', function (ws) {
     ws.ID = wsIDCounter++;
     console.log("ws.ID: ", ws.ID);
