@@ -43,8 +43,30 @@ wss.on('connection', function (ws) {
             const gameIndex = findGameIndex(games, gameID);
             game = games[gameIndex];
         }
-        
+        // * Remember to check in certain cases if game is undefined (will cause server crash)
         switch (message.type) {
+            case "unflag": {
+                if (game === undefined) {
+                    // nice try
+                    break;
+                }
+                game.flaggedIDs.delete([message.x, message.y].join());
+                for (const currentWS of game.wsPlayers) {
+                    currentWS.send(JSON.stringify({type: "unflag", id: `cell${message.x}_${message.y}`}));
+                }
+                break;
+            }
+            case "placeFlag": {
+                if (game === undefined) {
+                    // nice try
+                    break;
+                }
+                game.flaggedIDs.add([message.x, message.y].join());
+                for (const currentWS of game.wsPlayers) {
+                    currentWS.send(JSON.stringify({type: "placeFlag", id: `cell${message.x}_${message.y}`}))
+                }
+                break;
+            }
             case "newConnection": {
                 WStoPlayerName.set(ws, message.playerName);
                 break;
@@ -118,7 +140,6 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 // Reveal the rest of the chord even if they hit a mine
-                console.log(message.cellsToReveal);
                 for (const coordinate of message.cellsToReveal) {
                     const [currentX, currentY] = coordinate.split(",").map(e => parseInt(e));
                     revealCell(game, currentX, currentY);
