@@ -7,6 +7,7 @@ window.lost = false;
 window.won = false;
 window.rows = -1; // Temporary default value
 window.columns = -1;
+window.mines = -1;
 window.playerName = null;
 window.gameName = null;
 window.playerList = [];

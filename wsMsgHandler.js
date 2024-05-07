@@ -52,8 +52,16 @@ export function wsMsgHandler(ws) {
                 window.won = false;
                 window.rows = message.rows;
                 window.columns = message.columns;
-                let reference = document.querySelector("#game");
-                reference.innerHTML = ""
+                window.mines = message.mines;
+                const reference = document.querySelector("#game");
+                reference.innerHTML = "";
+                const newNode = document.createElement("div");
+                newNode.innerHTML = "Mines left: " + window.mines;
+                newNode.id = "minecounter";
+                reference.insertBefore(newNode, null);
+                const newnewNode = document.createElement("div"); // todo: fix
+                    newnewNode.className = "clear";
+                    reference.insertBefore(newnewNode, null);
                 for (let i = 0; i < message.rows; i++) {
                     for (let j = 0; j < message.columns; j++) {
                         const newNode = document.createElement("div");
@@ -109,9 +117,13 @@ export function wsMsgHandler(ws) {
                 break;
             case "unflag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell closed";
+                window.mines++;
+                document.querySelector('#minecounter').innerHTML = "Mines left: " + window.mines;
                 break;
             case "placeFlag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell flag";
+                window.mines--;
+                document.querySelector('#minecounter').innerHTML = "Mines left: " + window.mines;
                 break;
             default: 
                 console.log("How did you get here" + message);
