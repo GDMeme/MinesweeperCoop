@@ -6,7 +6,9 @@ export function wsMsgHandler(ws) {
 
     ws.addEventListener("message", (message) => {
         message = JSON.parse(message.data);
-        console.log("message: ", message);
+        if (message.type !== "mouseMoved") {
+            console.log("message: ", message); // No spamming logs.
+        }
         switch (message.type) {
             case "niceTry":
                 console.log("lol");
