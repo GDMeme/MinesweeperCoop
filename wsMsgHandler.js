@@ -74,7 +74,6 @@ export function wsMsgHandler(ws) {
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
                 break;
             case "mouseMoved":
-                console.log("Someone's mouse moved");
                 let currentMouse;
                 if (!document.querySelector(`#mouse${message.wsID}`)) { // Check if it's a new player
                     const newNode = document.createElement("div");
