@@ -9,18 +9,21 @@ export function cellmouseout(event) {
 };
 
 export function cellmousedown(event) {
+    console.log("mousedown spotted");
     if (window.lost || window.won) {
         console.log("you lost or won, no more clicking")
         return;
     }
     if (event.button === 0 && event.currentTarget.className === "cell closed") { // left mouse button
         event.currentTarget.className = "cell pressed";
-    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-8]$')) { // left or middle mouse button
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-8]$')) { // left or middle mouse button
         pressCellsAround(event);
     } else if (event.button === 2) { // right mouse button
+        console.log("right click spotted");
         if (event.currentTarget.className.match('^(cell type)[0-8]$')) { // already revealed
             return;
         }
+        console.log("classname is: ", event.currentTarget.className);
         if (event.currentTarget.className !== "cell exploded") {
             if (event.currentTarget.className === "cell flag") {
                 event.currentTarget.className = "cell closed";
@@ -70,13 +73,14 @@ export function cellmouseup(event) {
 };
 
 export function cellmouseenter(event) {
-    if (event.currentTarget.className !== "cell exploded" && event.currentTarget.className !== "cell flag") {
-        event.currentTarget.addEventListener("mousedown", cellmousedown);
-        if (window.leftPressed && !event.currentTarget.className.match('^(cell type)[0-8]$')) { 
-            event.currentTarget.className = "cell pressed";
-        } else if (window.leftPressed && event.currentTarget.className.match('^(cell type)[0-8]$')) {
-            pressCellsAround(event);
-        }
+    if (window.lost || window.won) {
+        return;
+    }
+    event.currentTarget.addEventListener("mousedown", cellmousedown);
+    if (window.leftPressed && !event.currentTarget.className.match('^(cell type)[0-8]$')) { 
+        event.currentTarget.className = "cell pressed";
+    } else if (window.leftPressed && event.currentTarget.className.match('^(cell type)[0-8]$')) {
+        pressCellsAround(event);
     }
 };
 
