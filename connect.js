@@ -1,6 +1,6 @@
 export function connect() {
     return new Promise(function(resolve, reject) {
-        var ws = new WebSocket('wss://shiny-space-garbanzo-vrjrvj4466x2wrj4-10000.app.github.dev/');
+        var ws = new WebSocket('wss://minesweepercoop-6gn2.onrender.com/');
         document.getElementById('connectionfailed').style.display = "none";
         document.getElementById('loader').style.display = "inline";
         document.getElementById('waitingforserver').style.display = "block";
