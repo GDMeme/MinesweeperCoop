@@ -13,9 +13,20 @@ export function wsMsgHandler(ws) {
             case "niceTry":
                 console.log("lol");
                 break;
+            case "revealMisflags":
+                if (message.misFlags.length > 0) {
+                    console.log("message.misFlags: ", message.misFlags)
+                    for (const misFlag of message.misFlags) {
+                        const [x, y] = misFlag.split(",").map(e => parseInt(e));
+                        document.querySelector(`#cell${x}_${y}`).className = "cell misflag";
+                    }
+                }
+                console.log("misflag spotted")
             case "revealCell":
                 console.log("revealCell received");
-                if (isNaN(message.tileStatus)) { // bomb found   
+                console.log("message.id: ", message.id);
+                console.log("tileStatus: ", message.tileStatus);
+                if (isNaN(message.tileStatus)) { // Bomb found   
                     console.log("exploded")            
                     document.querySelector(`#${message.id}`).className = "cell exploded";
                     window.lost = true;
@@ -24,25 +35,16 @@ export function wsMsgHandler(ws) {
                     document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 }
                 break;
-            case "revealCells":
+            case "revealCells": // Guaranteed not to be a bomb
                 let currentCell;
                 let data = JSON.parse(message.data);
                 console.log(JSON.parse(message.data));
                 for (let i = 0; i < data.length; i++) {
                     currentCell = document.querySelector(`#cell${data[i].key}`);
-                    if (currentCell.className === 'cell flag') {
-                        if (data[i].value !== 'bomb') {
-                            console.log("misflag!");
-                            window.lost = true;
-                            document.querySelector("#lose").style.display = "block"; // TODO: Change later
-                            currentCell.className = 'cell misflag';
-                            ws.send(JSON.stringify({type: 'gameOver'}));
-                            continue;
-                        } else {
-                            continue; // TODO: make the logic here better
-                        }
-                    } 
-                    currentCell.className = data[i].value === 'bomb' ? `cell exploded` : `cell type${data[i].value}`;
+                    if (currentCell.className === "cell flagged") {
+                        console.log("misflag!!");
+                    }
+                    currentCell.className = currentCell.className === "cell flagged" ? "cell misflag" : `cell type${data[i].value}`;
                 }
                 break;
             case "generatedBoard":
