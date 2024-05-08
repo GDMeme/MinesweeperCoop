@@ -96,6 +96,7 @@ export function wsMsgHandler(ws) {
                 currentMouse.style.top = parseInt(message.y) + message.scrollY - 2 + 'px';
                 break;
             case "sendGames":
+                document.getElementById('loader').style.display = "none";
                 for (const game of message.games) {
                     const gameButton = document.createElement('button');
                     // TODO: On button hover, show who is in that room

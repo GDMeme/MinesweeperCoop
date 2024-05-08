@@ -87,6 +87,7 @@ export function initialSetup() {
     }
     
     document.querySelector('#joinroom').onclick = function() {
+        document.getElementById('loader').style.display = "inline";
         document.querySelector('#roombuttons').style.display = "none";
         window.ws.send(JSON.stringify({type: 'requestGames'})); // Displays all available rooms to join
     }

@@ -3,7 +3,7 @@
     <head>
         <link rel="stylesheet" href="styles.css">
     </head>
-    <div id="playersetup" class="setup">
+    <div id="playersetup" style="display: none" class="setup">
         <label for="playername">Enter your name:</label>
         <input class="input-data" size="15" maxlength="18" id="playername">
         <button id="submitplayername">Submit!</button>
@@ -46,7 +46,13 @@
         <br>
     </div>
     <!-- loader does nothing atm -->
-    <div class="loader" id="loader" id="nodisplay"></div>
+    <div id="waitingforserver" style="font-size: 50px; position: absolute; bottom: 55%; display: none; width: 100%">Waiting for server...</div>
+    <div class="loader" id="loader" style="display: none"></div>
+    <div id="connectionfailed" style="display: none">
+        <div style="font-size: 25px;">Connection to server failed!</div>
+        <br>
+        <button id="tryconnectagain">Click here to try to connect again!</button>
+    </div>
     <div id="inputs" class="nodisplay">
         <div class="table-cell">
             <label for="customrows">Rows:</label>
