@@ -12,8 +12,23 @@ export function revealCell(game, x, y) {
     if (game.minePlacements.has(cellID) && !game.firstClick) {
         for (const currentWS of game.wsPlayers) {
             currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
-            game.lost = true;
         }
+        game.lost = true;
+        
+        // Find misflags and send to clients
+        const misFlags = []; // Pushing to const is not functional but who cares
+        for (const flagCoordinate of game.flaggedIDs) {
+            const [x, y] = flagCoordinate.split(",").map(e => parseInt(e));
+            const cellID = y * game.columns + x;
+            if (!game.minePlacements.has(cellID)) {
+                misFlags.push([x, y].join());
+            }
+        }
+        for (const currentWS of game.wsPlayers) {
+            currentWS.send(JSON.stringify({type: "revealMisflags", misFlags}));
+        }
+        
+        // Early return because the game is lost
         return;
     }
     if (game.minePlacements.has(cellID) && game.firstClick) { // First click was a mine

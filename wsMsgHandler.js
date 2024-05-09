@@ -55,15 +55,22 @@ export function wsMsgHandler(ws) {
                 window.rows = message.rows;
                 window.columns = message.columns;
                 window.mines = message.mines;
+                
                 const reference = document.querySelector("#game");
                 reference.innerHTML = "";
-                const newNode = document.createElement("div");
-                newNode.innerHTML = "Mines left: " + window.mines;
-                newNode.id = "minecounter";
-                reference.insertBefore(newNode, null);
-                const newnewNode = document.createElement("div"); // todo: fix
-                    newnewNode.className = "clear";
-                    reference.insertBefore(newnewNode, null);
+                
+                // Mines left text
+                const minesLeftNode = document.createElement("div");
+                minesLeftNode.innerHTML = "Mines left: " + window.mines;
+                minesLeftNode.id = "minecounter";
+                reference.insertBefore(minesLeftNode, null);
+                
+                // New line after mines left text
+                const tempNode = document.createElement("div");
+                tempNode.className = "clear";
+                reference.insertBefore(tempNode, null);
+                
+                // Generate the game cells
                 for (let i = 0; i < message.rows; i++) {
                     for (let j = 0; j < message.columns; j++) {
                         const newNode = document.createElement("div");

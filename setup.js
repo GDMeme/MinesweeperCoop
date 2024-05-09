@@ -105,7 +105,7 @@ export function initialSetup() {
         document.querySelector('#roomsetup').style.display = "none";
         document.querySelector('#inputs').className = "table";
         
-        // TODO: Empty room name results in a room name of "undefined"
+        // TODO: Empty room name results in a super tiny button
         window.ws.send(JSON.stringify({type: "createRoom", gameName: window.gameName}))
     }
     

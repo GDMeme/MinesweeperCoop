@@ -72,7 +72,7 @@ wss.on('connection', function (ws) {
                 break;
             }
             case "createRoom": {
-                // * * Check if they are in another room
+                // * Check if they are in another room
                 if (WStoGameID.get(ws) !== undefined) {
                     ws.send(JSON.stringify({type: 'niceTry'}));
                     break;
@@ -130,19 +130,6 @@ wss.on('connection', function (ws) {
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
                 revealCell(game, x, y);
-                if (game.lost) { // Reveal all misflags
-                    const misFlags = []; // Pushing to const is not functional but who cares
-                    for (const flagCoordinate of game.flaggedIDs) {
-                        const [x, y] = flagCoordinate.split(",").map(e => parseInt(e));
-                        const cellID = y * game.columns + x;
-                        if (!minePlacements.has(cellID)) {
-                            misFlags.push([x, y].join());
-                        }
-                    }
-                    for (const currentWS of game.wsPlayers) {
-                        currentWS.send(JSON.stringify({type: "revealMisflags", misFlags}));
-                    }
-                }
                 break;
             }
             case "revealChord": {
@@ -157,21 +144,6 @@ wss.on('connection', function (ws) {
                     const [currentX, currentY] = coordinate.split(",").map(e => parseInt(e));
                     revealCell(game, currentX, currentY);
                 }
-                // TODO: Code below is duplicated in revealCell, can probs put it in revealCell.js but would need more work cuz it has early return
-                if (game.lost) { // Reveal all misflags
-                    const misFlags = []; // Pushing to const is not functional but who cares
-                    for (const flagCoordinate of game.flaggedIDs) {
-                        const [x, y] = flagCoordinate.split(",").map(e => parseInt(e));
-                        const cellID = y * game.columns + x;
-                        if (!game.minePlacements.has(cellID)) {
-                            misFlags.push([x, y].join());
-                        }
-                    }
-                    for (const currentWS of game.wsPlayers) {
-                        currentWS.send(JSON.stringify({type: "revealMisflags", misFlags}));
-                    }
-                }
-                console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
                 break;
             }
             case "generateBoard": {
