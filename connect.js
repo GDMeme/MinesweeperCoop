@@ -1,4 +1,4 @@
-export function connect() {
+export function connect(firstTime) {
     return new Promise(function(resolve, reject) {
         var ws = new WebSocket('wss://minesweepercoop-6gn2.onrender.com');
         document.getElementById('connectionfailed').style.display = "none";
@@ -7,9 +7,11 @@ export function connect() {
         // document.body.style.backgroundColor = "#645a5a";
         ws.onopen = function() {
             console.log("connection opened");
-            document.getElementById('playersetup').style.display = "block";
-            document.getElementById('loader').style.display = "none";
-            document.getElementById('waitingforserver').style.display = "none";
+            if (firstTime) {
+                document.getElementById('playersetup').style.display = "block";
+                document.getElementById('loader').style.display = "none";
+                document.getElementById('waitingforserver').style.display = "none";
+            }
             resolve(ws);
         };
         ws.onerror = function(err) {

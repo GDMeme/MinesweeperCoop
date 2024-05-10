@@ -23,7 +23,7 @@ export function initialSetup() {
     
         // Start 5 minute timer to spam reconnects every 5 minutes
         const tryNewWSConnection = function () {
-            connect().then(function(ws) {
+            connect(false).then(function(ws) {
                 console.log("Tried to make a new websocket connection");
                 ws.close();
             });
