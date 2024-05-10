@@ -16,11 +16,11 @@ export function cellmousedown(event) {
     }
     if (event.button === 0 && event.currentTarget.className === "cell closed") { // left mouse button
         event.currentTarget.className = "cell pressed";
-    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-8]$')) { // left or middle mouse button
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // left or middle mouse button
         pressCellsAround(event);
     } else if (event.button === 2) { // right mouse button
         console.log("right click spotted");
-        if (event.currentTarget.className.match('^(cell type)[0-8]$')) { // already revealed
+        if (event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // already revealed
             return;
         }
         console.log("classname is: ", event.currentTarget.className);
@@ -41,10 +41,10 @@ export function cellmouseup(event) {
     if (window.lost || window.won) {
         return;
     }
-    if (event.which === 1 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-8]$')) {
+    if (event.which === 1 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
         console.log("revealing cell");
         revealCell(event);
-    } else if (event.which === 1 && event.currentTarget.className.match('^(cell type)[0-8]$')) { // Chording
+    } else if (event.which === 1 && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // Chording
         const tileNumber = parseInt(event.currentTarget.className.split('type')[1]); // Get the tile number
         console.log("tileNumber is: ", tileNumber);
         const currentX = parseInt(event.currentTarget.dataset.x);
@@ -77,9 +77,9 @@ export function cellmouseenter(event) {
         return;
     }
     event.currentTarget.addEventListener("mousedown", cellmousedown);
-    if (window.leftPressed && event.currentTarget.className !== "cell flag" && !event.currentTarget.className.match('^(cell type)[0-8]$')) { 
+    if (window.leftPressed && event.currentTarget.className !== "cell flag" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { 
         event.currentTarget.className = "cell pressed";
-    } else if (window.leftPressed && event.currentTarget.className.match('^(cell type)[0-8]$')) {
+    } else if (window.leftPressed && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
         pressCellsAround(event);
     }
 };
