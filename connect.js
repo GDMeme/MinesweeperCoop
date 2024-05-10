@@ -7,7 +7,7 @@ export function connect() {
         // document.body.style.backgroundColor = "#645a5a";
         ws.onopen = function() {
             console.log("connection opened");
-            document.getElementById('playersetup').style.display = "none";
+            document.getElementById('playersetup').style.display = "block";
             document.getElementById('loader').style.display = "none";
             document.getElementById('waitingforserver').style.display = "none";
             resolve(ws);
