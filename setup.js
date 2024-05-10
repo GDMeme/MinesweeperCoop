@@ -19,7 +19,7 @@ export function initialSetup() {
     document.body.style.backgroundColor = "#121212";
     
     // Immediately try connecting to websocket
-    connect().then(function(ws) {
+    connect(true).then(function(ws) {
     
         // Start 5 minute timer to spam reconnects every 5 minutes
         const tryNewWSConnection = function () {
