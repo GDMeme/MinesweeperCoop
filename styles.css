@@ -104,12 +104,80 @@ button {
     background-image: url("images/type8.png");
 }
 
+.type9 {
+    background-image: url("images/type9.png");
+}
+
+.type10 {
+    background-image: url("images/type10.png");
+}
+
+.type11 {
+    background-image: url("images/type11.png");
+}
+
+.type12 {
+    background-image: url("images/type12.png");
+}
+
+.type13 {
+    background-image: url("images/type13.png");
+}
+
+.type14 {
+    background-image: url("images/type14.png");
+}
+
+.type15 {
+    background-image: url("images/type15.png");
+}
+
+.type16 {
+    background-image: url("images/type16.png");
+}
+
+.type17 {
+    background-image: url("images/type17.png");
+}
+
+.type18 {
+    background-image: url("images/type18.png");
+}
+
+.type19 {
+    background-image: url("images/type19.png");
+}
+
+.type20 {
+    background-image: url("images/type20.png");
+}
+
+.type21 {
+    background-image: url("images/type21.png");
+}
+
+.type22 {
+    background-image: url("images/type22.png");
+}
+
+.type23 {
+    background-image: url("images/type23.png");
+}
+
+.type24 {
+    background-image: url("images/type24.png");
+}
+
 .exploded {
     background-image: url("images/mine_red.png")
 }
 
 .misflag {
     background-image: url("images/mine_wrong.png");
+}
+
+.mine {
+    background-image: url("images/mine.png");
 }
 
 .mousepointer {
@@ -132,14 +200,14 @@ button {
     height: 120px;
     -webkit-animation: spin 2s linear infinite; /* Safari */
     animation: spin 2s linear infinite;
-  }
+}
   
-  @-webkit-keyframes spin {
+@-webkit-keyframes spin {
     0% { -webkit-transform: rotate(0deg); }
     100% { -webkit-transform: rotate(360deg); }
-  }
-  
-  @keyframes spin {
+}
+
+@keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-  }
+}

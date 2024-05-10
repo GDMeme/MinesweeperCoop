@@ -13,6 +13,13 @@ export function wsMsgHandler(ws) {
             case "niceTry":
                 console.log("lol");
                 break;
+            case "revealAllMines":
+                for (const cellID of message.minePlacements) {
+                    const x = cellID % window.columns;
+                    const y = Math.floor(cellID / window.rows);
+                    document.querySelector(`#cell${x}_${y}`).className = "cell mine";
+                }
+                break;
             case "revealMisflags":
                 if (message.misFlags.length > 0) {
                     console.log("message.misFlags: ", message.misFlags)

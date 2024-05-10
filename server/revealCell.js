@@ -11,7 +11,8 @@ export function revealCell(game, x, y) {
     console.log("User revealed a cell, game.cellID: ", cellID);
     if (game.minePlacements.has(cellID) && !game.firstClick) {
         for (const currentWS of game.wsPlayers) {
-            currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"}));
+            currentWS.send(JSON.stringify({type: "revealAllMines", minePlacements: Array.from(game.minePlacements)})); // hack
+            currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"})); // TODO: Race condition fix later
         }
         game.lost = true;
         
