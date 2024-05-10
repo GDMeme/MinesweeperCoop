@@ -8,7 +8,7 @@ export function calculateTileStatus(game, currentX, currentY) {
     if (minePlacements.has(currentY * columns + currentX)) { // For chording, need to know which tiles are bombs
         return "bomb";
     }
-    for (const [x, y] of C.directionArray) {
+    for (const [x, y] of game.largeBoard ? C.bigDirectionArray : C.directionArray) {
         const newCoordinate = [currentX + x, currentY + y];
         if (coordinateOutOfBounds(newCoordinate, rows, columns)) {
             continue;

@@ -4,3 +4,4 @@ node_modules
 devserver.js
 devconnect.js
 ngrok.exe
+test.js

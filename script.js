@@ -11,6 +11,7 @@ window.mines = -1;
 window.playerName = null;
 window.gameName = null;
 window.playerList = [];
+window.largeBoard = false;
 
 // Setup
 initialSetup();

@@ -52,7 +52,7 @@ export function cellmouseup(event) {
         let flagCounter = 0;
         let currentCell;
         const cellsToReveal = [[event.currentTarget.dataset.x, event.currentTarget.dataset.y].join()]; // * Pushing to const is not functional but who cares
-        for (const [x, y] of C.directionArray) {
+        for (const [x, y] of window.largeBoard ? C.bigDirectionArray : C.directionArray) {
             const newCoordinate = [currentX + x, currentY + y];
             if (coordinateOutOfBounds(newCoordinate, window.rows, window.columns)) {
                 continue;
@@ -88,7 +88,7 @@ const pressCellsAround = function(event) {
     const currentX = parseInt(event.currentTarget.dataset.x);
     const currentY = parseInt(event.currentTarget.dataset.y);
     let currentCell;
-    for (const [x, y] of C.directionArray) {
+    for (const [x, y] of window.largeBoard ? C.bigDirectionArray : C.directionArray) {
         const newCoordinate = [currentX + x, currentY + y];
         if (coordinateOutOfBounds(newCoordinate, window.rows, window.columns)) {
             continue;
@@ -104,7 +104,7 @@ const closeCellsAround = function(event) {
     const currentX = parseInt(event.currentTarget.dataset.x);
     const currentY = parseInt(event.currentTarget.dataset.y);
     let currentCell;
-    for (const [x, y] of C.directionArray) {
+    for (const [x, y] of window.largeBoard ? C.bigDirectionArray : C.directionArray) {
         const newCoordinate = [currentX + x, currentY + y];
         if (coordinateOutOfBounds(newCoordinate, window.rows, window.columns)) {
             continue;

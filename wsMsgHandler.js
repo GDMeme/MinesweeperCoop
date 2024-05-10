@@ -22,6 +22,7 @@ export function wsMsgHandler(ws) {
                     }
                 }
                 console.log("misflag spotted")
+                break;
             case "revealCell":
                 console.log("revealCell received");
                 console.log("message.id: ", message.id);

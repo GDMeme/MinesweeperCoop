@@ -20,6 +20,8 @@ const WStoPlayerName = new Map(); // Client must enter their player name before 
 let gameIDCounter = 0;
 let wsIDCounter = 0; // Unique ws identifier to track mouse movement
 
+let largeBoard = false;
+
 wss.on('connection', function (ws) {
     ws.ID = wsIDCounter++;
     console.log("ws.ID: ", ws.ID);
@@ -150,9 +152,10 @@ wss.on('connection', function (ws) {
                 game.rows = message.rows;
                 game.columns = message.columns;
                 game.mines = message.mines;
+                game.largeBoard = message.largeBoard;
                 game.minePlacements.clear();
                 game.cellsRevealed.clear();
-            game.firstClick = true;
+                game.firstClick = true;
                 game.lost = false;
                 game.flaggedIDs.clear();
                 while (game.minePlacements.size < game.mines) { // Randomly generate mines

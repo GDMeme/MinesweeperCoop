@@ -1,7 +1,7 @@
 import { cellmouseout, cellmouseup, cellmouseenter } from './mouseEvents.js';
 import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
-import { connect } from './connect.js';
+import { connect } from './devconnect.js';
 
 export function setupCells() { // * Does this function belong here? Little bit circular
     document.querySelectorAll(".cell").forEach(e => {
@@ -16,17 +16,24 @@ export function setupCells() { // * Does this function belong here? Little bit c
 
 export function initialSetup() {
     
-    const tryNewWSConnection = function () {
-        connect().then(function(ws) {
-            console.log("Tried to make a new websocket connection");
-            ws.close();
-        });
-        setTimeout(tryNewWSConnection, 300000); // 5 minutes
-    }
-    
-    tryNewWSConnection();
-    
     document.body.style.backgroundColor = "#121212";
+    
+    // Immediately try connecting to websocket
+    connect().then(function(ws) {
+    
+        // Start 5 minute timer to spam reconnects every 5 minutes
+        const tryNewWSConnection = function () {
+            connect().then(function(ws) {
+                console.log("Tried to make a new websocket connection");
+                ws.close();
+            });
+            setTimeout(tryNewWSConnection, 300000); // 5 minutes
+        }
+        
+        tryNewWSConnection();
+    
+        wsMsgHandler(ws);    
+    });
     
     document.addEventListener("dragstart", (event) => {
         event.preventDefault();
@@ -69,15 +76,12 @@ export function initialSetup() {
         document.querySelector('#roombuttons').className = "setup";
         playerName = document.querySelector('#playername').value;
         
+        ws.send(JSON.stringify({type: "newConnection", playerName}));
+        
         // TODO: Turn this into a function
         window.playerList.push(window.playerName);
         document.querySelector('#players').style.display = "block";
         document.querySelector('#playerlist').innerHTML = window.playerList.join(", ");
-        // Wait until player name is submitted before connecting to websocket
-        connect().then(function(ws) {
-            ws.send(JSON.stringify({type: "newConnection", playerName}));
-            wsMsgHandler(ws);    
-        });
     }
     
     document.querySelector('#createroom').onclick = function() {

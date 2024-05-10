@@ -11,5 +11,6 @@ export class MinesweeperGame {
         this.lost = false;
         this.wsPlayers = [];
         this.flaggedIDs = new Set();
+        this.largeBoard;
     }
 }
