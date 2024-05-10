@@ -77,7 +77,7 @@ export function cellmouseenter(event) {
         return;
     }
     event.currentTarget.addEventListener("mousedown", cellmousedown);
-    if (window.leftPressed && !event.currentTarget.className.match('^(cell type)[0-8]$')) { 
+    if (window.leftPressed && event.currentTarget.className !== "cell flag" && !event.currentTarget.className.match('^(cell type)[0-8]$')) { 
         event.currentTarget.className = "cell pressed";
     } else if (window.leftPressed && event.currentTarget.className.match('^(cell type)[0-8]$')) {
         pressCellsAround(event);
