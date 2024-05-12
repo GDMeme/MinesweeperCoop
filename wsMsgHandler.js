@@ -14,9 +14,10 @@ export function wsMsgHandler(ws) {
                 console.log("lol");
                 break;
             case "revealAllMines":
+                console.log("message.minePlacements", message.minePlacements);
                 for (const cellID of message.minePlacements) {
                     const x = cellID % window.columns;
-                    const y = Math.floor(cellID / window.rows);
+                    const y = Math.floor(cellID / window.columns);
                     document.querySelector(`#cell${x}_${y}`).className = "cell mine";
                 }
                 break;
