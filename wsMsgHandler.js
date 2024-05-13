@@ -121,8 +121,9 @@ export function wsMsgHandler(ws) {
                     newNode.id = `mouse${message.wsID}`;
                 }
                 currentMouse = document.querySelector(`#mouse${message.wsID}`);
-                currentMouse.style.left = parseInt(message.x) + message.scrollX - 10 + 'px'; // Offset for image
-                currentMouse.style.top = parseInt(message.y) + message.scrollY - 2 + 'px';
+                const xTranslation = parseInt(message.x) + message.scrollX - 10 + 'px';
+                const yTranslation = parseInt(message.y) + message.scrollY - 2 + 'px'
+                currentMouse.style.transform = `translate(${xTranslation}, ${yTranslation})`;
                 break;
             case "sendGames":
                 document.getElementById('loader').style.display = "none";

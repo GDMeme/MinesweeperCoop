@@ -185,8 +185,10 @@ button {
     pointer-events: none;
     background-image: url("images/mouse.png");
     background-size: 100%;
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
+    left: 0;
+    top: 0;
 }
 
 .loader {

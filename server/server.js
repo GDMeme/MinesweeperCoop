@@ -183,7 +183,7 @@ wss.on('connection', function (ws) {
             
             // If not the last player to leave room
             if (game.wsPlayers.length === 1) {
-                games.splice(gameIndex, 1); // No race condition
+                games.splice(gameIndex, 1);
             } else {
                 game.wsPlayers.splice(game.wsPlayers.findIndex(e => e === ws) , 1); // Remove player from wsPlayers array
             }
