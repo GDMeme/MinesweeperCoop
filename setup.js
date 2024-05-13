@@ -33,6 +33,12 @@ export function initialSetup() {
         tryNewWSConnection();
     
         wsMsgHandler(ws);    
+    }); 
+    
+    window.addEventListener("keypress", (event) => { // Regenerate board on spacebar keypress
+        if (window.gameName !== null && event.key === " ") {
+            generateBoard();
+        }
     });
     
     document.addEventListener("dragstart", (event) => {
