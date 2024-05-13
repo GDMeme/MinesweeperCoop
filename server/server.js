@@ -20,8 +20,6 @@ const WStoPlayerName = new Map(); // Client must enter their player name before 
 let gameIDCounter = 0;
 let wsIDCounter = 0; // Unique ws identifier to track mouse movement
 
-let largeBoard = false;
-
 wss.on('connection', function (ws) {
     ws.ID = wsIDCounter++;
     console.log("ws.ID: ", ws.ID);
@@ -53,8 +51,9 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 game.flaggedIDs.delete([message.x, message.y].join());
+                console.log("size 1: ", game.flaggedIDs.size);
                 for (const currentWS of game.wsPlayers) {
-                    currentWS.send(JSON.stringify({type: "unflag", id: `cell${message.x}_${message.y}`}));
+                    currentWS.send(JSON.stringify({type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size}));
                 }
                 break;
             }
@@ -63,9 +62,10 @@ wss.on('connection', function (ws) {
                     // nice try
                     break;
                 }
+                console.log("size 2: ", game.flaggedIDs.size);
                 game.flaggedIDs.add([message.x, message.y].join());
                 for (const currentWS of game.wsPlayers) {
-                    currentWS.send(JSON.stringify({type: "placeFlag", id: `cell${message.x}_${message.y}`}))
+                    currentWS.send(JSON.stringify({type: "placeFlag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size}))
                 }
                 break;
             }

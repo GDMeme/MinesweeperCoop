@@ -140,13 +140,11 @@ export function wsMsgHandler(ws) {
                 break;
             case "unflag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell closed";
-                window.mines++;
-                document.querySelector('#minecounter').innerHTML = "Mines left: " + window.mines;
+                document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - message.numFlags);
                 break;
             case "placeFlag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell flag";
-                window.mines--;
-                document.querySelector('#minecounter').innerHTML = "Mines left: " + window.mines;
+                document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - message.numFlags);
                 break;
             default: 
                 console.log("How did you get here" + message);
