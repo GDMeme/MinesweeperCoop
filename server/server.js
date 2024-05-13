@@ -164,7 +164,7 @@ wss.on('connection', function (ws) {
                 console.log("game.minePlacements: ", game.minePlacements);
                 // TODO: Make a function like "sendWSEveryone" instead of for loop
                 for (const currentWS of game.wsPlayers) {
-                    currentWS.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns, mines: game.mines, ws}));
+                    currentWS.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns, mines: game.mines, largeBoard: game.largeBoard, ws}));
                 }
                 break;
             }

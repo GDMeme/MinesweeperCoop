@@ -13,15 +13,18 @@ export function wsMsgHandler(ws) {
             case "niceTry":
                 console.log("lol");
                 break;
-            case "revealAllMines":
+            case "revealAllMines": // This is called when the game is lost
                 console.log("message.minePlacements", message.minePlacements);
                 for (const cellID of message.minePlacements) {
                     const x = cellID % window.columns;
                     const y = Math.floor(cellID / window.columns);
-                    document.querySelector(`#cell${x}_${y}`).className = "cell mine";
+                    const currentCell = document.querySelector(`#cell${x}_${y}`);
+                    if (currentCell.className !== "cell flag") {
+                        document.querySelector(`#cell${x}_${y}`).className = "cell mine";
+                    }
                 }
                 break;
-            case "revealMisflags":
+            case "revealMisflags": // This is called after revealAllMines
                 if (message.misFlags.length > 0) {
                     console.log("message.misFlags: ", message.misFlags)
                     for (const misFlag of message.misFlags) {
@@ -64,6 +67,7 @@ export function wsMsgHandler(ws) {
                 window.rows = message.rows;
                 window.columns = message.columns;
                 window.mines = message.mines;
+                window.largeBoard = message.largeBoard;
                 
                 const reference = document.querySelector("#game");
                 reference.innerHTML = "";
@@ -94,7 +98,7 @@ export function wsMsgHandler(ws) {
                     reference.insertBefore(newNode, null);
                 }
                 setupCells();
-                console.log("ws: ", message.ws); // Use this to determine who generated the new board
+                console.log("ws: ", message.ws); // TODO: Use this to determine who generated the new board
                 break;
             case "win":
                 console.log("You win");
