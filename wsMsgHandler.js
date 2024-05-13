@@ -104,6 +104,13 @@ export function wsMsgHandler(ws) {
                 console.log("You win");
                 window.won = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
+                
+                // Replace all mine positions with flags
+                for (const flagID of message.minePlacements) {
+                    const x = flagID % window.columns;
+                    const y = Math.floor(flagID / window.columns);
+                    document.querySelector(`#cell${x}_${y}`).className = "cell flag";
+                }
                 break;
             case "mouseMoved":
                 let currentMouse;

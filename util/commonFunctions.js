@@ -6,7 +6,7 @@ export function checkWin(game) { // * Only used by server, maybe move in server 
     if ((game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size) { // Check if all cells revealed
         console.log("sending win");
         for (const ws of game.wsPlayers) {
-            ws.send(JSON.stringify({type: "win"}));
+            ws.send(JSON.stringify({type: "win", minePlacements: Array.from(game.minePlacements)}));
         }
     }   
 }
