@@ -19,10 +19,12 @@ const WStoPlayerName = new Map(); // Client must enter their player name before 
 // * Do these need to be atomic?
 let gameIDCounter = 0;
 let wsIDCounter = 0; // Unique ws identifier to track mouse movement
+let numConnected = 0;
 
 wss.on('connection', function (ws) {
     ws.ID = wsIDCounter++;
     console.log("ws.ID: ", ws.ID);
+    numConnected++;
     
     ws.on('error', console.error);
 
@@ -173,6 +175,7 @@ wss.on('connection', function (ws) {
         }
     });
     ws.on('close', function () {
+        numConnected--;
         const gameID = WStoGameID.get(ws); 
         if (gameID) {
             const gameIndex = findGameIndex(games, gameID);
@@ -188,7 +191,7 @@ wss.on('connection', function (ws) {
             WStoGameID.delete(ws);
             WStoPlayerName.delete(ws);
         }
-        if (WStoPlayerName.size === 0) { // This works because clients must enter their name before connecting to the server
+        if (numConnected === 0) {
             wsIDCounter = 0; // Reset ID counter if no one is connected
         }
         if (games.length === 0) {
