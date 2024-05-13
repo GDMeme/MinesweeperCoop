@@ -191,6 +191,14 @@ button {
     top: 0;
 }
 
+.mousename {
+    position: absolute;
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    color: black;
+}
+
 .loader {
     position: absolute;
     top: 46.5%;

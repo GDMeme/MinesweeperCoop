@@ -121,7 +121,7 @@ wss.on('connection', function (ws) {
                 }
                 for (const currentWS of game.wsPlayers) {
                     if (currentWS !== ws) { // If player who moved mouse sent the message, don't send mouseMoved message
-                        currentWS.send(JSON.stringify({type: "mouseMoved", scrollY: message.scrollY, scrollX: message.scrollX, x: message.x, y: message.y, wsID: currentWS.ID})); // Send ID of client who moved
+                        currentWS.send(JSON.stringify({type: "mouseMoved", name: WStoPlayerName.get(ws), scrollY: message.scrollY, scrollX: message.scrollX, x: message.x, y: message.y, wsID: currentWS.ID})); // Send ID of client who moved
                     }
                 }
                 break;

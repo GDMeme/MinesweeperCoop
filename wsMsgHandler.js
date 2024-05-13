@@ -113,17 +113,28 @@ export function wsMsgHandler(ws) {
                 }
                 break;
             case "mouseMoved":
-                let currentMouse;
                 if (!document.querySelector(`#mouse${message.wsID}`)) { // Check if it's a new player
-                    const newNode = document.createElement("div");
+                    // Create the mouse pointer image
+                    let newNode = document.createElement("div");
                     newNode.className = "mousepointer";
                     document.body.appendChild(newNode);
                     newNode.id = `mouse${message.wsID}`;
+                    
+                    // Create the mouse pointer name
+                    newNode = document.createElement("div");
+                    newNode.className = "mousename";
+                    document.body.appendChild(newNode);
+                    newNode.id = `mousename${message.wsID}`;
+                    newNode.innerHTML = message.name;
                 }
-                currentMouse = document.querySelector(`#mouse${message.wsID}`);
-                const xTranslation = parseInt(message.x) + message.scrollX - 10 + 'px';
-                const yTranslation = parseInt(message.y) + message.scrollY - 2 + 'px'
-                currentMouse.style.transform = `translate(${xTranslation}, ${yTranslation})`;
+                const currentMouse = document.querySelector(`#mouse${message.wsID}`);
+                const currentMouseName = document.querySelector(`#mousename${message.wsID}`);
+                const mouseX = parseInt(message.x) + message.scrollX - 10 + 'px';
+                const mouseY = parseInt(message.y) + message.scrollY - 2 + 'px'
+                const mouseNameX = parseInt(message.x) + message.scrollX - 8 + 'px';
+                const mouseNameY = parseInt(message.y) + message.scrollY - 17 + 'px'
+                currentMouse.style.transform = `translate(${mouseX}, ${mouseY})`;
+                currentMouseName.style.transform = `translate(${mouseNameX}, ${mouseNameY})`;
                 break;
             case "sendGames":
                 document.getElementById('loader').style.display = "none";
