@@ -54,9 +54,7 @@ wss.on('connection', function (ws) {
                 }
                 game.flaggedIDs.delete([message.x, message.y].join());
                 console.log("size 1: ", game.flaggedIDs.size);
-                for (const currentWS of game.wsPlayers) {
-                    currentWS.send(JSON.stringify({type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size}));
-                }
+                sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size});
                 break;
             }
             case "placeFlag": {
@@ -66,9 +64,7 @@ wss.on('connection', function (ws) {
                 }
                 console.log("size 2: ", game.flaggedIDs.size);
                 game.flaggedIDs.add([message.x, message.y].join());
-                for (const currentWS of game.wsPlayers) {
-                    currentWS.send(JSON.stringify({type: "placeFlag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size}))
-                }
+                sendWSEveryone(game.wsPlayers, {type: "placeFlag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size});
                 break;
             }
             case "newConnection": {

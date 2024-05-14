@@ -1,6 +1,6 @@
 import { calculateTileStatus } from './calculateTileStatus.js';
 import { revealNeighbours } from './revealNeighbours.js';
-import { checkWin } from '../util/commonFunctions.js';
+import { checkWin, sendWSEveryone } from '../util/commonFunctions.js';
 
 export function revealCell(game, x, y) {
     // If they messed with their css, don't update the tile for them, too bad
@@ -10,10 +10,7 @@ export function revealCell(game, x, y) {
     const cellID = y * game.columns + x;
     console.log("User revealed a cell, game.cellID: ", cellID);
     if (game.minePlacements.has(cellID) && !game.firstClick) {
-        for (const currentWS of game.wsPlayers) {
-            currentWS.send(JSON.stringify({type: "revealAllMines", minePlacements: Array.from(game.minePlacements)})); // hack
-            currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus: "bomb"})); // TODO: Race condition fix later
-        }
+        sendWSEveryone(game.wsPlayers, {type: "revealAllMines", minePlacements: Array.from(game.minePlacements), deathCellID: cellID});
         game.lost = true;
         
         // Find misflags and send to clients
@@ -25,9 +22,7 @@ export function revealCell(game, x, y) {
                 misFlags.push([x, y].join());
             }
         }
-        for (const currentWS of game.wsPlayers) {
-            currentWS.send(JSON.stringify({type: "revealMisflags", misFlags}));
-        }
+        sendWSEveryone(game.wsPlayers, {type: "revealMisflags", misFlags})
         
         // Early return because the game is lost
         return;
@@ -42,10 +37,8 @@ export function revealCell(game, x, y) {
             }
         }
     }
-    const tileStatus = calculateTileStatus(game, x, y);
-    for (const currentWS of game.wsPlayers) {
-        currentWS.send(JSON.stringify({type: "revealCell", id: "cell" + x + "_" + y, tileStatus}));
-    }
+    const tileStatus = calculateTileStatus(game, x, y); // Guaranteed not to be a bomb
+    sendWSEveryone(game.wsPlayers, {type: "revealCell", id: "cell" + x + "_" + y, tileStatus});
     game.cellsRevealed.add([x, y].join()); // adds a comma in between
     if (tileStatus === 0) {
         revealNeighbours(game, x, y);

@@ -19,10 +19,15 @@ export function wsMsgHandler(ws) {
                     const x = cellID % window.columns;
                     const y = Math.floor(cellID / window.columns);
                     const currentCell = document.querySelector(`#cell${x}_${y}`);
-                    if (currentCell.className !== "cell flag") {
+                    if (cellID === message.deathCellID) {
+                        currentCell.className = "cell exploded";
+                    } else if (currentCell.className !== "cell flag") {
                         document.querySelector(`#cell${x}_${y}`).className = "cell mine";
                     }
+                    // If the tile is flagged, do nothing
                 }
+                window.lost = true;
+                document.querySelector("#lose").style.display = "block"; // TODO: Change later
                 break;
             case "revealMisflags": // This is called after revealAllMines
                 if (message.misFlags.length > 0) {
@@ -34,18 +39,11 @@ export function wsMsgHandler(ws) {
                 }
                 console.log("misflag spotted")
                 break;
-            case "revealCell":
+            case "revealCell": // Guaranteed not to be a bomb
                 console.log("revealCell received");
                 console.log("message.id: ", message.id);
                 console.log("tileStatus: ", message.tileStatus);
-                if (isNaN(message.tileStatus)) { // Bomb found   
-                    console.log("exploded")            
-                    document.querySelector(`#${message.id}`).className = "cell exploded";
-                    window.lost = true;
-                    document.querySelector("#lose").style.display = "block"; // TODO: Change later
-                } else {
-                    document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
-                }
+                document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 break;
             case "revealCells": // Guaranteed not to be a bomb
                 let currentCell;
