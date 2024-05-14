@@ -105,6 +105,8 @@ export function wsMsgHandler(ws) {
                 window.won = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
                 
+                document.querySelector('#minecounter').innerHTML = "Mines left: 0";
+                
                 // Replace all mine positions with flags
                 for (const flagID of message.minePlacements) {
                     const x = flagID % window.columns;
