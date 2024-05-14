@@ -18,3 +18,9 @@ export function findGameIndex(games, ID) { // * Also only used by server
         }
     }
 }
+
+export function sendWSEveryone(WSPlayers, message) {
+    for (const ws of WSPlayers) {
+        ws.send(JSON.stringify(message));
+    }
+}

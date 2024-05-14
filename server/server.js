@@ -3,7 +3,7 @@ import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
 import { revealCell } from './revealCell.js';
-import { findGameIndex } from '../util/commonFunctions.js';
+import { findGameIndex, sendWSEveryone } from '../util/commonFunctions.js';
 
 // render.com provides tls certs
 const server = createServer();
@@ -111,7 +111,7 @@ wss.on('connection', function (ws) {
                 game.wsPlayers.push(ws); // Add the new player to the game
                 break;
             }
-            case "requestGames": { // TODO: Don't send the entire games object because it contains minePlacements
+            case "requestGames": { // This is fine because Sets are not JSON-able objects
                 ws.send(JSON.stringify({type: "sendGames", games}));
             }
             case "mouseMove": {
@@ -119,11 +119,8 @@ wss.on('connection', function (ws) {
                     console.log("no game detected!");
                     break;
                 }
-                for (const currentWS of game.wsPlayers) {
-                    if (currentWS !== ws) { // If player who moved mouse sent the message, don't send mouseMoved message
-                        currentWS.send(JSON.stringify({type: "mouseMoved", name: WStoPlayerName.get(ws), scrollY: message.scrollY, scrollX: message.scrollX, x: message.x, y: message.y, wsID: currentWS.ID})); // Send ID of client who moved
-                    }
-                }
+                // If player who moved mouse sent the message, don't send mouseMoved message
+                sendWSEveryone(game.wsPlayers.filter(e => e !== ws), {type: "mouseMoved", name: WStoPlayerName.get(ws), scrollY: message.scrollY, scrollX: message.scrollX, x: message.x, y: message.y, wsID: currentWS.ID});
                 break;
             }
             case "revealCell": {
@@ -164,10 +161,7 @@ wss.on('connection', function (ws) {
                     game.minePlacements.add(Math.floor(Math.random() * (game.rows * game.columns)));
                 }
                 console.log("game.minePlacements: ", game.minePlacements);
-                // TODO: Make a function like "sendWSEveryone" instead of for loop
-                for (const currentWS of game.wsPlayers) {
-                    currentWS.send(JSON.stringify({type: "generatedBoard", rows: game.rows, columns: game.columns, mines: game.mines, largeBoard: game.largeBoard, ws}));
-                }
+                sendWSEveryone(game.wsPlayers, {type: "generatedBoard", rows: game.rows, columns: game.columns, mines: game.mines, largeBoard: game.largeBoard, ws});
                 break;
             }
             default:

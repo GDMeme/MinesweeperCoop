@@ -104,7 +104,6 @@ export function wsMsgHandler(ws) {
                 console.log("You win");
                 window.won = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
-                
                 document.querySelector('#minecounter').innerHTML = "Mines left: 0";
                 
                 // Replace all mine positions with flags
