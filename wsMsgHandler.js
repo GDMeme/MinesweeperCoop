@@ -52,7 +52,7 @@ export function wsMsgHandler(ws) {
                             const timerTimeout = setTimeout(updateTimer, 1000);
                         }
                     }
-                    setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
+                    const waitTimeout = setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
                 }
                 window.firstClick = false;
             
@@ -100,6 +100,7 @@ export function wsMsgHandler(ws) {
                 
                 // Timer text
                 clearTimeout(timerTimeout);
+                clearTimeout(waitTimeout);
                 
                 const timerNode = document.createElement("div");
                 timerNode.innerHTML = "Time: 0";
