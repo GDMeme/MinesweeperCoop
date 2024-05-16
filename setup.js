@@ -35,9 +35,17 @@ export function initialSetup() {
         wsMsgHandler(ws);    
     }); 
     
-    window.addEventListener("keypress", (event) => { // Regenerate board on spacebar keypress
+    window.addEventListener("keydown", (event) => { // Regenerate board on spacebar keypress
         if (window.gameName !== null && event.key === " ") {
             generateBoard();
+            document.body.style.overflow = "hidden";
+        }
+    });
+    
+    window.addEventListener("keyup", (event) => { // Regenerate board on spacebar keypress
+        if (window.gameName !== null && event.key === " ") {
+            generateBoard();
+            document.body.style.overflow = "auto";
         }
     });
     
