@@ -116,7 +116,8 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 // If player who moved mouse sent the message, don't send mouseMoved message
-                sendWSEveryone(game.wsPlayers.filter(e => e !== ws), {type: "mouseMoved", name: WStoPlayerName.get(ws), scrollY: message.scrollY, scrollX: message.scrollX, x: message.x, y: message.y, wsID: currentWS.ID});
+                // Send ID of client who moved
+                sendWSEveryone(game.wsPlayers.filter(e => e !== ws), {type: "mouseMoved", name: WStoPlayerName.get(ws), scrollY: message.scrollY, scrollX: message.scrollX, x: message.x, y: message.y, wsID: ws.ID});
                 break;
             }
             case "revealCell": {
