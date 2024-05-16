@@ -5,8 +5,11 @@ export function coordinateOutOfBounds(coordinate, rows, columns) {
 export function checkWin(game) { // * Only used by server, maybe move in server directory? idk
     if ((game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size) { // Check if all cells revealed
         console.log("sending win");
+        
+        const secondsPassed = (new Date().getTime() - game.startTime) / 1000;
+        
         for (const ws of game.wsPlayers) {
-            ws.send(JSON.stringify({type: "win", minePlacements: Array.from(game.minePlacements)}));
+            ws.send(JSON.stringify({type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed}));
         }
     }   
 }

@@ -12,6 +12,7 @@ window.playerName = null;
 window.gameName = null;
 window.playerList = [];
 window.largeBoard = false;
+window.firstClick = true;
 
 // Setup
 initialSetup();

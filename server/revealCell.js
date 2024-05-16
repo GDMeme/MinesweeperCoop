@@ -37,6 +37,11 @@ export function revealCell(game, x, y) {
             }
         }
     }
+    
+    if (game.firstClick) {
+        game.startTime = new Date().getTime(); // Time in milliseconds
+    }
+    
     const tileStatus = calculateTileStatus(game, x, y); // Guaranteed not to be a bomb
     sendWSEveryone(game.wsPlayers, {type: "revealCell", id: "cell" + x + "_" + y, tileStatus});
     game.cellsRevealed.add([x, y].join()); // adds a comma in between

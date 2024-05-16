@@ -14,6 +14,7 @@ export function wsMsgHandler(ws) {
                 console.log("lol");
                 break;
             case "revealAllMines": // This is called when the game is lost
+            
                 console.log("message.minePlacements", message.minePlacements);
                 for (const cellID of message.minePlacements) {
                     const x = cellID % window.columns;
@@ -40,6 +41,21 @@ export function wsMsgHandler(ws) {
                 console.log("misflag spotted")
                 break;
             case "revealCell": // Guaranteed not to be a bomb
+            
+                if (window.firstClick) { // Race condition?
+                    const updateTimer = function () {
+                        if (!(window.won || window.lost)) {
+                            const timerNode = document.querySelector('#timer');
+                            let currentSeconds = parseInt(timerNode.innerHTML.split(" ")[1]);
+                            currentSeconds++;
+                            timerNode.innerHTML = "Time: " + currentSeconds;
+                            setTimeout(updateTimer, 1000);
+                        }
+                    }
+                    setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
+                }
+                window.firstClick = false;
+            
                 console.log("revealCell received");
                 console.log("message.id: ", message.id);
                 console.log("tileStatus: ", message.tileStatus);
@@ -66,6 +82,7 @@ export function wsMsgHandler(ws) {
                 window.columns = message.columns;
                 window.mines = message.mines;
                 window.largeBoard = message.largeBoard;
+                window.firstClick = true;
                 
                 const reference = document.querySelector("#game");
                 reference.innerHTML = "";
@@ -80,6 +97,14 @@ export function wsMsgHandler(ws) {
                 const tempNode = document.createElement("div");
                 tempNode.className = "clear";
                 reference.insertBefore(tempNode, null);
+                
+                // Timer text
+                document.querySelector('#timer')?.remove(); // Delete the timer when game is lost
+                
+                const timerNode = document.createElement("div");
+                timerNode.innerHTML = "Time: 0";
+                timerNode.id = "timer";
+                reference.insertBefore(timerNode, null);
                 
                 // Generate the game cells
                 for (let i = 0; i < message.rows; i++) {
@@ -103,6 +128,7 @@ export function wsMsgHandler(ws) {
                 window.won = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
                 document.querySelector('#minecounter').innerHTML = "Mines left: 0";
+                document.querySelector('#timer').innerHTML = "Time: " + message.secondsPassed + "seconds";
                 
                 // Replace all mine positions with flags
                 for (const flagID of message.minePlacements) {

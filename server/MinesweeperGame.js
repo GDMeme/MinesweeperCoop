@@ -12,5 +12,6 @@ export class MinesweeperGame {
         this.wsPlayers = [];
         this.flaggedIDs = new Set();
         this.largeBoard;
+        this.startTime; // Milliseconds since Jan 1, 1970
     }
 }
