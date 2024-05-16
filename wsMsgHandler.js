@@ -49,7 +49,7 @@ export function wsMsgHandler(ws) {
                             let currentSeconds = parseInt(timerNode.innerHTML.split(" ")[1]);
                             currentSeconds++;
                             timerNode.innerHTML = "Time: " + currentSeconds;
-                            setTimeout(updateTimer, 1000);
+                            const timerTimeout = setTimeout(updateTimer, 1000);
                         }
                     }
                     setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
@@ -99,7 +99,7 @@ export function wsMsgHandler(ws) {
                 reference.insertBefore(tempNode, null);
                 
                 // Timer text
-                document.querySelector('#timer')?.remove(); // Delete the timer when game is lost
+                clearTimeout(timerTimeout);
                 
                 const timerNode = document.createElement("div");
                 timerNode.innerHTML = "Time: 0";
