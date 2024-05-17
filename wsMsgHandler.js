@@ -3,6 +3,8 @@ import { setupCells } from "./setup.js";
 export function wsMsgHandler(ws) {
     window.ws = ws;
     console.log("connected to server"); 
+    
+    let timerTimeout = null;
 
     ws.addEventListener("message", (message) => {
         message = JSON.parse(message.data);
@@ -49,10 +51,10 @@ export function wsMsgHandler(ws) {
                             let currentSeconds = parseInt(timerNode.innerHTML.split(" ")[1]);
                             currentSeconds++;
                             timerNode.innerHTML = "Time: " + currentSeconds;
-                            const timerTimeout = setTimeout(updateTimer, 1000);
+                            timerTimeout = setTimeout(updateTimer, 1000);
                         }
                     }
-                    const waitTimeout = setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
+                    timerTimeout = setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
                 }
                 window.firstClick = false;
             
@@ -100,7 +102,6 @@ export function wsMsgHandler(ws) {
                 
                 // Timer text
                 clearTimeout(timerTimeout);
-                clearTimeout(waitTimeout);
                 
                 const timerNode = document.createElement("div");
                 timerNode.innerHTML = "Time: 0";
