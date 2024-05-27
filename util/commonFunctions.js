@@ -14,14 +14,6 @@ export function checkWin(game) { // * Only used by server, maybe move in server 
     }   
 }
 
-export function findGameIndex(games, ID) { // * Also only used by server
-    for (let i = 0; i < games.length; i++) {
-        if (games[i].ID === ID) {
-            return i;
-        }
-    }
-}
-
 export function sendWSEveryone(WSPlayers, message) {
     for (const ws of WSPlayers) {
         ws.send(JSON.stringify(message));

@@ -1,7 +1,7 @@
 export class MinesweeperGame {
     constructor() {
         this.name; // Name of the game room
-        this.ID;
+        this.ID; // * Still need this property?
         this.minePlacements = new Set();
         this.rows;
         this.columns;
