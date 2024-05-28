@@ -152,8 +152,22 @@ wss.on('connection', function (ws) {
                 game.firstClick = true;
                 game.lost = false;
                 game.flaggedIDs.clear();
-                while (game.minePlacements.size < game.mines) { // Randomly generate mines
-                    game.minePlacements.add(Math.floor(Math.random() * (game.rows * game.columns)));
+                
+                // // Initiate Grid
+                // for (let i = 0; i < game.rows; i++) {
+                //     game.mineGrid[i] = [];
+                //     for (let j = 0; j < game.columns; j++) {
+                //         game.mineGrid[i][j] = {mine: false, open: false, neighbors: 0, flag: false, edge: false, edgeCount: 0, mineArr: 0, probability: -1};
+                //     }
+                // }
+                
+                // Randomly generate mines
+                // Generates an array containing [0, 1, ... , game.rows - game.columns - 1]
+                const possibleMinePlacements = Array.from(Array(game.rows * game.columns - 1).keys());
+                for (let i = 0; i < game.mines; i++) {
+                    const randomIndex = Math.floor(Math.random() * (game.rows * game.columns - i))
+                    game.minePlacements.add(possibleMinePlacements[randomIndex]);
+                    possibleMinePlacements.splice(randomIndex, 1);
                 }
                 console.log("game.minePlacements: ", game.minePlacements);
                 sendWSEveryone(game.wsPlayers, {type: "generatedBoard", rows: game.rows, columns: game.columns, mines: game.mines, largeBoard: game.largeBoard, ws});
