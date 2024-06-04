@@ -2,6 +2,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
+import { Cell } from './cell.js';
 import { revealCell } from './revealCell.js';
 import { sendWSEveryone } from '../util/commonFunctions.js';
 
@@ -153,13 +154,13 @@ wss.on('connection', function (ws) {
                 game.lost = false;
                 game.flaggedIDs.clear();
                 
-                // // Initiate Grid
-                // for (let i = 0; i < game.rows; i++) {
-                //     game.mineGrid[i] = [];
-                //     for (let j = 0; j < game.columns; j++) {
-                //         game.mineGrid[i][j] = {mine: false, open: false, neighbors: 0, flag: false, edge: false, edgeCount: 0, mineArr: 0, probability: -1};
-                //     }
-                // }
+                // Initiate Grid
+                for (let i = 0; i < game.rows; i++) {
+                    game.mineGrid[i] = new Array(game.columns);
+                    for (let j = 0; j < game.columns; j++) {
+                        game.mineGrid[i][j] = new Cell();
+                    }
+                }
                 
                 // Randomly generate mines
                 // Generates an array containing [0, 1, ... , game.rows - game.columns - 1]
@@ -167,9 +168,12 @@ wss.on('connection', function (ws) {
                 for (let i = 0; i < game.mines; i++) {
                     const randomIndex = Math.floor(Math.random() * (game.rows * game.columns - i))
                     game.minePlacements.add(possibleMinePlacements[randomIndex]);
+                    // const cellID = possibleMinePlacements[randomIndex];
+                    // const x = cellID % game.columns;
+                    // const y = Math.floor(cellID / game.columns);
+                    // game.mineGrid[y][x].mine = true;
                     possibleMinePlacements.splice(randomIndex, 1);
                 }
-                console.log("game.minePlacements: ", game.minePlacements);
                 sendWSEveryone(game.wsPlayers, {type: "generatedBoard", rows: game.rows, columns: game.columns, mines: game.mines, largeBoard: game.largeBoard, ws});
                 break;
             }
