@@ -1,11 +1,6 @@
 export class MinesweeperGame {
     constructor() {
         this.name; // Name of the game room
-        this.mineGrid = [];
-        this.hundredCount = 0;
-        this.arrGrid = [];
-        this.edgeArr = [];
-        this.mineArr = 0;
         this.ID; // * Still need this property?
         this.minePlacements = new Set();
         this.rows;

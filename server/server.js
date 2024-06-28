@@ -2,7 +2,6 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
-import { Cell } from './cell.js';
 import { revealCell } from './revealCell.js';
 import { sendWSEveryone } from '../util/commonFunctions.js';
 
@@ -142,36 +141,22 @@ wss.on('connection', function (ws) {
             }
             case "generateBoard": {
                 delete message.type; // Remove the "type" property before copying the properties to game object
-                Object.assign(game, message); // TODO: Maybe add validation so the client can't add random properties to game object
+                // * Adds rows, columns, mines, largeBoard
+                Object.assign(game, message); // TODO: Add validation to message so the client can't add random properties to game object
                 console.log("game is now: ", game);
-                // game.rows = message.rows;
-                // game.columns = message.columns;
-                // game.mines = message.mines;
-                // game.largeBoard = message.largeBoard;
                 game.minePlacements.clear();
                 game.cellsRevealed.clear();
                 game.firstClick = true;
                 game.lost = false;
                 game.flaggedIDs.clear();
                 
-                // Initiate Grid
-                for (let i = 0; i < game.rows; i++) {
-                    game.mineGrid[i] = new Array(game.columns);
-                    for (let j = 0; j < game.columns; j++) {
-                        game.mineGrid[i][j] = new Cell();
-                    }
-                }
-                
+
                 // Randomly generate mines
                 // Generates an array containing [0, 1, ... , game.rows - game.columns - 1]
                 const possibleMinePlacements = Array.from(Array(game.rows * game.columns - 1).keys());
                 for (let i = 0; i < game.mines; i++) {
                     const randomIndex = Math.floor(Math.random() * (game.rows * game.columns - i))
                     game.minePlacements.add(possibleMinePlacements[randomIndex]);
-                    // const cellID = possibleMinePlacements[randomIndex];
-                    // const x = cellID % game.columns;
-                    // const y = Math.floor(cellID / game.columns);
-                    // game.mineGrid[y][x].mine = true;
                     possibleMinePlacements.splice(randomIndex, 1);
                 }
                 sendWSEveryone(game.wsPlayers, {type: "generatedBoard", rows: game.rows, columns: game.columns, mines: game.mines, largeBoard: game.largeBoard, ws});

@@ -4,23 +4,22 @@ import { checkWin, sendWSEveryone } from '../util/commonFunctions.js';
 
 export function revealCell(game, x, y) {
     // If they messed with their css, don't update the tile for them, too bad
-    // Early return for chording
-    if (game.mineGrid[y][x].open === true) { // * Do I still need this?
+    if (game.cellsRevealed.has([x, y].join())) { // Early return for chording
         return;
     }
     const cellID = y * game.columns + x;
     console.log("User revealed a cell, game.cellID: ", cellID);
-    if (game.mineGrid[y][x].mine === true && !game.firstClick) {
+    if (game.minePlacements.has(cellID) && !game.firstClick) {
         sendWSEveryone(game.wsPlayers, {type: "revealAllMines", minePlacements: Array.from(game.minePlacements), deathCellID: cellID});
         game.lost = true;
         
         // Find misflags and send to clients
         const misFlags = []; // Pushing to const is not functional but who cares
         for (const flagCoordinate of game.flaggedIDs) {
-            const [xCoordinate, yCoordinate] = flagCoordinate.split(",").map(e => parseInt(e));
-            // Flagged but not a mine
-            if (game.mineGrid[yCoordinate][xCoordinate].mine === false) {
-                misFlags.push([xCoordinate, yCoordinate].join());
+            const [x, y] = flagCoordinate.split(",").map(e => parseInt(e));
+            const cellID = y * game.columns + x;
+            if (!game.minePlacements.has(cellID)) {
+                misFlags.push([x, y].join());
             }
         }
         sendWSEveryone(game.wsPlayers, {type: "revealMisflags", misFlags})
@@ -59,21 +58,6 @@ export function revealCell(game, x, y) {
     if (tileStatus === 0) {
         revealNeighbours(game, x, y);
     }
-    
-    // Reset old probability values
-    // * Why do I need this? Since this is also run in generateProbability function
-    // TODO: This should only run if old probability values exist
-    for (let i = 0; i < game.mineGrid.length; i++) {
-        for (let j = 0; j < game.mineGrid[i].length; j++) {
-            game.mineGrid[i][j].mineArr = 0;
-            game.mineGrid[i][j].probability = -1;
-        }
-    }
-    game.hundredCount = 0;
-    game.arrGrid = [];
-    game.edgeArr = [];
-    
-    
     checkWin(game);
     console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
     game.firstClick = false;
