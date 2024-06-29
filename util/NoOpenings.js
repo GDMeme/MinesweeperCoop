@@ -16,7 +16,7 @@ const columns = 30;
 const rows = 16;
 const mines = 99;
 
-// For an expert board, numBoardsGoal = 1 took me way too long
+// For an expert board, numBoardsGoal = 1 took me way too long (more than 1.8 billion boards)
 const numBoardsGoal = 1;
 
 let data = `Columns: ${columns}, Rows: ${rows}, Mines: ${mines}, numBoardsGoal: ${numBoardsGoal}\n`;
