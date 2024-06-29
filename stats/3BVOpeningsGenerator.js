@@ -1,7 +1,7 @@
 import { writeFile } from 'fs';
 
-import { directionArray } from "./constants.js";
-import { coordinateOutOfBounds } from "./commonFunctions.js";
+import { directionArray } from "../util/constants.js";
+import { coordinateOutOfBounds } from "../util/commonFunctions.js";
 
 function calculateTileStatus(currentX, currentY) {
     let tileStatus = 0;

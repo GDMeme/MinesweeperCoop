@@ -1,7 +1,7 @@
 import { writeFile } from 'fs';
 
-import { directionArray } from "./constants.js";
-import { coordinateOutOfBounds } from "./commonFunctions.js";
+import { directionArray } from "../util/constants.js";
+import { coordinateOutOfBounds } from "../util/commonFunctions.js";
 
 function formatDivision(numerator, denominator) {
     return Math.round((numerator / denominator) * (10 ** denominator.toString().length)) / (10 ** denominator.toString().length);
