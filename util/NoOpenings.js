@@ -3,6 +3,10 @@ import { writeFile } from 'fs';
 import { directionArray } from "./constants.js";
 import { coordinateOutOfBounds } from "./commonFunctions.js";
 
+function formatDivision(numerator, denominator) {
+    return Math.round((numerator / denominator) * (10 ** denominator.toString().length)) / (10 ** denominator.toString().length);
+}
+
 let foundMine;
 let openings;
 let currentX;
@@ -95,8 +99,8 @@ for (const iteration of counterTracker) {
     totalSum += iteration;
 }
 
-data += `Average number of iterations for a board with no openings: ${Math.round((totalSum / numBoardsGoal) * (10 ** numBoardsGoal.toString().length)) / (10 ** numBoardsGoal.toString().length)}\n`;
-data += `Chance of having a board with no openings: ${Math.round((totalSum / numBoardsGoal * 100) * (10 ** numBoardsGoal.toString().length)) / (10 ** numBoardsGoal.toString().length)}\n`;
+data += `Average number of iterations for a board with no openings: ${formatDivision(totalSum, numBoardsGoal)}\n`;
+data += `Chance of having a board with no openings: ${formatDivision(totalSum * 100, numBoardsGoal)}\n`;
 
 writeFile('NoOpenings.txt', data, (err) => {
     // In case of a error throw err.

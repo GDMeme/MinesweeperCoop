@@ -21,7 +21,7 @@ function calculateTileStatus(currentX, currentY) {
     return tileStatus;
 }
 
-function formatDivison(numerator, denominator) {
+function formatDivision(numerator, denominator) {
     return Math.round((numerator / denominator) * (10 ** denominator.toString().length)) / (10 ** denominator.toString().length);
 }
 
@@ -167,7 +167,7 @@ sortedThreeBV.forEach((value, key) => {
    data += `${key} => ${value}\n`;
 });
 
-data += `Average 3BV: ${formatDivison(total3BVSum, numIterations)}\n`;
+data += `Average 3BV: ${formatDivision(total3BVSum, numIterations)}\n`;
 
 let numBoards;
 
@@ -178,7 +178,7 @@ for (const threeBV of sortedThreeBV.keys()) {
             numBoards += value;
         }
     });
-    data += `Chance of having a board with ${threeBV} or more 3BV: ${formatDivison(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
+    data += `Chance of having a board with ${threeBV} or more 3BV: ${formatDivision(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
 }
 
 const sortedOpenings = new Map([...openingsMap].sort((a, b) => a[0] - b[0]));
@@ -189,7 +189,7 @@ sortedOpenings.forEach((value, key) => {
     data += `${key} => ${value}\n`;
 });
 
-data += `Average openings: ${formatDivison(totalOpeningsSum, numIterations)}\n`;
+data += `Average openings: ${formatDivision(totalOpeningsSum, numIterations)}\n`;
 
 for (const openings of sortedOpenings.keys()) {
     numBoards = 0;
@@ -198,14 +198,14 @@ for (const openings of sortedOpenings.keys()) {
             numBoards += value;
         }
     });
-    data += `Chance of having a board with ${openings} or more openings: ${formatDivison(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
+    data += `Chance of having a board with ${openings} or more openings: ${formatDivision(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
 }
 
 const sortedOpeningSize = new Map([...openingSizeMap].sort((a, b) => a[0] - b[0]));
 
 sortedOpeningSize.forEach((value, key) => {
     const denominator = value[1] * key;
-    data += `Average opening size for ${key} openings: ${formatDivison(value[0], denominator)}\n`;
+    data += `Average opening size for ${key} openings: ${formatDivision(value[0], denominator)}\n`;
 });
 
 const sortedMinSizeOpening = new Map([...minSizeOpeningMap].sort((a, b) => a[0] - b[0]));
