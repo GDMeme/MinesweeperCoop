@@ -21,6 +21,10 @@ function calculateTileStatus(currentX, currentY) {
     return tileStatus;
 }
 
+function formatDivison(numerator, denominator) {
+    return Math.round((numerator / denominator) * (10 ** denominator.toString().length)) / (10 ** denominator.toString().length);
+}
+
 const ThreeBVMap = new Map();
 const openingsMap = new Map();
 const openingSizeMap = new Map();
@@ -104,11 +108,7 @@ for (let a = 0; a < numIterations; a++) {
                 break;
             }
         }
-        
-        // TODO: Average size of openings for each # of openings
-        // TODO: Average 3BV for each # of openings
-        
-        // TODO: Get max/min openings for each # of openings
+                
         if (!foundMine) { // Found a 0 tile
             openings++;
             frontier.push(`${currentX},${currentY}`);
@@ -160,51 +160,52 @@ for (let a = 0; a < numIterations; a++) {
 }
 
 const sortedThreeBV = new Map([...ThreeBVMap].sort((a, b) => a[0] - b[0]));
-const serializedThreeBV = Array.from([...sortedThreeBV]);
 
 data += `3BV Counter\n`;
-for (const [threeBV, counter] of serializedThreeBV) {
-    data += `${threeBV} => ${counter}\n`;
-}
-data += `Average 3BV: ${Math.round((total3BVSum / numIterations) * (10 ** numIterations.toString().length)) / 10 ** numIterations.toString().length}\n`;
 
-let filteredThreeBV;
+sortedThreeBV.forEach((value, key) => {
+   data += `${key} => ${value}\n`;
+});
+
+data += `Average 3BV: ${formatDivison(total3BVSum, numIterations)}\n`;
+
 let numBoards;
 
-for (const key of sortedThreeBV.keys()) {
+for (const threeBV of sortedThreeBV.keys()) {
     numBoards = 0;
-    filteredThreeBV = new Map([...sortedThreeBV].filter(([threeBV]) => threeBV >= key));
-    filteredThreeBV.forEach((counter) => {
-        numBoards += counter;
-    })
-    data += `Chance of having a board with ${key} or more 3BV: ${Math.round((numBoards / numIterations * 100) * (10 ** numIterations.toString().length)) / (10 ** numIterations.toString().length)}%\n`; // Round to correct number of decimal places
+    sortedThreeBV.forEach((value, key) => {
+        if (key >= threeBV) {
+            numBoards += value;
+        }
+    });
+    data += `Chance of having a board with ${threeBV} or more 3BV: ${formatDivison(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
 }
 
 const sortedOpenings = new Map([...openingsMap].sort((a, b) => a[0] - b[0]));
-const serializedOpenings = Array.from([...sortedOpenings]);
 
 data += `Openings Counter\n`;
-for (const [openings, counter] of serializedOpenings) {
-    data += `${openings} => ${counter}\n`;
-}
-data += `Average openings: ${totalOpeningsSum / numIterations}\n`;
 
-let filteredOpenings;
+sortedOpenings.forEach((value, key) => {
+    data += `${key} => ${value}\n`;
+});
 
-for (const key of sortedOpenings.keys()) {
+data += `Average openings: ${formatDivison(totalOpeningsSum, numIterations)}\n`;
+
+for (const openings of sortedOpenings.keys()) {
     numBoards = 0;
-    filteredOpenings = new Map([...sortedOpenings].filter(([openings]) => openings >= key));
-    filteredOpenings.forEach((counter) => {
-        numBoards += counter;
-    })
-    data += `Chance of having a board with ${key} or more openings: ${Math.round((numBoards / numIterations * 100) * (10 ** numIterations.toString().length)) / (10 ** numIterations.toString().length)}%\n`; // Round to correct number of decimal places
+    sortedOpenings.forEach((value, key) => {
+        if (key >= openings) {
+            numBoards += value;
+        }
+    });
+    data += `Chance of having a board with ${openings} or more openings: ${formatDivison(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
 }
 
 const sortedOpeningSize = new Map([...openingSizeMap].sort((a, b) => a[0] - b[0]));
 
 sortedOpeningSize.forEach((value, key) => {
     const denominator = value[1] * key;
-    data += `Average opening size for ${key} openings: ${Math.round((value[0] / denominator) * (10 ** denominator.toString().length)) / 10 ** denominator.toString().length}\n`;
+    data += `Average opening size for ${key} openings: ${formatDivison(value[0], denominator)}\n`;
 });
 
 const sortedMinSizeOpening = new Map([...minSizeOpeningMap].sort((a, b) => a[0] - b[0]));
@@ -226,3 +227,5 @@ writeFile('3BVOpeningsGenerator.txt', data, (err) => {
         throw err;
     }
 });
+
+console.log("3BVOpeningsGenerator.txt created");
