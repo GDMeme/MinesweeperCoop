@@ -61,9 +61,24 @@ export function wsMsgHandler(ws) {
                 console.log("revealCell received");
                 console.log("message.id: ", message.id);
                 console.log("tileStatus: ", message.tileStatus);
+                
+                // Fine for now
+                for (const cell of document.getElementById("game").children) {
+                    if (cell.className.split(" ")[0] === "cell") {
+                        cell.innerHTML = "";
+                    }
+                }
+                
                 document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 break;
             case "revealCells": // Guaranteed not to be a bomb
+                // Fine for now
+                for (const cell of document.getElementById("game").children) {
+                    if (cell.className.split(" ")[0] === "cell") {
+                        cell.innerHTML = "";
+                    }
+                }
+            
                 let currentCell;
                 let data = JSON.parse(message.data);
                 console.log(JSON.parse(message.data));

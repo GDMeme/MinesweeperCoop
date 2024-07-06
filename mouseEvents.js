@@ -25,6 +25,13 @@ export function cellmousedown(event) {
         }
         console.log("classname is: ", event.currentTarget.className);
         if (event.currentTarget.className !== "cell exploded") {
+            // Fine for now
+            for (const cell of document.getElementById("game").children) {
+                if (cell.className.split(" ")[0] === "cell") {
+                    cell.innerHTML = "";
+                }
+            }
+            
             if (event.currentTarget.className === "cell flag") {
                 event.currentTarget.className = "cell closed";
                 console.log("unflagged a tile");
