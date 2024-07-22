@@ -152,8 +152,9 @@ wss.on('connection', function (ws) {
                 
 
                 // Randomly generate mines
-                // Generates an array containing [0, 1, ... , game.rows - game.columns - 1]
-                const possibleMinePlacements = Array.from(Array(game.rows * game.columns - 1).keys());
+                // Generates an array containing [0, 1, ... , game.rows * game.columns - 1]
+                // Number of indices: game.rows * game.columns
+                const possibleMinePlacements = Array.from(new Array(game.rows * game.columns).keys());
                 for (let i = 0; i < game.mines; i++) {
                     const randomIndex = Math.floor(Math.random() * (game.rows * game.columns - i))
                     game.minePlacements.add(possibleMinePlacements[randomIndex]);
