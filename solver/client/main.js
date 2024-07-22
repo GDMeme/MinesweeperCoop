@@ -2030,6 +2030,8 @@ export async function doAnalysis() {
         justPressedAnalyse = true;
         console.log("hints:" , hints);
         
+        return hints;
+        
         // await nextActions(hints);
 
         // window.requestAnimationFrame(() => renderHints(hints, solve.other));

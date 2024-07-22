@@ -2,6 +2,8 @@ export function coordinateOutOfBounds(coordinate, rows, columns) { // * Only use
     return (coordinate[0] < 0 || coordinate[0] >= columns || coordinate[1] < 0 || coordinate[1] >= rows);
 }
 
+// TODO Maybe clients can use console to check this function to see game.minePlacements?
+// Is it possible for the user to get their game object?
 export function checkWin(game) { // * Only used by server, maybe move in server directory? idk
     if ((game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size) { // Check if all cells revealed
         console.log("sending win");
@@ -21,7 +23,7 @@ export function sendWSEveryone(WSPlayers, message) { // * Also only used by serv
 }
 
 // This function is done client-side; if they change their css,
-// the calculations will be incorrect for their actual board
+// the probability calculations will be incorrect for their actual board
 export function HTMLtoString(children) {
     // * No calculator for large board (yet?)
     if (window.largeBoard === true) {
@@ -65,7 +67,7 @@ export function HTMLtoString(children) {
         }
     }
     data = `${window.columns}x${window.rows}x${window.mines}${data}`;
-    console.log("data is below")
+    console.log("data is below");
     console.log(data);
     return data;
 }
