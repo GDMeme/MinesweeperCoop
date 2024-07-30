@@ -376,6 +376,9 @@ export async function solver(board, options) {
         // If we have a full analysis then set the probabilities on the tile tooltips
         if (pe.fullAnalysis) {
 
+            // TODO: Maybe just set some global variables instead of doing the logic in here
+            // This way it'll be more organized, don't have to look in this folder to find HTML logic
+            
             // Set the probability for each tile on the edge 
             let x, y;
             for (let i = 0; i < pe.boxes.length; i++) {
@@ -396,7 +399,7 @@ export async function solver(board, options) {
                 
                 if (tile.isSolverFoundBomb()) {
                     if (!tile.isFlagged()) {
-                        console.log("setting probability to 0 here: ", tile);
+                        console.log("setting probability to 100 here: ", tile);
                         ({x, y} = tile);
                         document.getElementById(`cell${x}_${y}`).innerHTML = 100;
                         

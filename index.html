@@ -47,13 +47,13 @@
     </div>
     <!-- loader does nothing atm -->
     <div id="waitingforserver" style="font-size: 50px; position: absolute; bottom: 55%; display: none; width: 100%">Waiting for server...</div>
-    <div class="loader" id="loader" style="display: none"></div>
-    <div id="connectionfailed" style="display: none">
+    <div class="loader" id="loader"></div>
+    <div class="nodisplay" id="connectionfailed">
         <div style="font-size: 25px;">Connection to server failed!</div>
         <br>
         <button id="tryconnectagain">Click here to try to connect again!</button>
     </div>
-    <div id="inputs" class="nodisplay">
+    <div class="nodisplay" id="inputs">
         <div class="table-cell">
             <label for="customrows">Rows:</label>
             <input class="input-data" size="3" id="customrows">
@@ -81,7 +81,7 @@
     <div class="nodisplay" id="win">You win</div>    
     <div class="nodisplay" id="lose">You lose</div>    
     
-    <button id="testbutton">Show Probabilities</button>
+    <button class="nodisplay" id="showprobabilities">Show Probabilities</button>
     
     <script src="./script.js" type="module"></script>
 </html>

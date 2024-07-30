@@ -31,7 +31,7 @@ export function revealCell(game, x, y) {
         game.minePlacements.delete(cellID);
         
         // Generates an array containing [0, 1, ... , game.columns * game.rows - game.mines] excluding the IDs of existing mines
-        // Number of indicies: game.columns * game.rows - game.mines + 1
+        // Number of indices: game.columns * game.rows - game.mines + 1
         const possibleNewMinePlacements = new Array(game.columns * game.rows - game.mines + 1);
         let cellCounter = 0;
         for (let i = 0; i < possibleNewMinePlacements.size; i++) {

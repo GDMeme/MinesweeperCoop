@@ -1,4 +1,4 @@
-import { setupCells } from "./setup.js";
+import { setupBoard } from "./setup.js";
 
 export function wsMsgHandler(ws) {
     window.ws = ws;
@@ -137,7 +137,7 @@ export function wsMsgHandler(ws) {
                     newNode.className = "clear";
                     reference.insertBefore(newNode, null);
                 }
-                setupCells();
+                setupBoard();
                 console.log("ws: ", message.ws); // TODO: Use this to determine who generated the new board
                 break;
             case "win":
