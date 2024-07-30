@@ -1,5 +1,8 @@
 import { initialSetup } from './setup.js';
 
+import { HTMLtoString } from './util/commonFunctions.js';
+import { doAnalysis, dropHandler, startup } from './solver/client/main.js';
+
 // Globals (Nothing will go wrong)
 window.leftPressed = false;
 window.ws = null;
@@ -13,6 +16,7 @@ window.gameName = null;
 window.playerList = [];
 window.largeBoard = false;
 window.firstClick = true;
+window.probabilityStartup = false;
 
 // Setup
 initialSetup();

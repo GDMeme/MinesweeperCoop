@@ -54,6 +54,8 @@ button {
     font-size: 17px;
     line-height: 37px;
     touch-action: manipulation;
+    cursor: default;
+    user-select: none;
 }
 
 .closed {

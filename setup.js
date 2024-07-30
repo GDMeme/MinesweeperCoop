@@ -3,15 +3,21 @@ import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
 import { connect } from './connect.js';
 
-export function setupCells() { // * Does this function belong here? Little bit circular
+export function setupBoard() { // * Does this function belong here? Little bit circular
     document.querySelectorAll(".cell").forEach(e => {
         e.addEventListener("mouseenter", cellmouseenter);
         e.addEventListener("mouseout", cellmouseout);
         e.addEventListener("mouseup", cellmouseup);
+        
+        // Prevent right click menu
         e.addEventListener("contextmenu", function(event) {
             event.preventDefault();
         });
     });
+    
+    // * Fine to put this here
+    // Default display style
+    document.querySelector('#showprobabilities').style.display = "inline-block";
 };
 
 export function initialSetup() {
@@ -63,14 +69,14 @@ export function initialSetup() {
         window.leftPressed = false;
     });
     
-    let timerFlag = true;
+    let mouseMessageTimer = true;
     
     document.addEventListener("mousemove", function(event) {
-        if (window.ws && timerFlag && document.hasFocus() && window.gameName !== null) { // Tab should be focused to track mouse movement
+        if (window.ws && mouseMessageTimer && document.hasFocus() && window.gameName !== null) { // Tab should be focused to track mouse movement
             ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y, scrollY: window.scrollY, scrollX: window.scrollX}));
-            timerFlag = false;
+            mouseMessageTimer = false;
             setTimeout(() => {
-                timerFlag = true;    
+                mouseMessageTimer = true;    
             }, 20); // Wait 20ms before sending another mouseMove message
         } 
     });
@@ -130,4 +136,27 @@ export function initialSetup() {
     document.querySelector('#generateboard').onclick = function() {
         generateBoard();
     }
+    
+    //* Probability Stuff
+    document.getElementById("showprobabilities").addEventListener('click', async function() {
+        const data = HTMLtoString(document.getElementById("game").children);
+        if (!window.probabilityStartup) {
+            await startup(window.rows, window.columns, window.mines);
+            window.probabilityStartup = true;
+        }
+        
+        await dropHandler(data);
+        const bestMove = (await doAnalysis())[0];
+        if (bestMove.action === 1) { // Regular left click (clear)
+            // Green
+            document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#00FF00";
+        } else if (bestMove.action === 2) { // Regular right click (flag)
+            // Red
+            document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#FF0000";
+            // Maybe want to show the flag(s) and then the chord
+        } else if (bestMove.action === 3) { // Chord
+            // Immediately chord
+            // Need some way to highlight to click here
+        }
+    });
 }
