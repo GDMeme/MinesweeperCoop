@@ -67,11 +67,11 @@ let currentMinute = new Date().getMinutes();
 
 for (let a = 0; a < numIterations; a++) {
     if (new Date().getMinutes() !== currentMinute) {
-        console.log(`Currently at iteration ${a} out of ${numIterations}`);
+        console.log(`Currently at iteration ${a} of ${numIterations}`);
         currentMinute = new Date().getMinutes();
     }
     minePlacements.clear();
-    possibleMinePlacements = Array.from(Array(columns * rows - 1).keys());
+    possibleMinePlacements = Array.from(new Array(columns * rows).keys());
     for (let i = 0; i < mines; i++) { //
         const randomIndex = Math.floor(Math.random() * (columns * rows - i));
         minePlacements.add(possibleMinePlacements[randomIndex]);
