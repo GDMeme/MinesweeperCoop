@@ -92,7 +92,6 @@ wss.on('connection', function (ws) {
                 }
                 WStoGameID.set(ws, message.gameID);
                 console.log("message.gameID: ", message.gameID);
-                game = gameIDtoGame.get(message.gameID);
                 for (const currentWS of game.wsPlayers) {
                     // Send message to new player as well
                     currentWS.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(ws)})); 
