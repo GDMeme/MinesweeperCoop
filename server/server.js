@@ -92,12 +92,13 @@ wss.on('connection', function (ws) {
                 }
                 WStoGameID.set(ws, message.gameID);
                 console.log("message.gameID: ", message.gameID);
-                for (const currentWS of game.wsPlayers) {
+                const currentGame = gameIDtoGame.get(message.gameID); // TODO New variable, can probs implement it better
+                for (const currentWS of currentGame.wsPlayers) {
                     // Send message to new player as well
                     currentWS.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(ws)})); 
                     ws.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(currentWS)}));
                 }
-                game.wsPlayers.push(ws); // Add the new player to the game
+                currentGame.wsPlayers.push(ws); // Add the new player to the game
                 break;
             }
             case "requestGames": { // This is fine because Sets are not JSON-able objects
