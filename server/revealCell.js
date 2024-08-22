@@ -34,7 +34,7 @@ export function revealCell(game, x, y) {
         // Number of indices: game.columns * game.rows - game.mines + 1
         const possibleNewMinePlacements = new Array(game.columns * game.rows - game.mines + 1);
         let cellCounter = 0;
-        for (let i = 0; i < possibleNewMinePlacements.size; i++) {
+        for (let i = 0; i < possibleNewMinePlacements.length; i++) {
             if (!game.minePlacements.has(cellCounter)) {
                 possibleNewMinePlacements[i] = cellCounter;
             } else { // Found an existing mine, skip but increment cellCounter
