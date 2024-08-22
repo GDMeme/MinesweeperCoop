@@ -9,7 +9,7 @@ export function revealCell(game, x, y) {
     }
     const cellID = y * game.columns + x;
     console.log("User revealed a cell, game.cellID: ", cellID);
-    if (game.minePlacements.has(cellID) && !game.firstClick) {
+    if (game.minePlacements.has(cellID) && !game.firstClick) { // User clicked on a mine, game over
         sendWSEveryone(game.wsPlayers, {type: "revealAllMines", minePlacements: Array.from(game.minePlacements), deathCellID: cellID});
         game.lost = true;
         
@@ -50,6 +50,12 @@ export function revealCell(game, x, y) {
     
     if (game.firstClick) {
         game.startTime = new Date().getTime(); // Time in milliseconds
+    }
+    
+    // If the user reveals a tile that removes a flag (only possible through editing CSS)
+    if (flaggedIDs.has(cellID)) {
+        flaggedIDs.delete(cellID);
+        sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${newX}_${newY}`, numFlags: game.flaggedIDs.size});
     }
     
     const tileStatus = calculateTileStatus(game, x, y); // Guaranteed not to be a bomb

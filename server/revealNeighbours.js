@@ -9,13 +9,22 @@ const tileStatusMap = new Map();
 let tileStatusMapToArray = [];
 
 export function revealNeighbours(game, currentX, currentY) {
-    const {rows, columns, cellsRevealed, wsPlayers} = game;
+    const {rows, columns, cellsRevealed, wsPlayers, flaggedIDs} = game;
     frontier = [[currentX, currentY].join()];
     tileStatusMap.clear();
     tileStatusMapToArray = [];
+    let cellID;
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
         cellsRevealed.add([currentX, currentY].join());
+        
+        // If the user reveals an opening that removes a flag
+        cellID = currentY * columns + currentX;
+        if (flaggedIDs.has(cellID)) {
+            flaggedIDs.delete(cellID);
+            sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${currentX}_${currentY}`, numFlags: game.flaggedIDs.size});
+        }
+        
         for (const [x, y] of C.directionArray) {
             const newX = currentX + x;
             const newY = currentY + y;
@@ -29,6 +38,13 @@ export function revealNeighbours(game, currentX, currentY) {
             }
             tileStatusMap.set(newCoordinate.join("_"), tileStatus);
             cellsRevealed.add(newCoordinate.join());
+            
+            // If the user reveals a tile that removes a flag
+            cellID = newY * columns + newX;
+            if (flaggedIDs.has(cellID)) {
+                flaggedIDs.delete(cellID);
+                sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${newX}_${newY}`, numFlags: game.flaggedIDs.size});
+            }
         }
     }
     for (const [key, value] of tileStatusMap.entries()) {
