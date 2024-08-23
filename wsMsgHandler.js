@@ -1,4 +1,5 @@
 import { setupBoard } from "./setup.js";
+import { removeProbabilities } from "./util/commonFunctions.js";
 
 export function wsMsgHandler(ws) {
     window.ws = ws;
@@ -15,8 +16,17 @@ export function wsMsgHandler(ws) {
             case "niceTry":
                 console.log("lol");
                 break;
+            case "removePlayer":
+                // Remove mouse from screen
+                let mouseToRemove = document.querySelector(`#mouse${message.wsID}`);
+                if (mouseToRemove) {
+                    mouseToRemove.remove();
+                }
+                
+                // Remove playername from player list
+                window.playerList.splice(window.playerList.findIndex(e => e === message.playerName), 1);
+                break;
             case "revealAllMines": // This is called when the game is lost
-            
                 console.log("message.minePlacements", message.minePlacements);
                 for (const cellID of message.minePlacements) {
                     const x = cellID % window.columns;
@@ -62,23 +72,12 @@ export function wsMsgHandler(ws) {
                 console.log("message.id: ", message.id);
                 console.log("tileStatus: ", message.tileStatus);
                 
-                // Fine for now
-                for (const cell of document.getElementById("game").children) {
-                    if (cell.className.split(" ")[0] === "cell") {
-                        cell.innerHTML = "";
-                    }
-                }
+                removeProbabilities();
                 
                 document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 break;
             case "revealCells": // Guaranteed not to be a bomb
-                // Fine for now
-                for (const cell of document.getElementById("game").children) {
-                    if (cell.className.split(" ")[0] === "cell") {
-                        cell.innerHTML = "";
-                    }
-                }
-            
+                removeProbabilities();            
                 let currentCell;
                 let data = JSON.parse(message.data);
                 console.log(JSON.parse(message.data));

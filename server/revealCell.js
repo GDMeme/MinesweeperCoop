@@ -60,7 +60,7 @@ export function revealCell(game, x, y) {
     
     const tileStatus = calculateTileStatus(game, x, y); // Guaranteed not to be a bomb
     sendWSEveryone(game.wsPlayers, {type: "revealCell", id: `cell${x}_${y}`, tileStatus});
-    game.cellsRevealed.add(`${x},${y}`);
+    game.cellsRevealed.set(`${x},${y}`, tileStatus);
     if (tileStatus === 0) {
         revealNeighbours(game, x, y);
     }

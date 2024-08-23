@@ -7,7 +7,7 @@ export class MinesweeperGame {
         this.columns;
         this.mines; 
         this.firstClick = true; // Cannot die on first click
-        this.cellsRevealed = new Set();
+        this.cellsRevealed = new Map(); // Map so board state requests are less server-intensive
         this.lost = false;
         this.wsPlayers = [];
         this.flaggedIDs = new Set(); // * Keep this so I don't need to loop through all cells when revealing misflags

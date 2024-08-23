@@ -71,3 +71,11 @@ export function HTMLtoString(children) {
     console.log(data);
     return data;
 }
+
+export function removeProbabilities() {
+    for (const cell of document.getElementById("game").children) {
+        if (cell.className.split(" ")[0] === "cell") {
+            cell.innerHTML = "";
+        }
+    }
+}

@@ -3,20 +3,16 @@ import { coordinateOutOfBounds } from '../util/commonFunctions.js';
 
 import * as C from "../util/constants.js";
 
-let frontier = [];
-let tileStatus;
-const tileStatusMap = new Map();
-let tileStatusMapToArray = [];
-
 export function revealNeighbours(game, currentX, currentY) {
     const {rows, columns, cellsRevealed, wsPlayers, flaggedIDs} = game;
-    frontier = [[currentX, currentY].join()];
-    tileStatusMap.clear();
-    tileStatusMapToArray = [];
+    const frontier = [[currentX, currentY].join()];
+    let tileStatus;
+    const newRevealedCellsMap = new Map();
+    const newRevealedCellsMapToArray = [];
     let cellID;
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
-        cellsRevealed.add([currentX, currentY].join());
+        cellsRevealed.set([currentX, currentY].join(), 0);
         
         // If the user reveals an opening that removes a flag
         cellID = currentY * columns + currentX;
@@ -33,11 +29,13 @@ export function revealNeighbours(game, currentX, currentY) {
                 continue;
             }
             tileStatus = calculateTileStatus(game, newX, newY); // Guaranteed not to be a bomb
-            if (!cellsRevealed.has(newCoordinate.join()) && tileStatus === 0) {
-                frontier.push(newCoordinate.join());
+            if (!cellsRevealed.has(newCoordinate.join())) {
+                newRevealedCellsMap.set(newCoordinate.join("_"), tileStatus);
+                cellsRevealed.set(newCoordinate.join(), tileStatus);
+                if (tileStatus === 0) {
+                    frontier.push(newCoordinate.join());
+                }
             }
-            tileStatusMap.set(newCoordinate.join("_"), tileStatus);
-            cellsRevealed.add(newCoordinate.join());
             
             // If the user reveals a tile that removes a flag
             cellID = newY * columns + newX;
@@ -47,10 +45,12 @@ export function revealNeighbours(game, currentX, currentY) {
             }
         }
     }
-    for (const [key, value] of tileStatusMap.entries()) {
-        tileStatusMapToArray.push({key, value});
+    
+    // Send new cells that were revealed
+    for (const [key, value] of newRevealedCellsMap.entries()) {
+        newRevealedCellsMapToArray.push({key, value});
     }
     for (const ws of wsPlayers) {
-        ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(tileStatusMapToArray)}));
+        ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(newRevealedCellsMapToArray)}));
     }
 }

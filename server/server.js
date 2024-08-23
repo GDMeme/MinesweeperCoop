@@ -92,7 +92,7 @@ wss.on('connection', function (ws) {
                 }
                 WStoGameID.set(ws, message.gameID);
                 console.log("message.gameID: ", message.gameID);
-                const currentGame = gameIDtoGame.get(message.gameID); // TODO New variable, can probs implement it better
+                const currentGame = gameIDtoGame.get(message.gameID);
                 for (const currentWS of currentGame.wsPlayers) {
                     // Send message to new player as well
                     currentWS.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(ws)})); 
@@ -171,13 +171,22 @@ wss.on('connection', function (ws) {
         numConnected--;
         const gameID = WStoGameID.get(ws); 
         const game = gameID ? gameIDtoGame.get(gameID) : undefined;
-        if (game) {
+        if (game) { // Check if the user is in a game
             // If the client is the last player to leave room
             if (game.wsPlayers.length === 1) {
                 gameIDtoGame.delete(gameID);
             } else {
-                // TODO: This is a linear search, could use a map instead but lots of thinking
-                game.wsPlayers.splice(game.wsPlayers.findIndex(e => e === ws) , 1); // Remove player from wsPlayers array
+                let indexToRemove;
+                const players = game.wsPlayers;
+                for (let i = 0; i < players.length; i++) {
+                    // Remove mouse image from everyone else's screen
+                    if (players[i] !== ws) {
+                        players[i].send(JSON.stringify({type: "removePlayer", wsID: ws.ID, playerName: WStoPlayerName.get(ws)}));
+                    } else {
+                        indexToRemove = i;
+                    }
+                }
+                players.splice(indexToRemove, 1);                
             }
             
             WStoGameID.delete(ws);
