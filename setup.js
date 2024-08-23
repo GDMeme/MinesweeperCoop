@@ -2,6 +2,8 @@ import { cellmouseout, cellmouseup, cellmouseenter } from './mouseEvents.js';
 import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
 import { connect } from './connect.js';
+import { HTMLtoString } from './util/commonFunctions.js';
+import { doAnalysis, dropHandler, startup } from './solver/client/main.js';
 
 export function setupBoard() { // * Does this function belong here? Little bit circular
     document.querySelectorAll(".cell").forEach(e => {
