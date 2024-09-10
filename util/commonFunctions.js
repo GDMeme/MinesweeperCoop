@@ -4,20 +4,8 @@ export function coordinateOutOfBounds(coordinate, rows, columns) { // * Only use
     return (coordinate[0] < 0 || coordinate[0] >= columns || coordinate[1] < 0 || coordinate[1] >= rows);
 }
 
-export function checkWin(game, ws) { // * Only used by server, maybe move in server directory? idk
-    if ((game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size) { // Check if all cells revealed
-        console.log("sending win");
-        
-        const secondsPassed = (new Date().getTime() - game.startTime) / 1000;
-        
-        // TODO can't be sending game.minePlacements to client if they weren't the one that won
-        if (game.battleMode) {
-            sendWSEveryone(game.wsPlayers, {type: "battleWin", playerName: WStoPlayerName.get(ws), secondsPassed});
-            ws.send(JSON.stringify({type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed}));
-        } else {
-            sendWSEveryone(game.wsPlayers, {type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed});
-        }
-    }   
+export function checkWin(game) { // * Only used by server, maybe move in server directory? idk
+    return (game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size;
 }
 
 export function sendWSEveryone(WSPlayers, message) { // * Also only used by server

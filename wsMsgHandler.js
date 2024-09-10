@@ -16,6 +16,8 @@ export function wsMsgHandler(ws) {
             case "niceTry":
                 console.log("lol");
                 break;
+            case "gameProgress":
+                // TODO parse message.modifiedGame
             case "battleWin":
                 // TODO Update HTML, "${message.playerName} has won"
                 // Current progress of board is saved, can click on something to continue playing later

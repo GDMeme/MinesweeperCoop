@@ -122,7 +122,15 @@ wss.on('connection', function (ws) {
                 for (const currentWS of currentGame.wsPlayers) {
                     // Send message to new player as well
                     currentWS.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(ws)})); 
-                    ws.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(currentWS)}));
+                    ws.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(currentWS), game}));
+                }
+                // Joining a game in proress
+                if (game.cellsRevealed.size > 0 && !checkWin(game)) {
+                    // Need to remove wsPlayers property before sending to client
+                    const { wsPlayers: _, ...modifiedGame } = game;
+                    modifiedGame.cellsRevealed = Array.from(modifiedGame.cellsRevealed);
+                    modifiedGame.flaggedIDs = Array.from(modifiedGame.flaggedIDs);
+                    ws.send(JSON.stringify({type: "gameProgress", modifiedGame}))
                 }
                 currentGame.wsPlayers.push(ws); // Add the new player to the game
                 break;
