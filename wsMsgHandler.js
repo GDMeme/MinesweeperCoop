@@ -9,25 +9,43 @@ export function wsMsgHandler(ws) {
 
     ws.addEventListener("message", (message) => {
         message = JSON.parse(message.data);
-        if (message.type !== "mouseMoved") {
+        if (message.type !== "mouseMoved") { 
             console.log("message: ", message); // No spamming logs.
         }
         switch (message.type) {
             case "niceTry":
                 console.log("lol");
                 break;
+            case "battleWin":
+                // TODO Update HTML, "${message.playerName} has won"
+                // Current progress of board is saved, can click on something to continue playing later
+            case "startGame": // Only for battle mode
+                let countdownTimer;
+                document.querySelector('#countdown').innerHTML = 5;
+                function updateCountdown() {
+                    if (message.startTime < new Date().getTime() + 100) {
+                        // Start polling now
+                        while (message.startTime > new Date().getTime()) { }
+                        
+                        document.querySelector('#countdown').innerHTML = "";
+                        console.log("countdown over");
+                        window.noclicking = false;
+                        clearTimeout(countdownTimer);
+                    } else {
+                        console.log("countdown number: ", Math.ceil((message.startTime / new Date().getTime()) / 1000));
+                        document.querySelector('#countdown').innerHTML = Math.ceil((message.startTime / new Date().getTime()) / 1000);
+                    }
+                }
+                countdownTimer = setTimeout(updateCountdown, 100);
             case "removePlayer":
                 // Remove mouse from screen
-                let mouseToRemove = document.querySelector(`#mouse${message.wsID}`);
-                if (mouseToRemove) {
-                    mouseToRemove.remove();
-                }
+                document.querySelector(`#mouse${message.wsID}`)?.remove();
                 
                 // Remove playername from player list
                 window.playerList.splice(window.playerList.findIndex(e => e === message.playerName), 1);
                 break;
-            case "revealAllMines": // This is called when the game is lost
-                console.log("message.minePlacements", message.minePlacements);
+            case "revealMinesMisflags": // This is called when the game is lost
+                // Reveal mines
                 for (const cellID of message.minePlacements) {
                     const x = cellID % window.columns;
                     const y = Math.floor(cellID / window.columns);
@@ -37,12 +55,9 @@ export function wsMsgHandler(ws) {
                     } else if (currentCell.className !== "cell flag") {
                         document.querySelector(`#cell${x}_${y}`).className = "cell mine";
                     }
-                    // If the tile is flagged, do nothing
                 }
-                window.lost = true;
-                document.querySelector("#lose").style.display = "block"; // TODO: Change later
-                break;
-            case "revealMisflags": // This is called after revealAllMines
+                
+                // Reveal misflags
                 if (message.misFlags.length > 0) {
                     console.log("message.misFlags: ", message.misFlags)
                     for (const misFlag of message.misFlags) {
@@ -50,54 +65,41 @@ export function wsMsgHandler(ws) {
                         document.querySelector(`#cell${x}_${y}`).className = "cell misflag";
                     }
                 }
-                console.log("misflag spotted")
+                
+                window.noclicking = true;
+                document.querySelector("#lose").style.display = "block"; // TODO: Change later
                 break;
             case "revealCell": // Guaranteed not to be a bomb
-            
-                if (window.firstClick) { // Race condition?
+                if (window.firstClick) { // * Does this need to be atomic?
+                    window.firstClick = false;
                     const updateTimer = function () {
-                        if (!(window.won || window.lost)) {
+                        if (!window.noclicking) {
                             const timerNode = document.querySelector('#timer');
                             let currentSeconds = parseInt(timerNode.innerHTML.split(" ")[1]);
                             currentSeconds++;
-                            timerNode.innerHTML = "Time: " + currentSeconds;
+                            timerNode.innerHTML = `Time: ${currentSeconds}`;
                             timerTimeout = setTimeout(updateTimer, 1000);
                         }
                     }
                     timerTimeout = setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
                 }
-                window.firstClick = false;
-            
-                console.log("revealCell received");
-                console.log("message.id: ", message.id);
-                console.log("tileStatus: ", message.tileStatus);
-                
                 removeProbabilities();
-                
                 document.querySelector(`#${message.id}`).className = `cell type${message.tileStatus}`;
                 break;
             case "revealCells": // Guaranteed not to be a bomb
                 removeProbabilities();            
-                let currentCell;
-                let data = JSON.parse(message.data);
-                console.log(JSON.parse(message.data));
-                for (let i = 0; i < data.length; i++) {
-                    currentCell = document.querySelector(`#cell${data[i].key}`);
-                    if (currentCell.className === "cell flagged") {
-                        console.log("misflag!!");
-                    }
-                    currentCell.className = currentCell.className === "cell flagged" ? "cell misflag" : `cell type${data[i].value}`;
+                for (const {key, value} of message.data) {
+                    document.querySelector(`#cell${key}`).className = `cell type${value}`;
                 }
                 break;
             case "generatedBoard":
+                console.log("message is: ", message);
                 document.querySelector("#win").style.display = "none"; // TODO: Change later
                 document.querySelector("#lose").style.display = "none"; // TODO: Change later
-                window.lost = false;
-                window.won = false;
-                window.rows = message.rows;
-                window.columns = message.columns;
-                window.mines = message.mines;
-                window.largeBoard = message.largeBoard;
+                
+                delete message.boardOwnerName; // TODO: This is the name of the person who generated the new board 
+                
+                Object.assign(window, message.game); // This assigns rows, columns, mines, largeBoard
                 window.firstClick = true;
                 
                 const reference = document.querySelector("#game");
@@ -123,8 +125,8 @@ export function wsMsgHandler(ws) {
                 reference.insertBefore(timerNode, null);
                 
                 // Generate the game cells
-                for (let i = 0; i < message.rows; i++) {
-                    for (let j = 0; j < message.columns; j++) {
+                for (let i = 0; i < window.rows; i++) {
+                    for (let j = 0; j < window.columns; j++) {
                         const newNode = document.createElement("div");
                         newNode.className = "cell closed";
                         newNode.dataset.x = j;
@@ -137,15 +139,13 @@ export function wsMsgHandler(ws) {
                     reference.insertBefore(newNode, null);
                 }
                 setupBoard();
-                console.log("ws: ", message.ws); // TODO: Use this to determine who generated the new board
                 break;
             case "win":
                 console.log("You win");
-                window.won = true;
+                window.noclicking = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
                 document.querySelector('#minecounter').innerHTML = "Mines left: 0";
                 document.querySelector('#timer').innerHTML = "Time: " + message.secondsPassed + "seconds";
-                
                 // Replace all mine positions with flags
                 for (const flagID of message.minePlacements) {
                     const x = flagID % window.columns;

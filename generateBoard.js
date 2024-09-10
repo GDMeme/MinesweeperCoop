@@ -12,11 +12,18 @@ export function generateBoard() {
     }
     
     if (window.rows * window.columns <= window.mines || isNaN(window.rows) || isNaN(window.columns) || isNaN(window.mines)) { // Not possible to generate board
-        // TODO: Add some HTML here to tell user
+        // TODO: Add some HTML here to tell client
         console.log("Bad input");
         return;
     }
     
-    console.log("sending message to generate board")
-    window.ws.send(JSON.stringify({type: 'generateBoard', rows: window.rows, columns: window.columns, mines: window.mines, largeBoard: window.largeBoard})); // wait for response before changing HTML
+    if (document.querySelector('#battlecheckbox').checked) {
+        document.querySelector('#readybutton').style.display = "inline-block";
+    }
+    
+    // If in battle mode, cannot start clicking early
+    window.noclicking = document.querySelector('#battlecheckbox').checked;
+    
+    console.log("sending message to generate board");
+    window.ws.send(JSON.stringify({type: 'generateBoard', rows: window.rows, columns: window.columns, mines: window.mines, largeBoard: window.largeBoard, battleMode: window.noclicking})); // wait for response before changing HTML
 }

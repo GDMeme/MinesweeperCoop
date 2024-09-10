@@ -1,7 +1,7 @@
 import { cellmouseout, cellmouseup, cellmouseenter } from './mouseEvents.js';
 import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
-import { connect } from './connect.js';
+import { connect } from './devconnect.js';
 import { HTMLtoString } from './util/commonFunctions.js';
 import { doAnalysis, dropHandler, startup } from './solver/client/main.js';
 
@@ -137,6 +137,12 @@ export function initialSetup() {
     
     document.querySelector('#generateboard').onclick = function() {
         generateBoard();
+    }
+    
+    document.querySelector('#readybutton').onclick = function() {
+        document.querySelector('#readybutton').style.display = "none";
+        document.querySelector('#countdown').style.display = "block";
+        window.ws.send(JSON.stringify({type: "ready"}));
     }
     
     //* Probability Stuff

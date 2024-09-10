@@ -1,5 +1,5 @@
-import { calculateTileStatus } from './calculateTileStatus.js';
-import { coordinateOutOfBounds } from '../util/commonFunctions.js';
+import { calculateTileStatus } from './calculateCellStatus.js';
+import { coordinateOutOfBounds, sendWSEveryone } from '../util/commonFunctions.js';
 
 import * as C from "../util/constants.js";
 
@@ -14,7 +14,7 @@ export function revealNeighbours(game, currentX, currentY) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
         cellsRevealed.set([currentX, currentY].join(), 0);
         
-        // If the user reveals an opening that removes a flag
+        // If the client reveals an opening that removes a flag
         cellID = currentY * columns + currentX;
         if (flaggedIDs.has(cellID)) {
             flaggedIDs.delete(cellID);
@@ -37,7 +37,7 @@ export function revealNeighbours(game, currentX, currentY) {
                 }
             }
             
-            // If the user reveals a tile that removes a flag
+            // If the client reveals a tile that removes a flag
             cellID = newY * columns + newX;
             if (flaggedIDs.has(cellID)) {
                 flaggedIDs.delete(cellID);
@@ -50,7 +50,6 @@ export function revealNeighbours(game, currentX, currentY) {
     for (const [key, value] of newRevealedCellsMap.entries()) {
         newRevealedCellsMapToArray.push({key, value});
     }
-    for (const ws of wsPlayers) {
-        ws.send(JSON.stringify({type: "revealCells", data: JSON.stringify(newRevealedCellsMapToArray)}));
-    }
+    
+    sendWSEveryone(wsPlayers, {type: "revealCells", data: newRevealedCellsMapToArray});
 }

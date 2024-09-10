@@ -71,10 +71,24 @@
             <input type="checkbox" class="input-data" id="largeboard">
         </div>
         <div class="table-cell">
+            <label for="battlecheckbox">Battle Mode</label>
+            <input type="checkbox" class="input-data" id="battlecheckbox">
+        </div>
+        <div class="table-cell">
             <button id="generateboard">Generate Board</button>
         </div>
     </div>
     <br>
+    <button class="nodisplay" id="readybutton">Ready</button>
+    <br>
+    <div class="nodisplay" id="countdown">
+        Waiting for other players...
+    </div>
+    <div class="nodisplay" id="playerprogress">
+        <!-- ex. Player 1: 5% complete -->
+        <!-- Player 2: 10% complete -->
+        <!-- Player 3: Exploded at 10% completion -->
+    </div>
     <div class="pull-left" id="game">
         <!-- Game goes here -->
     </div>

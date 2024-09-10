@@ -1,17 +1,21 @@
+import { WStoPlayerName } from "./constants";
+
 export function coordinateOutOfBounds(coordinate, rows, columns) { // * Only used by server
     return (coordinate[0] < 0 || coordinate[0] >= columns || coordinate[1] < 0 || coordinate[1] >= rows);
 }
 
-// TODO Maybe clients can use console to check this function to see game.minePlacements?
-// Is it possible for the user to get their game object?
-export function checkWin(game) { // * Only used by server, maybe move in server directory? idk
+export function checkWin(game, ws) { // * Only used by server, maybe move in server directory? idk
     if ((game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size) { // Check if all cells revealed
         console.log("sending win");
         
         const secondsPassed = (new Date().getTime() - game.startTime) / 1000;
         
-        for (const ws of game.wsPlayers) {
+        // TODO can't be sending game.minePlacements to client if they weren't the one that won
+        if (game.battleMode) {
+            sendWSEveryone(game.wsPlayers, {type: "battleWin", playerName: WStoPlayerName.get(ws), secondsPassed});
             ws.send(JSON.stringify({type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed}));
+        } else {
+            sendWSEveryone(game.wsPlayers, {type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed});
         }
     }   
 }
@@ -72,7 +76,7 @@ export function HTMLtoString(children) {
     return data;
 }
 
-export function removeProbabilities() {
+export function removeProbabilities() { // Only used client side
     for (const cell of document.getElementById("game").children) {
         if (cell.className.split(" ")[0] === "cell") {
             cell.innerHTML = "";

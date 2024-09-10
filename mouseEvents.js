@@ -10,7 +10,7 @@ export function cellmouseout(event) {
 
 export function cellmousedown(event) {
     console.log("mousedown spotted");
-    if (window.lost || window.won) {
+    if (window.noclicking) {
         console.log("you lost or won, no more clicking")
         return;
     }
@@ -34,7 +34,6 @@ export function cellmousedown(event) {
             
             if (event.currentTarget.className === "cell flag") {
                 event.currentTarget.className = "cell closed";
-                console.log("unflagged a tile");
                 window.ws.send(JSON.stringify({type: "unflag", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
             } else {
                 event.currentTarget.className = "cell flag";
@@ -45,15 +44,14 @@ export function cellmousedown(event) {
 };
 
 export function cellmouseup(event) {
-    if (window.lost || window.won) {
+    if (window.noclicking) {
         return;
     }
     if (event.which === 1 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
         console.log("revealing cell");
         revealCell(event);
     } else if (event.which === 1 && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // Chording
-        const tileNumber = parseInt(event.currentTarget.className.split('type')[1]); // Get the tile number
-        console.log("tileNumber is: ", tileNumber);
+        const cellNumber = parseInt(event.currentTarget.className.split('type')[1]);
         const currentX = parseInt(event.currentTarget.dataset.x);
         const currentY = parseInt(event.currentTarget.dataset.y);
         let flagCounter = 0;
@@ -71,7 +69,7 @@ export function cellmouseup(event) {
                 cellsToReveal.push(newCoordinate.join());
             }
         }
-        if (flagCounter === tileNumber) {
+        if (flagCounter === cellNumber) {
             window.ws.send(JSON.stringify({type: "revealChord", cellsToReveal, x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
         } else {
             closeCellsAround(event);
@@ -80,7 +78,7 @@ export function cellmouseup(event) {
 };
 
 export function cellmouseenter(event) {
-    if (window.lost || window.won) {
+    if (window.noclicking) {
         return;
     }
     event.currentTarget.addEventListener("mousedown", cellmousedown);

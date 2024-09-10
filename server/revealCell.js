@@ -1,16 +1,18 @@
-import { calculateTileStatus } from './calculateTileStatus.js';
+import { calculateTileStatus as calculateCellStatus } from './calculateCellStatus.js';
 import { revealNeighbours } from './revealNeighbours.js';
 import { checkWin, sendWSEveryone } from '../util/commonFunctions.js';
 
-export function revealCell(game, x, y) {
+export function revealCell(game, x, y, ws) {
+    if (x < 0 || y < 0 || x >= game.columns || y >= game.rows) {
+        ws.send(JSON.stringify({type: "niceTry"}));
+    }
+    
     // If they messed with their css, don't update the tile for them, too bad
     if (game.cellsRevealed.has([x, y].join())) { // Early return for chording
         return;
     }
     const cellID = y * game.columns + x;
-    console.log("User revealed a cell, game.cellID: ", cellID);
-    if (game.minePlacements.has(cellID) && !game.firstClick) { // User clicked on a mine, game over
-        sendWSEveryone(game.wsPlayers, {type: "revealAllMines", minePlacements: Array.from(game.minePlacements), deathCellID: cellID});
+    if (game.minePlacements.has(cellID) && !game.firstClick) { // Client clicked on a mine, game over
         game.lost = true;
         
         // Find misflags and send to clients
@@ -22,7 +24,7 @@ export function revealCell(game, x, y) {
                 misFlags.push([x, y].join());
             }
         }
-        sendWSEveryone(game.wsPlayers, {type: "revealMisflags", misFlags})
+        sendWSEveryone(game.wsPlayers, {type: "revealMinesMisflags", minePlacements: Array.from(game.minePlacements), deathCellID: cellID, misFlags});
         
         // Early return because the game is lost
         return;
@@ -52,19 +54,18 @@ export function revealCell(game, x, y) {
         game.startTime = new Date().getTime(); // Time in milliseconds
     }
     
-    // If the user reveals a tile that removes a flag (only possible through editing CSS)
-    if (flaggedIDs.has(cellID)) {
-        flaggedIDs.delete(cellID);
+    // If the client reveals a cell that removes a flag (only possible through editing CSS)
+    if (game.flaggedIDs.has(cellID)) {
+        game.flaggedIDs.delete(cellID);
         sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${newX}_${newY}`, numFlags: game.flaggedIDs.size});
     }
     
-    const tileStatus = calculateTileStatus(game, x, y); // Guaranteed not to be a bomb
+    const tileStatus = calculateCellStatus(game, x, y); // Guaranteed not to be a bomb
     sendWSEveryone(game.wsPlayers, {type: "revealCell", id: `cell${x}_${y}`, tileStatus});
     game.cellsRevealed.set(`${x},${y}`, tileStatus);
     if (tileStatus === 0) {
         revealNeighbours(game, x, y);
     }
-    checkWin(game);
-    console.log("size of game.cellsRevealed: ", game.cellsRevealed.size);
+    checkWin(game, ws);
     game.firstClick = false;
 }
