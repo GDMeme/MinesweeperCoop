@@ -16,8 +16,87 @@ export function wsMsgHandler(ws) {
             case "niceTry":
                 console.log("lol");
                 break;
-            case "gameProgress":
-                // TODO parse message.modifiedGame
+            case "gameProgress": {
+                // TODO generate board (cells) first
+                const game = message.modifiedGame;
+                
+                console.log("game here is: ", game)
+                
+                
+                // * Code below is all from generateboard
+                document.querySelector("#win").style.display = "none"; // TODO: Change later
+                document.querySelector("#lose").style.display = "none"; // TODO: Change later
+                
+                delete message.boardOwnerName; // TODO: This is the name of the person who generated the new board 
+                
+                Object.assign(window, game); // This assigns rows, columns, mines, largeBoard
+                window.firstClick = true;
+                window.noclicking = false;
+                
+                document.querySelector("#customrows").value = game.rows;
+                document.querySelector("#customcolumns").value = game.columns;
+                document.querySelector("#custommines").value = game.mines;
+                
+                const reference = document.querySelector("#game");
+                reference.innerHTML = "";
+                
+                // Mines left text
+                const minesLeftNode = document.createElement("div");
+                console.log("game.flaggedIDs.size: ", game.flaggedIDs.size)
+                console.log("game.flaggedIDs.length: ", game.flaggedIDs.length)
+                minesLeftNode.innerHTML = "Mines left: " + (window.mines - game.flaggedIDs.length);
+                minesLeftNode.id = "minecounter";
+                reference.insertBefore(minesLeftNode, null);
+                
+                // New line after mines left text
+                const tempNode = document.createElement("div");
+                tempNode.className = "clear";
+                reference.insertBefore(tempNode, null);
+                
+                // Timer text
+                clearTimeout(timerTimeout);
+                
+                // TODO: Timer is wrong atm
+                // TODO fix timer using startTime of the game
+                const timerNode = document.createElement("div");
+                timerNode.innerHTML = "Time: 0";
+                timerNode.id = "timer";
+                reference.insertBefore(timerNode, null);
+                
+                // Generate the game cells
+                for (let i = 0; i < window.rows; i++) {
+                    for (let j = 0; j < window.columns; j++) {
+                        const newNode = document.createElement("div");
+                        newNode.className = "cell closed";
+                        newNode.dataset.x = j;
+                        newNode.dataset.y = i;
+                        newNode.id = "cell" + j + "_" + i;
+                        reference.insertBefore(newNode, null);
+                    }
+                    const newNode = document.createElement("div");
+                    newNode.className = "clear";
+                    reference.insertBefore(newNode, null);
+                }
+                setupBoard();
+                // TODO dont call generate board, just use the code from case "generatedBoard" but modified
+                // * Generateboard ends here
+                // generateBoard(game.rows, game.columns, game.mines, game.largeBoard);
+                
+                for (const [cellCoordinates, tileStatus] of game.cellsRevealed) {
+                    const [x, y] = cellCoordinates.split(",").map(e => parseInt(e));
+                    
+                    // Will only have tiles with numbers 0-8
+                    document.querySelector(`#cell${x}_${y}`).className = `cell type${tileStatus}`;
+                }
+                
+                for (const cellID of game.flaggedIDs) {
+                    const x = cellID % window.columns;
+                    const y = Math.floor(cellID / window.columns);
+                    
+                    document.querySelector(`#cell${x}_${y}`).className = "cell flag";
+                }
+                break;
+            }
             case "battleWin":
                 // TODO Update HTML, "${message.playerName} has won"
                 // Current progress of board is saved, can click on something to continue playing later
@@ -101,8 +180,13 @@ export function wsMsgHandler(ws) {
                 
                 delete message.boardOwnerName; // TODO: This is the name of the person who generated the new board 
                 
-                Object.assign(window, message.game); // This assigns rows, columns, mines, largeBoard
+                Object.assign(window, message.modifiedGame); // This assigns rows, columns, mines, largeBoard
                 window.firstClick = true;
+                window.noclicking = false;
+                
+                document.querySelector("#customrows").value = message.modifiedGame.rows;
+                document.querySelector("#customcolumns").value = message.modifiedGame.columns;
+                document.querySelector("#custommines").value = message.modifiedGame.mines;
                 
                 const reference = document.querySelector("#game");
                 reference.innerHTML = "";
@@ -202,11 +286,11 @@ export function wsMsgHandler(ws) {
                 break;
             case "unflag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell closed";
-                document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - message.numFlags);
+                document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - parseInt(message.numFlags));
                 break;
             case "placeFlag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell flag";
-                document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - message.numFlags);
+                document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - parseInt(message.numFlags));
                 break;
             default: 
                 console.log("How did you get here" + message);

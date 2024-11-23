@@ -17,10 +17,8 @@ export function revealCell(game, x, y, ws) {
         
         // Find misflags and send to clients
         const misFlags = []; // Pushing to const is not functional but who cares
-        for (const flagCoordinate of game.flaggedIDs) {
-            const [x, y] = flagCoordinate.split(",").map(e => parseInt(e));
-            const cellID = y * game.columns + x;
-            if (!game.minePlacements.has(cellID)) {
+        for (const flagID of game.flaggedIDs) {
+            if (!game.minePlacements.has(flagID)) {
                 misFlags.push([x, y].join());
             }
         }
