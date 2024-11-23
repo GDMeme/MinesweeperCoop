@@ -17,10 +17,8 @@ export function revealCell(game, x, y, ws) {
         
         // Find misflags and send to clients
         const misFlags = []; // Pushing to const is not functional but who cares
-        for (const flagCoordinate of game.flaggedIDs) {
-            const [x, y] = flagCoordinate.split(",").map(e => parseInt(e));
-            const cellID = y * game.columns + x;
-            if (!game.minePlacements.has(cellID)) {
+        for (const flagID of game.flaggedIDs) {
+            if (!game.minePlacements.has(flagID)) {
                 misFlags.push([x, y].join());
             }
         }
@@ -66,6 +64,18 @@ export function revealCell(game, x, y, ws) {
     if (tileStatus === 0) {
         revealNeighbours(game, x, y);
     }
-    checkWin(game, ws);
+    if (checkWin(game)) {
+        console.log("sending win");
+        
+        const secondsPassed = (new Date().getTime() - game.startTime) / 1000;
+        
+        // TODO can't be sending game.minePlacements to client if they weren't the one that won
+        if (game.battleMode) {
+            sendWSEveryone(game.wsPlayers, {type: "battleWin", playerName: WStoPlayerName.get(ws), secondsPassed});
+            ws.send(JSON.stringify({type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed}));
+        } else {
+            sendWSEveryone(game.wsPlayers, {type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed});
+        }
+    }
     game.firstClick = false;
 }

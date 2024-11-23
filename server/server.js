@@ -75,8 +75,8 @@ wss.on('connection', function (ws) {
                     // nice try
                     break;
                 }
-                game.flaggedIDs.delete([message.x, message.y].join()); // TODO: Maybe less efficient than just concatenating the strings using backtick
-                console.log("size 1: ", game.flaggedIDs.size);
+                const flagID = parseInt(message.y) * game.columns + parseInt(message.x);
+                game.flaggedIDs.delete(flagID); // TODO: Maybe less efficient than just concatenating the strings using backtick
                 sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size});
                 break;
             }
@@ -85,7 +85,8 @@ wss.on('connection', function (ws) {
                     // nice try
                     break;
                 }
-                game.flaggedIDs.add([message.x, message.y].join());
+                const flagID = parseInt(message.y) * game.columns + parseInt(message.x);
+                game.flaggedIDs.add(flagID);
                 sendWSEveryone(game.wsPlayers, {type: "placeFlag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size});
                 break;
             }
@@ -122,7 +123,15 @@ wss.on('connection', function (ws) {
                 for (const currentWS of currentGame.wsPlayers) {
                     // Send message to new player as well
                     currentWS.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(ws)})); 
-                    ws.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(currentWS)}));
+                    ws.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(currentWS), game}));
+                }
+                // * Joining a game in proress
+                if (currentGame.cellsRevealed.size > 0 && !checkWin(currentGame)) {
+                    // Need to remove wsPlayers property before sending to client
+                    const { wsPlayers: _, ...modifiedGame } = currentGame;
+                    modifiedGame.cellsRevealed = Array.from(modifiedGame.cellsRevealed);
+                    modifiedGame.flaggedIDs = Array.from(modifiedGame.flaggedIDs);
+                    ws.send(JSON.stringify({type: "gameProgress", modifiedGame}))
                 }
                 currentGame.wsPlayers.push(ws); // Add the new player to the game
                 break;
