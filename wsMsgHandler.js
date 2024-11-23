@@ -99,8 +99,13 @@ export function wsMsgHandler(ws) {
                 
                 delete message.boardOwnerName; // TODO: This is the name of the person who generated the new board 
                 
-                Object.assign(window, message.game); // This assigns rows, columns, mines, largeBoard
+                Object.assign(window, message.modifiedGame); // This assigns rows, columns, mines, largeBoard
                 window.firstClick = true;
+                window.noclicking = false;
+                
+                document.querySelector("#customrows").value = message.modifiedGame.rows;
+                document.querySelector("#customcolumns").value = message.modifiedGame.columns;
+                document.querySelector("#custommines").value = message.modifiedGame.mines;
                 
                 const reference = document.querySelector("#game");
                 reference.innerHTML = "";
