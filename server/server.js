@@ -3,7 +3,7 @@ import { createServer } from 'http';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
 import { revealCell } from './revealCell.js';
-import { sendWSEveryone } from '../util/commonFunctions.js';
+import { sendWSEveryone, checkWin } from '../util/commonFunctions.js';
 import { WStoPlayerName } from '../util/constants.js';
 
 // render.com provides tls certs
