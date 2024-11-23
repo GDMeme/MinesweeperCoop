@@ -1,3 +1,5 @@
+import { WStoPlayerName } from "./constants.js";
+
 export function coordinateOutOfBounds(coordinate, rows, columns) { // * Only used by server
     return (coordinate[0] < 0 || coordinate[0] >= columns || coordinate[1] < 0 || coordinate[1] >= rows);
 }
