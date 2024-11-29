@@ -47,10 +47,10 @@ export function cellmouseup(event) {
     if (window.noclicking) {
         return;
     }
-    if (event.which === 1 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
+    if (event.button === 0 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
         console.log("revealing cell");
         revealCell(event);
-    } else if (event.which === 1 && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // Chording
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // Chording
         const cellNumber = parseInt(event.currentTarget.className.split('type')[1]);
         const currentX = parseInt(event.currentTarget.dataset.x);
         const currentY = parseInt(event.currentTarget.dataset.y);
