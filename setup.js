@@ -1,7 +1,7 @@
 import { cellmouseout, cellmouseup, cellmouseenter } from './mouseEvents.js';
 import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
-import { connect } from './connect.js';
+import { connect } from './connect.js'; // * MAKE SURE THIS STAYS ON LINE 4 for BeforeCommit.js
 import { HTMLtoString } from './util/commonFunctions.js';
 import { doAnalysis, dropHandler, startup } from './solver/client/main.js';
 
@@ -45,14 +45,22 @@ export function initialSetup() {
     
     window.addEventListener("keydown", (event) => { // Regenerate board on spacebar keypress
         if (window.gameName !== null && event.key === " ") {
-            generateBoard();
+            const rows = parseInt(document.querySelector('#customrows').value);
+            const columns = parseInt(document.querySelector('#customcolumns').value);
+            const mines = parseInt(document.querySelector('#custommines').value);
+            const largeBoard = document.querySelector('#largeboard').checked;
+            generateBoard(rows, columns, mines, largeBoard);
             document.body.style.overflow = "hidden";
         }
     });
     
     window.addEventListener("keyup", (event) => { // Regenerate board on spacebar keypress
         if (window.gameName !== null && event.key === " ") {
-            generateBoard();
+            const rows = parseInt(document.querySelector('#customrows').value);
+            const columns = parseInt(document.querySelector('#customcolumns').value);
+            const mines = parseInt(document.querySelector('#custommines').value);
+            const largeBoard = document.querySelector('#largeboard').checked;
+            generateBoard(rows, columns, mines, largeBoard);
             document.body.style.overflow = "auto";
         }
     });
@@ -136,7 +144,11 @@ export function initialSetup() {
     }
     
     document.querySelector('#generateboard').onclick = function() {
-        generateBoard();
+        const rows = parseInt(document.querySelector('#customrows').value);
+        const columns = parseInt(document.querySelector('#customcolumns').value);
+        const mines = parseInt(document.querySelector('#custommines').value);
+        const largeBoard = document.querySelector('#largeboard').checked;
+        generateBoard(rows, columns, mines, largeBoard);
     }
     
     document.querySelector('#readybutton').onclick = function() {
