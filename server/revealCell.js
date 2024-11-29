@@ -46,7 +46,7 @@ export function revealCell(game, x, y, ws) {
         }
         
         // Generate a mine in a different place (will never be duplicate)
-        const randomIndex = Math.floor(Math.random() * (game.columns * game.rows - game.mines + 1))
+        const randomIndex = Math.floor(Math.random() * (possibleNewMinePlacements.length));
         game.minePlacements.add(possibleNewMinePlacements[randomIndex]);
     }
     
