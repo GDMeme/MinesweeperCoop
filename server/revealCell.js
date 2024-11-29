@@ -19,7 +19,7 @@ export function revealCell(game, x, y, ws) {
         const misFlags = []; // Pushing to const is not functional but who cares
         for (const flagID of game.flaggedIDs) {
             if (!game.minePlacements.has(flagID)) {
-                misFlags.push([x, y].join());
+                misFlags.push(flagID);
             }
         }
         sendWSEveryone(game.wsPlayers, {type: "revealMinesMisflags", minePlacements: Array.from(game.minePlacements), deathCellID: cellID, misFlags});

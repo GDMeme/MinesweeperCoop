@@ -139,10 +139,12 @@ export function wsMsgHandler(ws) {
                 }
                 
                 // Reveal misflags
+                console.log("message.misFlags", message.misFlags);
                 if (message.misFlags.length > 0) {
                     console.log("message.misFlags: ", message.misFlags)
-                    for (const misFlag of message.misFlags) {
-                        const [x, y] = misFlag.split(",").map(e => parseInt(e));
+                    for (const misFlagID of message.misFlags) {
+                        const x = misFlagID % window.columns;
+                        const y = Math.floor(misFlagID / window.columns);
                         document.querySelector(`#cell${x}_${y}`).className = "cell misflag";
                     }
                 }
