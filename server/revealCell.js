@@ -30,12 +30,14 @@ export function revealCell(game, x, y, ws) {
     if (game.minePlacements.has(cellID) && game.firstClick) { // First click was a mine
         game.minePlacements.delete(cellID);
         
-        // Generates an array containing [0, 1, ... , game.columns * game.rows - game.mines] excluding the IDs of existing mines
+        // Generates an array containing [0, 1, ... , game.columns * game.rows - game.mines - 1] excluding the IDs of existing mines and current cell (cellID)
         // Number of indices: game.columns * game.rows - game.mines + 1
-        const possibleNewMinePlacements = new Array(game.columns * game.rows - game.mines + 1);
+        
+        // Ex. 5x5/23, 2 possible spots to move the mine
+        const possibleNewMinePlacements = new Array(game.columns * game.rows - game.mines);
         let cellCounter = 0;
         for (let i = 0; i < possibleNewMinePlacements.length; i++) {
-            if (!game.minePlacements.has(cellCounter)) {
+            if (!game.minePlacements.has(cellCounter) && cellCounter !== cellID) {
                 possibleNewMinePlacements[i] = cellCounter;
             } else { // Found an existing mine, skip but increment cellCounter
                 i--;
