@@ -167,16 +167,18 @@ export function initialSetup() {
         
         await dropHandler(data);
         const bestMove = (await doAnalysis())[0];
-        if (bestMove.action === 1) { // Regular left click (clear)
-            // Green
-            document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#00FF00";
-        } else if (bestMove.action === 2) { // Regular right click (flag)
-            // Red
-            document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#FF0000";
-            // Maybe want to show the flag(s) and then the chord
-        } else if (bestMove.action === 3) { // Chord
-            // Immediately chord
-            // Need some way to highlight to click here
+        if (bestMove !== undefined) { // Check if board is fully solved
+            if (bestMove.action === 1) { // Regular left click (clear)
+                // Green
+                document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#00FF00";
+            } else if (bestMove.action === 2) { // Regular right click (flag)
+                // Red
+                document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#FF0000";
+                // Maybe want to show the flag(s) and then the chord
+            } else if (bestMove.action === 3) { // Chord
+                // Immediately chord
+                // Need some way to highlight to click here
+            }
         }
     });
 }
