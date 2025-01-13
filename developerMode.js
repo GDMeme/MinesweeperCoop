@@ -54,7 +54,11 @@ function getCookie(cname) {
 }
 
 document.getElementById('developermodebannerserverselector').onchange = function() {
-    setCookie("gameServerUrl", document.querySelector('#developermodebannerserverselector').value, 1);
+    setCookie(
+        "gameServerUrl",
+        document.querySelector('#developermodebannerserverselector').value,
+        1
+    );
     console.log(getCookie("gameServerUrl"));
     location.reload();
 }

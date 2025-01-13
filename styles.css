@@ -39,6 +39,7 @@ button {
 
 .developer-mode-banner > a, select, option {
     color: black;
+    padding-left: 10px;
 }
 
 .input-data {

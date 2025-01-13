@@ -1,4 +1,4 @@
-import { getGameServerUrl } from './developerMode.js'
+import { getGameServerUrl } from './developerMode.js';
 
 export function connect(firstTime) {
     return new Promise(function(resolve, reject) {
