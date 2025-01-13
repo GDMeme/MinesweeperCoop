@@ -3,7 +3,15 @@
     <head>
         <link rel="stylesheet" href="styles.css">
     </head>
-    <div id="playersetup" class="setup nodisplay">
+    <div id="developermode" class="nodisplay developer-mode-banner">
+        <a>DEVELOPER MODE ENABLED!!!</a>
+        <a>Server:</a> 
+        <select id="developermodebannerserverselector">
+            <option value="wss://127.0.0.1:8080">localhost</option>
+            <option value="wss://minesweepercoop-6gn2.onrender.com">Render</option>
+        </select>
+    </div>
+    <div id="playersetup" class="nodisplay">
         <label for="playername">Enter your name:</label>
         <input class="input-data" size="15" maxlength="18" id="playername">
         <button id="submitplayername">Submit!</button>

@@ -1,6 +1,10 @@
+import { getGameServerUrl } from './developerMode.js';
+
 export function connect(firstTime) {
     return new Promise(function(resolve, reject) {
-        var ws = new WebSocket('wss://minesweepercoop-6gn2.onrender.com');
+        const gameServerUrl = getGameServerUrl();
+        console.log(`server url: ${gameServerUrl}`);
+        var ws = new WebSocket(gameServerUrl);
         if (firstTime) {
             document.getElementById('connectionfailed').style.display = "none";
             document.getElementById('loader').style.display = "block";

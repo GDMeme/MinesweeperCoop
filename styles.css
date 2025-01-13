@@ -32,6 +32,16 @@ button {
     margin-top: 50px;
 }
 
+.developer-mode-banner {
+    background-color: #f9f9a1;
+    padding: 10px;
+}
+
+.developer-mode-banner > a, select, option {
+    color: black;
+    padding-left: 10px;
+}
+
 .input-data {
     display: inline-block;
     vertical-align: "middle";
