@@ -829,7 +829,7 @@ function renderTiles(tiles) {
 
 function updateMineCount(minesLeft) {
 
-    let work = minesLeft;
+    let work = Math.abs(minesLeft);
     const digits = getDigitCount(minesLeft);
 
     let position = digits - 1;
@@ -1967,7 +1967,7 @@ async function sleep(msec) {
     return new Promise(resolve => setTimeout(resolve, msec));
 }
 
-export async function doAnalysis() {
+export async function doAnalysis(fullBFDA) {
 
     if (canvasLocked) {
         console.log("Already analysing... request rejected");
@@ -2022,7 +2022,7 @@ export async function doAnalysis() {
         // }
 
         options.guessPruning = guessAnalysisPruning;
-        options.fullBFDA = true;
+        options.fullBFDA = fullBFDA;
 
         const solve = await solver(board, options);  // look for solutions
         const hints = solve.actions;
@@ -2054,10 +2054,6 @@ export async function doAnalysis() {
 }
 
 async function checkBoard() {
-
-    if (!analysisMode || replayMode) {
-        return;
-    }
 
     if (canvasLocked) {
         console.log("Not checking the board because analysis is being done");
