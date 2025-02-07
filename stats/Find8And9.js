@@ -28,15 +28,15 @@ function formatDivision(numerator, denominator) {
 let currentX;
 let currentY;
 
-const columns = 25;
-const rows = 25;
+const columns = 30;
+const rows = 16;
 const mines = 99;
 
 const minePlacements = new Set();
 let possibleMinePlacements;
 
 // For the Roblox Minesweeper board (25x25/99), numIterations = 1000000 took me 2.45 minutes
-const numIterations = Number.MAX_SAFE_INTEGER;
+const numIterations = 1000000;
 
 console.log("Started iterations");
 
@@ -103,8 +103,8 @@ sortedNineMap.forEach((value, key) => {
     data += `${key} => ${value}\n`;
 });
 
-data += `Probability of 8: ${formatDivision(eightCounter, numIterations)}, or about 1/${Math.round(numIterations / eightCounter)}\n`;
-data += `Probability of 9: ${formatDivision(nineCounter, numIterations)}, or about 1/${Math.round(numIterations / nineCounter)}\n`;
+data += `Probability of 8: ${formatDivision(eightCounter, numIterations)}%, or about 1 in ${Math.round(numIterations / eightCounter)}\n`;
+data += `Probability of 9: ${formatDivision(nineCounter, numIterations)}%, or about 1 in ${Math.round(numIterations / nineCounter)}\n`;
 
 writeFile('Find8And9.txt', data, (err) => {
     // In case of a error throw err.

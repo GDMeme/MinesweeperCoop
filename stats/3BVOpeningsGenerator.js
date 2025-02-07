@@ -178,7 +178,7 @@ for (const threeBV of sortedThreeBV.keys()) {
             numBoards += value;
         }
     });
-    data += `Chance of having a board with ${threeBV} or more 3BV: ${formatDivision(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
+    data += `Chance of having a board with ${threeBV} or more 3BV: ${formatDivision(numBoards * 100, numIterations)}%, or about 1 in ${Math.round(numIterations / (numBoards * 100))}\n`; // Round to correct number of decimal places
 }
 
 const sortedOpenings = new Map([...openingsMap].sort((a, b) => a[0] - b[0]));
@@ -198,7 +198,7 @@ for (const openings of sortedOpenings.keys()) {
             numBoards += value;
         }
     });
-    data += `Chance of having a board with ${openings} or more openings: ${formatDivision(numBoards * 100, numIterations)}%\n`; // Round to correct number of decimal places
+    data += `Chance of having a board with ${openings} or more openings: ${formatDivision(numBoards * 100, numIterations)}, or about 1 in ${Math.round(numIterations / (numBoards * 100))}%\n`; // Round to correct number of decimal places
 }
 
 const sortedOpeningSize = new Map([...openingSizeMap].sort((a, b) => a[0] - b[0]));
