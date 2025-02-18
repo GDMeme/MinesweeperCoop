@@ -13,11 +13,11 @@ function normalizeToCRLF(text) {
     return text.replace(/\r?\n/g, '\r\n');
 }
 
-let arr = syncReadFile('../server/devserver.js');
+let arr = syncReadFile('../server/server.js');
 
-// * Make sure to update this if imports change
 const imports = `import { WebSocketServer } from 'ws';
-import { createServer } from 'http';
+import { readFileSync } from 'fs';
+import { createServer } from 'https';
 
 import { MinesweeperGame } from './MinesweeperGame.js';
 import { revealCell } from './revealCell.js';
@@ -26,24 +26,27 @@ import { WStoPlayerName } from '../util/constants.js';
 
 `;
 
-// This probably won't change
-const server = `// render.com provides tls certs
-const server = createServer();
+// This probably won't change 
+const server = `const server = createServer({
+    cert: readFileSync('cert.pem'),
+    key: readFileSync('key.pem'),
+    passphrase: 'fdsa'
+});
 
-server.listen(10000);
+server.listen(8080);
 
 `;
 
-// Delete the first 17 lines from devserver.js, will be replaced by "imports" and "server"
-arr.splice(0, 17);
+// Delete the first 13 lines from server.js, will be replaced by "imports" and "server"
+arr.splice(0, 13);
 
 const serverJsContent = normalizeToCRLF(imports + server + arr.join("\n"));
-writeFileSync("../server/server.js", serverJsContent);
+writeFileSync("../server/devserver.js", serverJsContent);
 
-// In setup.js, change from ./devconnect.js to ./connect.js
+// In setup.js, change from ./connect.js to ./devconnect.js
 arr = syncReadFile('../setup.js');
 
-arr[3] = `import { connect } from './connect.js'; // * MAKE SURE THIS STAYS ON LINE 4`;
+arr[3] = `import { connect } from './devconnect.js'; // * MAKE SURE THIS STAYS ON LINE 4`;
 
 const setupJsContent = normalizeToCRLF(arr.join("\n"));
 writeFileSync("../setup.js", setupJsContent);
