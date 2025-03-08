@@ -21,6 +21,10 @@ export function generateBoard(rows, columns, mines, largeBoard) {
         document.querySelector('#readybutton').style.display = "inline-block";
     }
     
+    if (document.querySelector('#disablechordcheckbox').checked) {
+        window.chording = false;
+    }
+    
     // If in battle mode, cannot start clicking early
     window.noclicking = document.querySelector('#battlecheckbox').checked;
     

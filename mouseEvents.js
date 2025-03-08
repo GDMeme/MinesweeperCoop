@@ -16,14 +16,12 @@ export function cellmousedown(event) {
     }
     if (event.button === 0 && event.currentTarget.className === "cell closed") { // left mouse button
         event.currentTarget.className = "cell pressed";
-    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // left or middle mouse button
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) { // left or middle mouse button
         pressCellsAround(event);
     } else if (event.button === 2) { // right mouse button
-        console.log("right click spotted");
         if (event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // already revealed
             return;
         }
-        console.log("classname is: ", event.currentTarget.className);
         if (event.currentTarget.className !== "cell exploded") {
             // Fine for now
             for (const cell of document.getElementById("game").children) {
@@ -50,7 +48,7 @@ export function cellmouseup(event) {
     if (event.button === 0 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
         console.log("revealing cell");
         revealCell(event);
-    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // Chording
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) { // Chording
         const cellNumber = parseInt(event.currentTarget.className.split('type')[1]);
         const currentX = parseInt(event.currentTarget.dataset.x);
         const currentY = parseInt(event.currentTarget.dataset.y);
