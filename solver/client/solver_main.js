@@ -558,9 +558,9 @@ export async function solver(board, options) {
                             const recommended = returnActions[0];
                             result.unshift(...returnActions);
                             if (recommended.prob == 0.5) {
-                                showMessage(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                                console.log(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                             } else {
-                                showMessage(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                                console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                             }
 
                             // combine the dead tiles from the probability engine and the unavoidable 5050s
@@ -639,15 +639,15 @@ export async function solver(board, options) {
                 const recommended = returnActions[0];
                 result.push(recommended);
                 if (recommended.prob == 0.5) {
-                    showMessage(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                    console.log(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                 } else {
-                    showMessage(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                    console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                 }
                 
                 return addDeadTiles(result, pe.getDeadTiles());
 
                 //result.push(new Action(unavoidable5050a.getX(), unavoidable5050a.getY(), unavoidable5050a.probability, ACTION_CLEAR));
-                //showMessage(unavoidable5050a.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                //console.log(unavoidable5050a.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                 //return addDeadTiles(result, pe.getDeadTiles());
 
 
@@ -794,11 +794,11 @@ export async function solver(board, options) {
                 const recommended = returnActions[0];
                 result.push(...returnActions);
                 if (recommended.prob == 0.5) {  // 2935898204031399
-                    showMessage(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                    console.log(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                 } else {
-                    showMessage(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                    console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                 }
-                //showMessage(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                //console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                 return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound);
             }
         }
@@ -820,9 +820,9 @@ export async function solver(board, options) {
                 result.push(...returnActions);
                 //console.log(recommended.prob);
                 if (recommended.prob == 0.5) {  // 2935898204031399
-                    showMessage(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                    console.log(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                 } else {
-                    showMessage(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                    console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                 }
 
                 return addDeadTiles(result, pe.getDeadTiles());
