@@ -78,9 +78,6 @@ export function wsMsgHandler(ws) {
                     reference.insertBefore(newNode, null);
                 }
                 setupBoard();
-                // TODO dont call generate board, just use the code from case "generatedBoard" but modified
-                // * Generateboard ends here
-                // generateBoard(game.rows, game.columns, game.mines, game.largeBoard);
                 
                 for (const [cellCoordinates, tileStatus] of game.cellsRevealed) {
                     const [x, y] = cellCoordinates.split(",").map(e => parseInt(e));
@@ -153,7 +150,7 @@ export function wsMsgHandler(ws) {
                 document.querySelector("#lose").style.display = "block"; // TODO: Change later
                 break;
             case "revealCell": // Guaranteed not to be a bomb
-                if (window.firstClick) { // * Does this need to be atomic?
+                if (window.firstClick) {
                     window.firstClick = false;
                     const updateTimer = function () {
                         if (!window.noclicking) {
@@ -289,10 +286,12 @@ export function wsMsgHandler(ws) {
             case "unflag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell closed";
                 document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - parseInt(message.numFlags));
+                removeProbabilities();
                 break;
             case "placeFlag": // * Race condition if cell was already revealed?
                 document.querySelector(`#${message.id}`).className = "cell flag";
                 document.querySelector('#minecounter').innerHTML = "Mines left: " + (window.mines - parseInt(message.numFlags));
+                removeProbabilities();
                 break;
             default: 
                 console.log("How did you get here" + message);

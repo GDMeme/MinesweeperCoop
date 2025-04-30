@@ -7,11 +7,18 @@ export function revealCell(game, x, y, ws) {
         ws.send(JSON.stringify({type: "niceTry"}));
     }
     
-    // If they messed with their css, don't update the tile for them, too bad
-    if (game.cellsRevealed.has([x, y].join())) { // Early return for chording
+    const cellID = y * game.columns + x;
+    
+    // Trying to reveal a cell that is already flagged (race condition or editing CSS, don't do anything)
+    if (game.flaggedIDs.has(cellID)) {
         return;
     }
-    const cellID = y * game.columns + x;
+    
+    // If they messed with their css, don't do anything
+    if (game.cellsRevealed.has([x, y].join())) {
+        return;
+    }
+    
     if (game.minePlacements.has(cellID) && !game.firstClick) { // Client clicked on a mine, game over
         game.lost = true;
         
@@ -27,7 +34,8 @@ export function revealCell(game, x, y, ws) {
         // Early return because the game is lost
         return;
     }
-    if (game.minePlacements.has(cellID) && game.firstClick) { // First click was a mine
+    // First click was a mine
+    if (game.minePlacements.has(cellID) && game.firstClick) {
         game.minePlacements.delete(cellID);
         
         // Generates an array containing [0, 1, ... , game.columns * game.rows - game.mines - 1] excluding the IDs of existing mines and current cell (cellID)
@@ -50,28 +58,24 @@ export function revealCell(game, x, y, ws) {
         game.minePlacements.add(possibleNewMinePlacements[randomIndex]);
     }
     
-    if (game.firstClick) {
-        game.startTime = new Date().getTime(); // Time in milliseconds
-    }
-    
-    // If the client reveals a cell that removes a flag (only possible through editing CSS)
-    if (game.flaggedIDs.has(cellID)) {
-        game.flaggedIDs.delete(cellID);
-        sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${newX}_${newY}`, numFlags: game.flaggedIDs.size});
-    }
-    
     const tileStatus = calculateCellStatus(game, x, y); // Guaranteed not to be a bomb
     sendWSEveryone(game.wsPlayers, {type: "revealCell", id: `cell${x}_${y}`, tileStatus});
     game.cellsRevealed.set(`${x},${y}`, tileStatus);
     if (tileStatus === 0) {
         revealNeighbours(game, x, y);
     }
+    
+    // Start timer after sending info to client
+    if (game.firstClick) {
+        game.startTime = new Date().getTime(); // Time in milliseconds
+        game.firstClick = false;
+    }
     if (checkWin(game)) {
         console.log("sending win");
         
         const secondsPassed = (new Date().getTime() - game.startTime) / 1000;
         
-        // TODO can't be sending game.minePlacements to client if they weren't the one that won
+        // Don't send game.minePlacements to client if they weren't the one that won
         if (game.battleMode) {
             sendWSEveryone(game.wsPlayers, {type: "battleWin", playerName: WStoPlayerName.get(ws), secondsPassed});
             ws.send(JSON.stringify({type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed}));
@@ -79,5 +83,4 @@ export function revealCell(game, x, y, ws) {
             sendWSEveryone(game.wsPlayers, {type: "win", minePlacements: Array.from(game.minePlacements), secondsPassed});
         }
     }
-    game.firstClick = false;
 }

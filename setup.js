@@ -3,7 +3,7 @@ import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
 import { connect } from './connect.js'; // * MAKE SURE THIS STAYS ON LINE 4
 import { HTMLtoString } from './util/commonFunctions.js';
-import { doAnalysis, dropHandler, startup } from './solver/client/main.js';
+import { doAnalysis, dropHandler } from './solver/client/main.js';
 
 export function setupBoard() { // * Does this function belong here? Little bit circular
     document.querySelectorAll(".cell").forEach(e => {
@@ -70,7 +70,7 @@ export function initialSetup() {
     });
     
     document.addEventListener("mousedown", function(event) {
-        if (event.button === 0) { // left mouse button
+        if (event.button === 0) { // Left mouse button
             window.leftPressed = true;
         }
     });
@@ -82,7 +82,8 @@ export function initialSetup() {
     let mouseMessageTimer = true;
     
     document.addEventListener("mousemove", function(event) {
-        if (window.ws && mouseMessageTimer && document.hasFocus() && window.gameName !== null) { // Tab should be focused to track mouse movement
+        // Tab should be focused to track mouse movement
+        if (window.ws && mouseMessageTimer && document.hasFocus() && window.gameName !== null) {
             ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y, scrollY: window.scrollY, scrollX: window.scrollX}));
             mouseMessageTimer = false;
             setTimeout(() => {
@@ -160,11 +161,6 @@ export function initialSetup() {
     //* Probability Stuff
     document.getElementById("showprobabilities").addEventListener('click', async function() {
         const data = HTMLtoString(document.getElementById("game").children);
-        if (!window.probabilityStartup) {
-            await startup(window.rows, window.columns, window.mines);
-            window.probabilityStartup = true;
-        }
-        
         await dropHandler(data);
         const bestMove = (await doAnalysis())[0];
         if (bestMove !== undefined) { // Check if board is fully solved

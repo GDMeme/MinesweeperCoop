@@ -9,27 +9,24 @@ export function cellmouseout(event) {
 };
 
 export function cellmousedown(event) {
-    console.log("mousedown spotted");
     if (window.noclicking) {
         console.log("you lost or won, no more clicking")
         return;
     }
-    if (event.button === 0 && event.currentTarget.className === "cell closed") { // left mouse button
+    // Left mouse button
+    if (event.button === 0 && event.currentTarget.className === "cell closed") {
         event.currentTarget.className = "cell pressed";
-    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) { // left or middle mouse button
+    // Left or middle mouse button
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) {
         pressCellsAround(event);
-    } else if (event.button === 2) { // right mouse button
-        if (event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // already revealed
+    // Right mouse button
+    } else if (event.button === 2) {
+        if (event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { // Already revealed
             return;
         }
+        
+        // Flagging/Unflagging
         if (event.currentTarget.className !== "cell exploded") {
-            // Fine for now
-            for (const cell of document.getElementById("game").children) {
-                if (cell.className.split(" ")[0] === "cell") {
-                    cell.innerHTML = "";
-                }
-            }
-            
             if (event.currentTarget.className === "cell flag") {
                 event.currentTarget.className = "cell closed";
                 window.ws.send(JSON.stringify({type: "unflag", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
@@ -45,16 +42,18 @@ export function cellmouseup(event) {
     if (window.noclicking) {
         return;
     }
+    // Normal reveal
     if (event.button === 0 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
-        console.log("revealing cell");
-        revealCell(event);
-    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) { // Chording
+        console.log("revealing cell: ", event);
+        window.ws.send(JSON.stringify({type: "revealCell", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
+    // Chording
+    } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) {
         const cellNumber = parseInt(event.currentTarget.className.split('type')[1]);
         const currentX = parseInt(event.currentTarget.dataset.x);
         const currentY = parseInt(event.currentTarget.dataset.y);
         let flagCounter = 0;
         let currentCell;
-        const cellsToReveal = [[event.currentTarget.dataset.x, event.currentTarget.dataset.y].join()]; // * Pushing to const is not functional but who cares
+        const cellsToReveal = [[event.currentTarget.dataset.x, event.currentTarget.dataset.y].join()];
         for (const [x, y] of window.largeBoard ? C.bigDirectionArray : C.directionArray) {
             const newCoordinate = [currentX + x, currentY + y];
             if (coordinateOutOfBounds(newCoordinate, window.rows, window.columns)) {
@@ -82,7 +81,7 @@ export function cellmouseenter(event) {
     event.currentTarget.addEventListener("mousedown", cellmousedown);
     if (window.leftPressed && event.currentTarget.className !== "cell flag" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) { 
         event.currentTarget.className = "cell pressed";
-    } else if (window.leftPressed && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
+    } else if (window.leftPressed && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) {
         pressCellsAround(event);
     }
 };
@@ -117,9 +116,4 @@ const closeCellsAround = function(event) {
             currentCell.className = "cell closed";
         }
     }
-}
-
-const revealCell = function(event) {
-    console.log("id: ", event.currentTarget.id);
-    window.ws.send(JSON.stringify({type: "revealCell", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
 }

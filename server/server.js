@@ -14,10 +14,9 @@ server.listen(10000);
 const wss = new WebSocketServer({ server });
 
 // * Don't need to store all the games in one array, just use gameIDtoGame.values()
-const gameIDtoGame = new Map(); // Maps game ID to game object
+const gameIDToGame = new Map(); // Maps game ID to game object
 const WStoGameID = new Map(); // Maps client websocket to a specific game ID
 
-// * Do these need to be atomic?
 let gameIDCounter = 0;
 let wsIDCounter = 0; // Unique ws identifier to track mouse movement
 let numConnected = 0;
@@ -40,11 +39,11 @@ wss.on('connection', function (ws) {
         }
         
         const gameID = WStoGameID.get(ws);
-        const game = gameID ? gameIDtoGame.get(gameID) : undefined;
+        const game = gameID ? gameIDToGame.get(gameID) : undefined;
         
         // * Remember to check in certain cases if game is undefined (will cause server crash)
         switch (message.type) {
-            case "startGame": {
+            case "startGame": { // For battle mode
                 if (!game) {
                     // nice try
                     break;
@@ -57,7 +56,7 @@ wss.on('connection', function (ws) {
                 }
                 break;
             }
-            case "ready": {
+            case "ready": { // For battle mode
                 if (!game) {
                     // nice try
                     break;
@@ -76,7 +75,7 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 const flagID = parseInt(message.y) * game.columns + parseInt(message.x);
-                game.flaggedIDs.delete(flagID); // TODO: Maybe less efficient than just concatenating the strings using backtick
+                game.flaggedIDs.delete(flagID);
                 sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size});
                 break;
             }
@@ -103,7 +102,7 @@ wss.on('connection', function (ws) {
                 const newGame = new MinesweeperGame();
                 const gameID = ++gameIDCounter;
                 WStoGameID.set(ws, gameID);
-                gameIDtoGame.set(gameID, newGame);
+                gameIDToGame.set(gameID, newGame);
                 newGame.ID = WStoGameID.get(ws);
                 newGame.name = message.gameName; // TODO: Default to "${playerName}'s room" if gameName is empty
                 console.log("game.ID: ", newGame.ID);
@@ -119,7 +118,7 @@ wss.on('connection', function (ws) {
                 }
                 WStoGameID.set(ws, message.gameID);
                 console.log("message.gameID: ", message.gameID);
-                const currentGame = gameIDtoGame.get(message.gameID);
+                const currentGame = gameIDToGame.get(message.gameID);
                 for (const currentWS of currentGame.wsPlayers) {
                     // Send message to new player as well
                     currentWS.send(JSON.stringify({type: 'addPlayer', name: WStoPlayerName.get(ws)})); 
@@ -136,9 +135,10 @@ wss.on('connection', function (ws) {
                 currentGame.wsPlayers.push(ws); // Add the new player to the game
                 break;
             }
-            case "requestGames": { // This is fine because Sets are not JSON-able objects
-                console.log("games: ", Array.from(gameIDtoGame.values()));
-                ws.send(JSON.stringify({type: "sendGames", games: Array.from(gameIDtoGame.values())}));
+            case "requestGames": {
+                // This is fine because Sets are not JSON-able objects
+                console.log("games: ", Array.from(gameIDToGame.values()));
+                ws.send(JSON.stringify({type: "sendGames", games: Array.from(gameIDToGame.values())}));
             }
             case "mouseMove": {
                 if (!game) {
@@ -175,7 +175,7 @@ wss.on('connection', function (ws) {
                 }
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
-                if (game.firstClick) { // No cheating.
+                if (game.firstClick) { // Cannot chord on first click, just reveal one cell
                     revealCell(game.battleMode ? game.games[game.wsToGamesIndex.get(ws)] : game, x, y, ws);
                     break;
                 }
@@ -253,11 +253,11 @@ wss.on('connection', function (ws) {
     ws.on('close', function () {
         numConnected--;
         const gameID = WStoGameID.get(ws); 
-        const game = gameID ? gameIDtoGame.get(gameID) : undefined;
+        const game = gameID ? gameIDToGame.get(gameID) : undefined;
         if (game) { // Check if the client was in a game
             // If the client was the last player to leave room
             if (game.wsPlayers.length === 1) {
-                gameIDtoGame.delete(gameID);
+                gameIDToGame.delete(gameID);
             } else {
                 const indexToRemove = game.wsPlayers.findIndex(e => e === ws);
                 for (let i = 0; i < game.wsPlayers.length; i++) {
@@ -281,7 +281,7 @@ wss.on('connection', function (ws) {
         if (numConnected === 0) {
             wsIDCounter = 0; // Reset ws ID counter if no one is connected
         }
-        if (gameIDtoGame.size === 0) {
+        if (gameIDToGame.size === 0) {
             gameIDCounter = 0; // Reset game ID counter if there are no games
         }
     });

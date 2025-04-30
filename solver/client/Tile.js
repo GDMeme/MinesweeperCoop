@@ -14,6 +14,7 @@ export class Tile {
         this.is_bomb = null;   // this gets set when the game is lost
         this.exploded = false;  // this gets set if this tile was the one clicked
 		this.index = index;
+		this.is_start = false;
 
         this.onEdge = false;
         this.hint = false;
@@ -24,11 +25,16 @@ export class Tile {
 		this.efficiencyValue = "";   // the value we need to be to be chordable
 		this.efficiencyProbability = 0;  // the probability of being that value
 		this.efficiencyText = "";  
+		
+		this.winRate = 0;   // win rate as determined by the Brute force analysis
+		this.winRateText = "";  
 
 		// is there an mine adjacent to this tile?  Set as part of the No flag efficiency logic
 		this.adjacentMine = false;
 
 		this.skull = false;  // used when hardcore rule triggers
+		
+		this.inflate = false; // used when constructing a compressed board
 
 		Object.seal(this); // prevent new values being created
 	}
@@ -79,7 +85,7 @@ export class Tile {
         if (!this.hasHint) {
             return "";
 		} else {
-			return this.hintText + this.efficiencyText;
+			return this.hintText + this.efficiencyText + this.winRateText;
         }
 
     }
@@ -93,7 +99,7 @@ export class Tile {
         this.hasHint = true;
 
 		if (prob == 1) {
-			this.hintText = "Clear";
+			this.hintText = "Safe";
 		} else if (prob == 0) {
 			this.hintText = "Mine";
 		} else if (progress == null) {
@@ -110,6 +116,12 @@ export class Tile {
 
 		this.efficiencyText = "\n" + (probability * 100).toFixed(2) + "% value '" + value + "'"
 	}
+	
+	setWinRate(winRate) {
+		this.winRate = winRate;
+
+		this.winRateText = "\n" + (winRate * 100).toFixed(2) + "% solve rate";
+	}
 
     //getProbability() {
     //    return this.probability;
@@ -123,6 +135,8 @@ export class Tile {
 		this.efficiencyProbability = 0;
 		this.efficiencyText = "";
 		this.probability = -1;
+		this.winRate = 0;
+		this.winRateText = "";
     }
 
     setOnEdge() {
@@ -143,6 +157,9 @@ export class Tile {
 	}
 
 	setValueOnly(value) {
+		if (this.is_flagged) {
+			console.error(this.asText() + " assigning a value " + value + " to a flagged tile!");
+		}
 		this.value = value;
     }
 

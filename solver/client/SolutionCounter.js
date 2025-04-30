@@ -1,12 +1,7 @@
-/**
- * 
- */
-
-"use strict";
-
 import { ProbabilityLine, BoxWitness, Box, NextWitness, MergeSorter } from './solver_probability_engine.js';
 import { combination } from './solver_main.js';
 
+import { binomialCache } from './global.js';
 export class SolutionCounter {
 
     static SMALL_COMBINATIONS = [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1], [1, 6, 15, 20, 15, 6, 1], [1, 7, 21, 35, 35, 21, 7, 1], [1, 8, 28, 56, 70, 56, 28, 8, 1]];
@@ -22,7 +17,6 @@ export class SolutionCounter {
 
         // constraints in the game
         this.minesLeft = minesLeft;
-        this.squaresLeft = squaresLeft;
         //this.tilesLeft = squaresLeft;
         this.tilesOffEdge = squaresLeft - allWitnessed.length;   // squares left off the edge and unrevealed
         this.minTotalMines = minesLeft - this.tilesOffEdge;   // //we can't use so few mines that we can't fit the remainder elsewhere on the board
@@ -45,7 +39,12 @@ export class SolutionCounter {
         this.recursions = 0;
 
         Object.seal(this) // prevent new properties being created
-
+        
+        if (binomialCache.getMaxN() < this.tilesOffEdge) {
+            this.validWeb = false;
+            this.invalidReasons.push("Too many floating tiles to calculate the Binomial Coefficient, max permitted is " + binomialCache.getMaxN());
+            return;
+        }
 
         // can't have less than zero mines
         if (minesLeft < 0) {
@@ -628,7 +627,7 @@ export class SolutionCounter {
 
             if (pl.mineCount >= this.minTotalMines) {    // if the mine count for this solution is less than the minimum it can't be valid
 
-                console.log("Mines left " + this.minesLeft + " mines on PL " + pl.mineCount + " squares left = " + this.squaresLeft);
+                // console.log("Mines left " + this.minesLeft + " mines on PL " + pl.mineCount + " squares left = " + this.squaresLeft);
                 var mult = combination(this.minesLeft - pl.mineCount, this.tilesOffEdge);  //# of ways the rest of the board can be formed
 
                 outsideTally = outsideTally + mult * BigInt(this.minesLeft - pl.mineCount) * (pl.solutionCount);

@@ -1,5 +1,3 @@
-"use strict";
-
 import { countSolutions, divideBigInt } from "./solver_main.js";
 
 export class LongTermRiskHelper {
@@ -7,7 +5,7 @@ export class LongTermRiskHelper {
 	constructor(board, pe, minesLeft, options)  {
 
 		this.INFLUENCE_THRESHOLD = 0.025;
-		
+
 		this.board = board;
 		//this.wholeEdge = wholeEdge;
 		this.currentPe = pe;
@@ -342,6 +340,7 @@ export class LongTermRiskHelper {
 		const i = subject.getX();
 		const j = subject.getY();
 
+		// * GDMem edited this
 		if (j < 0 || j + 1 >= this.board.height || i < 0 || i + 1 >= this.board.width) {
 			return null;
 		}
@@ -593,7 +592,7 @@ export class LongTermRiskHelper {
 			}
 
 			// if the location is already a mine then don't return the location
-			if (loc.isSolverFoundBomb()) {
+			if (loc.isSolverFoundBomb() || this.currentPe.isNewMine(loc)) {
 				continue;
 			}
 

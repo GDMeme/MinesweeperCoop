@@ -11,7 +11,8 @@ export function generateBoard(rows, columns, mines, largeBoard) {
         columns = 100;
     }
     
-    if (rows * columns <= mines || isNaN(rows) || isNaN(columns) || isNaN(mines)) { // Not possible to generate board
+    // check if not possible to generate board
+    if (rows * columns <= mines || isNaN(rows) || isNaN(columns) || isNaN(mines)) {
         // TODO: Add some HTML here to tell client
         console.log("Bad input");
         return;
@@ -28,6 +29,5 @@ export function generateBoard(rows, columns, mines, largeBoard) {
     // If in battle mode, cannot start clicking early
     window.noclicking = document.querySelector('#battlecheckbox').checked;
     
-    console.log("sending message to generate board");
-    window.ws.send(JSON.stringify({type: 'generateBoard', rows, columns, mines, largeBoard, battleMode: window.noclicking})); // wait for response before changing HTML
+    window.ws.send(JSON.stringify({type: 'generateBoard', rows, columns, mines, largeBoard, battleMode: window.noclicking}));
 }

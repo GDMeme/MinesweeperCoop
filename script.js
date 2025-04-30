@@ -14,7 +14,6 @@ window.largeBoard = false;
 window.firstClick = true;
 window.battleMode = false;
 window.chording = true;
-window.probabilityStartup = false;
 
 // Setup
 initialSetup();
