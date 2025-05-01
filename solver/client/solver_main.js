@@ -825,7 +825,7 @@ export async function solver(board, options) {
                     console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                 }
 
-                return addDeadTiles(result, pe.getDeadTiles());
+                return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound);
             }
         }
 
@@ -896,12 +896,13 @@ export async function solver(board, options) {
     // also used to mark the found mines
     function addDeadTiles(result, deadTiles, mines) {
         console.log("result is: ", result);
-        for (let tile of mines) {   //mark each found mine
+        console.log("mines is: ", mines);
+        for (let tile of mines) { // mark each found mine
             tile.setFoundBomb();
         }
         
         // identify the dead tiles
-        for (let tile of deadTiles) {   // show all dead tiles 
+        for (let tile of deadTiles) { // show all dead tiles 
             if (tile.probability != 0 && tile.probability != 1) {
                 const action = new Action(tile.getX(), tile.getY(), tile.probability);
                 action.dead = true;
