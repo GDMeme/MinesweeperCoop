@@ -1,12 +1,5 @@
-notes.txt
-*.pem
 node_modules
-devserver.js
-devconnect.js
-ngrok.exe
-ChanceOfWinningCalculator.js
 input.txt
 3BVOpeningsGenerator.txt
 NoOpenings.txt
 Find8And9.txt
-test.js
