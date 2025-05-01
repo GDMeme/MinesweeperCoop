@@ -127,10 +127,10 @@ wss.on('connection', function (ws) {
                 // * Joining a game in proress
                 if (currentGame.cellsRevealed.size > 0 && !checkWin(currentGame)) {
                     // Need to remove wsPlayers property before sending to client
-                    const { wsPlayers: _, ...modifiedGame } = currentGame;
-                    modifiedGame.cellsRevealed = Array.from(modifiedGame.cellsRevealed);
-                    modifiedGame.flaggedIDs = Array.from(modifiedGame.flaggedIDs);
-                    ws.send(JSON.stringify({type: "gameProgress", modifiedGame}))
+                    const { wsPlayers: _, ...safeGameData } = currentGame;
+                    safeGameData.cellsRevealed = Array.from(safeGameData.cellsRevealed);
+                    safeGameData.flaggedIDs = Array.from(safeGameData.flaggedIDs);
+                    ws.send(JSON.stringify({type: "gameProgress", safeGameData}))
                 }
                 currentGame.wsPlayers.push(ws); // Add the new player to the game
                 break;
@@ -155,7 +155,15 @@ wss.on('connection', function (ws) {
                     // nice try
                     break;
                 }
-                if (game.lost || new Date().getTime() < game.startTime) {
+                
+                // Check if client is allowed to click
+                if (!game.inProgress && !game.firstClick) {
+                    // nice try
+                    break;
+                }
+                
+                // To account for battle mode
+                if (new Date().getTime() < game.startTime) {
                     ws.send(JSON.stringify({type: "niceTry"}));
                     break;
                 }
@@ -169,7 +177,7 @@ wss.on('connection', function (ws) {
                     // nice try
                     break;
                 }
-                if (game.lost || new Date().getTime() < game.startTime) {
+                if (!game.inProgress || new Date().getTime() < game.startTime) {
                     ws.send(JSON.stringify({type: "niceTry"}));
                     break;
                 }
@@ -219,7 +227,7 @@ wss.on('connection', function (ws) {
                         console.log("game is now: ", game);
                         game.games[i].cellsRevealed.clear();
                         game.games[i].firstClick = true;
-                        game.games[i].lost = false;
+                        game.games[i].inProgress = false;
                         game.games[i].flaggedIDs.clear();
                         game.games[i].minePlacements = game.minePlacements;
                         
@@ -235,13 +243,13 @@ wss.on('connection', function (ws) {
                 } else {       
                     game.cellsRevealed.clear();
                     game.firstClick = true;
-                    game.lost = false;
+                    game.inProgress = false;
                     game.flaggedIDs.clear();
                     
                     // Need to remove wsPlayers property before sending to client
-                    const { wsPlayers: _, ...modifiedGame } = game;
+                    const { wsPlayers, ...safeGameData } = game;
                     
-                    sendWSEveryone(game.wsPlayers, {type: "generatedBoard", modifiedGame, boardOwnerName: WStoPlayerName.get(ws)});
+                    sendWSEveryone(game.wsPlayers, {type: "generatedBoard", safeGameData: safeGameData, boardOwnerName: WStoPlayerName.get(ws)});
                 }
                 
                 break;

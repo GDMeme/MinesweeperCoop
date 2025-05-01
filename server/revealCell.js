@@ -20,7 +20,7 @@ export function revealCell(game, x, y, ws) {
     }
     
     if (game.minePlacements.has(cellID) && !game.firstClick) { // Client clicked on a mine, game over
-        game.lost = true;
+        game.inProgress = false;
         
         // Find misflags and send to clients
         const misFlags = []; // Pushing to const is not functional but who cares
@@ -69,6 +69,7 @@ export function revealCell(game, x, y, ws) {
     if (game.firstClick) {
         game.startTime = new Date().getTime(); // Time in milliseconds
         game.firstClick = false;
+        game.inProgress = true;
     }
     if (checkWin(game)) {
         console.log("sending win");

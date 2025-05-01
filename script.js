@@ -1,4 +1,4 @@
-import { initialSetup } from './setup.js';
+import { initialSetup } from './initialSetup.js';
 
 // Globals (Nothing will go wrong)
 window.leftPressed = false;

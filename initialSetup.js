@@ -5,23 +5,6 @@ import { connect } from './connect.js'; // * MAKE SURE THIS STAYS ON LINE 4
 import { HTMLtoString } from './util/commonFunctions.js';
 import { doAnalysis, dropHandler } from './solver/client/main.js';
 
-export function setupBoard() { // * Does this function belong here? Little bit circular
-    document.querySelectorAll(".cell").forEach(e => {
-        e.addEventListener("mouseenter", cellmouseenter);
-        e.addEventListener("mouseout", cellmouseout);
-        e.addEventListener("mouseup", cellmouseup);
-        
-        // Prevent right click menu
-        e.addEventListener("contextmenu", function(event) {
-            event.preventDefault();
-        });
-    });
-    
-    // * Fine to put this here
-    // Default display style
-    document.querySelector('#showprobabilities').style.display = "inline-block";
-};
-
 export function initialSetup() {
     
     document.body.style.backgroundColor = "#121212";
@@ -167,7 +150,7 @@ export function initialSetup() {
             if (bestMove.action === 1) { // Regular left click (clear)
                 // Green
                 document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#00FF00";
-            } else if (bestMove.action === 2) { // Regular right click (flag)
+            } else if (bestMove.action === 2) { // Regular right click (flag) (will only show for Efficiency Playstyle I think)
                 // Red
                 document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#FF0000";
                 // Maybe want to show the flag(s) and then the chord

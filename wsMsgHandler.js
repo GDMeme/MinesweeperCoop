@@ -1,4 +1,4 @@
-import { setupBoard } from "./setup.js";
+import { setupBoard } from "./setupBoard.js";
 import { removeProbabilities } from "./util/commonFunctions.js";
 
 export function wsMsgHandler(ws) {
@@ -17,68 +17,20 @@ export function wsMsgHandler(ws) {
                 console.log("lol");
                 break;
             case "gameProgress": {
-                // TODO generate board (cells) first
-                const game = message.modifiedGame;
+                const game = message.safeGameData;
+                setupBoard(game, timerTimeout, message.boardOwnerName);
                 
-                console.log("game here is: ", game)
-                
-                
-                // * Code below is all from generateboard
-                document.querySelector("#win").style.display = "none"; // TODO: Change later
-                document.querySelector("#lose").style.display = "none"; // TODO: Change later
-                
-                delete message.boardOwnerName; // TODO: This is the name of the person who generated the new board 
-                
-                Object.assign(window, game); // This assigns rows, columns, mines, largeBoard
-                window.firstClick = true;
-                window.noclicking = false;
-                
-                document.querySelector("#customrows").value = game.rows;
-                document.querySelector("#customcolumns").value = game.columns;
-                document.querySelector("#custommines").value = game.mines;
-                
-                const reference = document.querySelector("#game");
-                reference.innerHTML = "";
-                
-                // Mines left text
-                const minesLeftNode = document.createElement("div");
-                console.log("game.flaggedIDs.size: ", game.flaggedIDs.size)
-                console.log("game.flaggedIDs.length: ", game.flaggedIDs.length)
-                minesLeftNode.innerHTML = "Mines left: " + (window.mines - game.flaggedIDs.length);
-                minesLeftNode.id = "minecounter";
-                reference.insertBefore(minesLeftNode, null);
-                
-                // New line after mines left text
-                const tempNode = document.createElement("div");
-                tempNode.className = "clear";
-                reference.insertBefore(tempNode, null);
-                
-                // Timer text
-                clearTimeout(timerTimeout);
-                
-                // TODO: Timer is wrong atm
-                // TODO fix timer using startTime of the game
-                const timerNode = document.createElement("div");
-                timerNode.innerHTML = "Time: 0";
-                timerNode.id = "timer";
-                reference.insertBefore(timerNode, null);
-                
-                // Generate the game cells
-                for (let i = 0; i < window.rows; i++) {
-                    for (let j = 0; j < window.columns; j++) {
-                        const newNode = document.createElement("div");
-                        newNode.className = "cell closed";
-                        newNode.dataset.x = j;
-                        newNode.dataset.y = i;
-                        newNode.id = "cell" + j + "_" + i;
-                        reference.insertBefore(newNode, null);
-                    }
-                    const newNode = document.createElement("div");
-                    newNode.className = "clear";
-                    reference.insertBefore(newNode, null);
+                // Timer
+                if (game.inProgress || game.firstClick) {
+                    window.firstClick = false;
+                    
+                    // Initialize timer using startTime
+                    const timerNode = document.getElementById("timer");
+                    timerNode.innerHTML = `Time: ${Math.floor((new Date().getTime() - game.startTime) / 1000)}`;
+                    timerTimeout = setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
                 }
-                setupBoard();
                 
+                // Populate cells with existing values
                 for (const [cellCoordinates, tileStatus] of game.cellsRevealed) {
                     const [x, y] = cellCoordinates.split(",").map(e => parseInt(e));
                     
@@ -136,9 +88,7 @@ export function wsMsgHandler(ws) {
                 }
                 
                 // Reveal misflags
-                console.log("message.misFlags", message.misFlags);
                 if (message.misFlags.length > 0) {
-                    console.log("message.misFlags: ", message.misFlags)
                     for (const misFlagID of message.misFlags) {
                         const x = misFlagID % window.columns;
                         const y = Math.floor(misFlagID / window.columns);
@@ -152,15 +102,6 @@ export function wsMsgHandler(ws) {
             case "revealCell": // Guaranteed not to be a bomb
                 if (window.firstClick) {
                     window.firstClick = false;
-                    const updateTimer = function () {
-                        if (!window.noclicking) {
-                            const timerNode = document.querySelector('#timer');
-                            let currentSeconds = parseInt(timerNode.innerHTML.split(" ")[1]);
-                            currentSeconds++;
-                            timerNode.innerHTML = `Time: ${currentSeconds}`;
-                            timerTimeout = setTimeout(updateTimer, 1000);
-                        }
-                    }
                     timerTimeout = setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset
                 }
                 removeProbabilities();
@@ -173,57 +114,7 @@ export function wsMsgHandler(ws) {
                 }
                 break;
             case "generatedBoard":
-                console.log("message is: ", message);
-                document.querySelector("#win").style.display = "none"; // TODO: Change later
-                document.querySelector("#lose").style.display = "none"; // TODO: Change later
-                
-                delete message.boardOwnerName; // TODO: This is the name of the person who generated the new board 
-                
-                Object.assign(window, message.modifiedGame); // This assigns rows, columns, mines, largeBoard
-                window.firstClick = true;
-                window.noclicking = false;
-                
-                document.querySelector("#customrows").value = message.modifiedGame.rows;
-                document.querySelector("#customcolumns").value = message.modifiedGame.columns;
-                document.querySelector("#custommines").value = message.modifiedGame.mines;
-                
-                const reference = document.querySelector("#game");
-                reference.innerHTML = "";
-                
-                // Mines left text
-                const minesLeftNode = document.createElement("div");
-                minesLeftNode.innerHTML = "Mines left: " + window.mines;
-                minesLeftNode.id = "minecounter";
-                reference.insertBefore(minesLeftNode, null);
-                
-                // New line after mines left text
-                const tempNode = document.createElement("div");
-                tempNode.className = "clear";
-                reference.insertBefore(tempNode, null);
-                
-                // Timer text
-                clearTimeout(timerTimeout);
-                
-                const timerNode = document.createElement("div");
-                timerNode.innerHTML = "Time: 0";
-                timerNode.id = "timer";
-                reference.insertBefore(timerNode, null);
-                
-                // Generate the game cells
-                for (let i = 0; i < window.rows; i++) {
-                    for (let j = 0; j < window.columns; j++) {
-                        const newNode = document.createElement("div");
-                        newNode.className = "cell closed";
-                        newNode.dataset.x = j;
-                        newNode.dataset.y = i;
-                        newNode.id = "cell" + j + "_" + i;
-                        reference.insertBefore(newNode, null);
-                    }
-                    const newNode = document.createElement("div");
-                    newNode.className = "clear";
-                    reference.insertBefore(newNode, null);
-                }
-                setupBoard();
+                setupBoard(message.safeGameData, timerTimeout);    
                 break;
             case "win":
                 console.log("You win");
@@ -297,4 +188,16 @@ export function wsMsgHandler(ws) {
                 console.log("How did you get here" + message);
         } 
     });
+    
+    const updateTimer = function () {
+        // Only update timer if game is still in progress
+        if (!window.noclicking) {
+            const timerNode = document.querySelector('#timer');
+            let currentSeconds = parseInt(timerNode.innerHTML.split(" ")[1]);
+            currentSeconds++;
+            timerNode.innerHTML = `Time: ${currentSeconds}`;
+            timerTimeout = setTimeout(updateTimer, 1000);
+        }
+    }
 }
+
