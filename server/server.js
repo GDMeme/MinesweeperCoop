@@ -162,13 +162,13 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 
-                const flagID = parseInt(message.y) * game.columns + parseInt(message.x);
+                const flagID = parseInt(message.y) * room.columns + parseInt(message.x);
                 if (room instanceof CoopRoom) {
                     room.board.flaggedIDs.delete(flagID);
-                    room.sendMessage({type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size}, ws);
+                    room.sendMessage({type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: room.flaggedIDs.size}, ws);
                 } else if (room instanceof BattleRoom) {
                     room.boards[room.wsToTeamsIndex.get(ws)].flaggedIDs.delete(flagID);
-                    room.sendMessage(room.teams[room.wsToTeamsIndex.get(ws)], {type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: game.flaggedIDs.size});
+                    room.sendMessage(room.teams[room.wsToTeamsIndex.get(ws)], {type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: room.flaggedIDs.size});
                 } else {
                     console.log("unknown room found??");
                 }
