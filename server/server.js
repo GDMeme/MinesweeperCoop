@@ -129,14 +129,13 @@ wss.on('connection', function (ws) {
                 
                 const mines = Math.floor(rows * columns * density);
                 
-                for (let i = 0; i < room.wsPlayers.length; i++) {
+                for (let i = 0; i < room.teams.length; i++) {
                     room.boards[i] = createBattleBoard(rows, columns, mines);
+                    
+                    // Remove wsPlayers property before sending to client
+                    const { wsPlayers, ...safeGameData } = room.boards[i];
+                    room.sendMessage({type: "startGame", safeGameData, startTime}, room.teams[i][0]);
                 }
-                
-                // Remove wsPlayers property before sending to client
-                const exampleBoard = createBattleBoard(rows, columns, mines);
-                const { wsPlayers, ...safeGameData } = exampleBoard;
-                room.sendMessage({type: "startGame", safeGameData, startTime}, ws);
                 break;
             }
             case "ready": { // For battle mode
@@ -257,7 +256,7 @@ wss.on('connection', function (ws) {
                 
                 // Add the new player to the game
                 currentRoom.wsPlayers.push(ws);
-                currentRoom.wsToPlayersIndex.set(ws, room.wsPlayers.length - 1);
+                currentRoom.wsToPlayersIndex.set(ws, currentRoom.wsPlayers.length - 1);
                 break;
             }
             case "requestGames": {
@@ -377,10 +376,10 @@ wss.on('connection', function (ws) {
             if (room.wsPlayers.length === 1) {
                 roomIDtoRoom.delete(roomID);
             } else {
-                for (let i = 0; i < game.wsPlayers.length; i++) {
+                for (let i = 0; i < room.wsPlayers.length; i++) {
                     // Remove mouse image from everyone else's screen
-                    if (game.wsPlayers[i] !== ws) {
-                        game.wsPlayers[i].send(JSON.stringify({type: "removePlayer", wsID: ws.ID, playerName: WStoPlayerName.get(ws)}));
+                    if (room.wsPlayers[i] !== ws) {
+                        room.wsPlayers[i].send(JSON.stringify({type: "removePlayer", wsID: ws.ID, playerName: WStoPlayerName.get(ws)}));
                     }
                 }
                 const indexToRemove = room.wsToPlayersIndex.get(ws);
@@ -392,6 +391,7 @@ wss.on('connection', function (ws) {
                     room.wsToPlayersIndex.set(ws, index);
                 });
                 
+                // Remove them from a team if they were in one
                 room.removePlayer(ws);
             }
             WStoRoomID.delete(ws);

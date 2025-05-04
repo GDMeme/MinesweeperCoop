@@ -67,6 +67,7 @@ export function wsMsgHandler(ws) {
                 
                 
                 countdownEnded = false;
+                document.querySelector('#countdown').style.display = "block";
                 document.querySelector('#countdown').innerHTML = 5;
                 function updateCountdown() {
                     const timeLeft = message.startTime - Date.now();

@@ -131,7 +131,8 @@ export function initialSetup() {
     }
     
     document.querySelector('#startgamebutton').onclick = function() {
-        document.querySelector('#startgamebutton').style.display = "none";
+        // todo put this back
+        // document.querySelector('#startgamebutton').style.display = "none";
         document.querySelector('#countdown').style.display = "none";
         window.ws.send(JSON.stringify({type: "startGame"}));
     }
