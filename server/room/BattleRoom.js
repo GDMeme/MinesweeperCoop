@@ -1,0 +1,77 @@
+import { BaseRoom } from './BaseRoom.js';
+
+export class BattleRoom extends BaseRoom {
+    constructor(roomID, wsPlayers = [], roomName) {
+        // Set up roomID and wsPlayers
+        super(roomID, wsPlayers, roomName);
+        
+        this.teams = []; // Each team is its own array of websockets
+        this.wsToTeamInfo = new Map(); // Map ws -> { teamIndex, playerIndex }
+        
+        this.boards = []; // Index mapped to wsPlayers
+        this.ready  = []; // Mapped to individual player, not team
+    }
+    
+    allowClicks() {
+        return this.inProgress && this.startTime < new Date().getTime();
+    }
+    
+    findBoardFromWS(ws) {
+        return this.boards[this.wsToPlayersIndex.get(ws)]
+    }
+    
+    // In battle room, send to the whole team
+    sendMessage(message, ws) {
+        const teamInfo = this.wsToTeamInfo.get(ws);
+        if (!teamInfo) {
+            console.log("teamInfo not found");
+            console.log("message was: ", message);
+            return;
+        }
+        this.teams[this.wsToTeamInfo.get(ws).teamIndex].forEach(ws => {
+            ws.send(JSON.stringify(message));
+        });
+    }
+    
+    removePlayer(ws) {
+        // Reset ready state
+        this.ready = new Array(this.wsPlayers.length);
+        
+        const teamInfo = this.wsToTeamInfo.get(ws);
+        
+        if (!teamInfo) {
+            console.log("no team info found");
+            return;
+        }
+        
+        const { teamIndex, playerIndex } = teamInfo;
+        
+        this.teams[teamIndex].splice(playerIndex, 1);
+        
+        // If team is now empty, remove it entirely
+        if (this.teams[teamIndex].length === 0) {
+            this.teams.splice(teamIndex, 1);
+
+            // Rebuild wsToTeamInfo for all teams after this one
+            for (let i = teamIndex; i < this.teams.length; i++) {
+                for (let j = 0; j < this.teams[i].length; j++) {
+                    this.wsToTeamInfo.set(this.teams[i][j], {
+                        teamIndex: i,
+                        playerIndex: j
+                    });
+                }
+            }
+        } else {
+            // Otherwise, just rebuild this team's wsToTeamInfo
+            const team = this.teams[teamIndex];
+            for (let i = 0; i < team.length; i++) {
+                this.wsToTeamInfo.set(team[i], {
+                    teamIndex,
+                    playerIndex: i
+                });
+            }
+        }
+        
+        this.wsToTeamInfo.delete(ws);
+    }
+}

@@ -1,3 +1,5 @@
+import { MinesweeperGame } from "../server/MinesweeperGame.js";
+
 export function coordinateOutOfBounds(coordinate, rows, columns) { // * Only used by server
     return (coordinate[0] < 0 || coordinate[0] >= columns || coordinate[1] < 0 || coordinate[1] >= rows);
 }
@@ -6,12 +8,7 @@ export function checkWin(game) { // * Only used by server, maybe move in server 
     return (game.rows * game.columns) - game.cellsRevealed.size === game.minePlacements.size;
 }
 
-export function sendWSEveryone(WSPlayers, message) { // * Also only used by server
-    for (const ws of WSPlayers) {
-        ws.send(JSON.stringify(message));
-    }
-}
-
+// * This allows for some easy cheating since it's client side. Then again, not really preventable
 // This function is done client-side; if they change their css,
 // the probability calculations will be incorrect for their actual board
 export function HTMLtoString(children) {
@@ -68,4 +65,37 @@ export function removeProbabilities() { // Only used client side
             cell.innerHTML = "";
         }
     }
+}
+
+export function generateRandomMines(rows, columns, mines) {
+    const randomMines = new Set();
+    
+    // Generates an array containing [0, 1, ... , rows * columns - 1]
+    const possibleMinePlacements = Array.from(new Array(rows * columns).keys());
+    for (let i = 0; i < mines; i++) {
+        const randomIndex = Math.floor(Math.random() * (rows * columns - i))
+        randomMines.add(possibleMinePlacements[randomIndex]);
+        possibleMinePlacements.splice(randomIndex, 1);
+    }
+    
+    return randomMines;
+}
+
+export function createBattleBoard(rows, columns, mines, startTime) {
+    const board = new MinesweeperGame(rows, columns, mines, false);
+    board.startTime = startTime;
+    board.rows = rows;
+    board.columns = columns;
+    board.mines = mines;
+    board.firstClick = true;
+    board.cellsRevealed.clear();
+    board.flaggedIDs.clear();
+    board.minePlacements = generateRandomMines(rows, columns, mines);
+    return board;
+}
+
+export function sendToGroup(message, group) {
+    group.forEach(ws => {
+        ws.send(JSON.stringify(message));
+    });
 }

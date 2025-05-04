@@ -27,18 +27,7 @@ export function initialSetup() {
     }); 
     
     window.addEventListener("keydown", (event) => { // Regenerate board on spacebar keypress
-        if (window.gameName !== null && event.key === " ") {
-            const rows = parseInt(document.querySelector('#customrows').value);
-            const columns = parseInt(document.querySelector('#customcolumns').value);
-            const mines = parseInt(document.querySelector('#custommines').value);
-            const largeBoard = document.querySelector('#largeboard').checked;
-            generateBoard(rows, columns, mines, largeBoard);
-            document.body.style.overflow = "hidden";
-        }
-    });
-    
-    window.addEventListener("keyup", (event) => { // Regenerate board on spacebar keypress
-        if (window.gameName !== null && event.key === " ") {
+        if (window.roomName !== null && event.key === " ") {
             const rows = parseInt(document.querySelector('#customrows').value);
             const columns = parseInt(document.querySelector('#customcolumns').value);
             const mines = parseInt(document.querySelector('#custommines').value);
@@ -66,7 +55,7 @@ export function initialSetup() {
     
     document.addEventListener("mousemove", function(event) {
         // Tab should be focused to track mouse movement
-        if (window.ws && mouseMessageTimer && document.hasFocus() && window.gameName !== null) {
+        if (window.ws && mouseMessageTimer && document.hasFocus() && window.roomName !== null) {
             ws.send(JSON.stringify({type: "mouseMove", x: event.x, y: event.y, scrollY: window.scrollY, scrollX: window.scrollX}));
             mouseMessageTimer = false;
             setTimeout(() => {
@@ -111,20 +100,20 @@ export function initialSetup() {
     }
     
     // You can press "enter" instead of the submit button when submitting your name
-    document.getElementById('gamename').addEventListener("keypress", function(event) {
+    document.getElementById('roomname').addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
             event.preventDefault();
-            document.getElementById('submitgamename').click();
+            document.getElementById('submitroomname').click();
         }
     });
     
-    document.querySelector('#submitgamename').onclick = function() {
-        window.gameName = document.querySelector('#gamename').value;
+    document.querySelector('#submitroomname').onclick = function() {
+        window.roomName = document.querySelector('#roomname').value;
         document.querySelector('#roomsetup').style.display = "none";
         document.querySelector('#inputs').className = "table";
         
         // TODO: Empty room name results in a super tiny button
-        window.ws.send(JSON.stringify({type: "createRoom", gameName: window.gameName}))
+        window.ws.send(JSON.stringify({type: "createRoom", roomName: window.roomName}))
     }
     
     document.querySelector('#generateboard').onclick = function() {
@@ -139,6 +128,32 @@ export function initialSetup() {
         document.querySelector('#readybutton').style.display = "none";
         document.querySelector('#countdown').style.display = "block";
         window.ws.send(JSON.stringify({type: "ready"}));
+    }
+    
+    document.querySelector('#startgamebutton').onclick = function() {
+        document.querySelector('#startgamebutton').style.display = "none";
+        document.querySelector('#countdown').style.display = "none";
+        window.ws.send(JSON.stringify({type: "startGame"}));
+    }
+    
+    document.querySelector('#updategamemode').onclick = function() {
+        const gamemode = document.querySelector("#battlecheckbox").checked ? "battle" : "coop";
+        if (gamemode === "battle") {
+            document.querySelector('#readybutton').style.display = "inline-block";
+            document.querySelector('#jointeam1').style.display = "inline-block";
+            document.querySelector('#jointeam2').style.display = "inline-block";
+        }
+        window.ws.send(JSON.stringify({type: "updateGamemode", gamemode}));
+    }
+    
+    // * temp stuff
+    // Team will be 0 indexed
+    document.querySelector('#jointeam1').onclick = function() {
+        window.ws.send(JSON.stringify({type: "joinTeam", team: 0}));
+    }
+    
+    document.querySelector('#jointeam2').onclick = function() {
+        window.ws.send(JSON.stringify({type:"joinTeam", team: 1}));
     }
     
     //* Probability Stuff

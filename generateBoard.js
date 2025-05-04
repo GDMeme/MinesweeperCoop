@@ -18,10 +18,6 @@ export function generateBoard(rows, columns, mines, largeBoard) {
         return;
     }
     
-    if (document.querySelector('#battlecheckbox').checked) {
-        document.querySelector('#readybutton').style.display = "inline-block";
-    }
-    
     if (document.querySelector('#disablechordcheckbox').checked) {
         window.chording = false;
     }

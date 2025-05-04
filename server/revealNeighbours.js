@@ -1,10 +1,11 @@
 import { calculateTileStatus } from './calculateCellStatus.js';
-import { coordinateOutOfBounds, sendWSEveryone } from '../util/commonFunctions.js';
+import { coordinateOutOfBounds } from '../util/commonFunctions.js';
 
 import * as C from "../util/constants.js";
 
-export function revealNeighbours(game, currentX, currentY) {
-    const {rows, columns, cellsRevealed, wsPlayers, flaggedIDs} = game;
+export function revealNeighbours(room, currentX, currentY, ws) {
+    const board = room.findBoardFromWS(ws);
+    const {rows, columns, cellsRevealed, wsPlayers, flaggedIDs} = board;
     const frontier = [[currentX, currentY].join()];
     let tileStatus;
     const newRevealedCellsMap = new Map();
@@ -18,7 +19,7 @@ export function revealNeighbours(game, currentX, currentY) {
         cellID = currentY * columns + currentX;
         if (flaggedIDs.has(cellID)) {
             flaggedIDs.delete(cellID);
-            sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${currentX}_${currentY}`, numFlags: game.flaggedIDs.size});
+            room.sendMessage({type: "unflag", id: `cell${currentX}_${currentY}`, numFlags: board.flaggedIDs.size}, ws);
         }
         
         for (const [x, y] of C.directionArray) {
@@ -28,7 +29,7 @@ export function revealNeighbours(game, currentX, currentY) {
             if (coordinateOutOfBounds(newCoordinate, rows, columns)) {
                 continue;
             }
-            tileStatus = calculateTileStatus(game, newX, newY); // Guaranteed not to be a bomb
+            tileStatus = calculateTileStatus(board, newX, newY); // Guaranteed not to be a bomb
             if (!cellsRevealed.has(newCoordinate.join())) {
                 newRevealedCellsMap.set(newCoordinate.join("_"), tileStatus);
                 cellsRevealed.set(newCoordinate.join(), tileStatus);
@@ -41,7 +42,7 @@ export function revealNeighbours(game, currentX, currentY) {
             cellID = newY * columns + newX;
             if (flaggedIDs.has(cellID)) {
                 flaggedIDs.delete(cellID);
-                sendWSEveryone(game.wsPlayers, {type: "unflag", id: `cell${newX}_${newY}`, numFlags: game.flaggedIDs.size});
+                room.sendMessage({type: "unflag", id: `cell${newX}_${newY}`, numFlags: board.flaggedIDs.size}, ws);
             }
         }
     }
@@ -51,5 +52,5 @@ export function revealNeighbours(game, currentX, currentY) {
         newRevealedCellsMapToArray.push({key, value});
     }
     
-    sendWSEveryone(wsPlayers, {type: "revealCells", data: newRevealedCellsMapToArray});
+    room.sendMessage({type: "revealCells", data: newRevealedCellsMapToArray}, ws);
 }

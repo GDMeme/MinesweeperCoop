@@ -27,11 +27,11 @@
         </button>
     </div>
     <div id="roomsetup" class="nodisplay">
-        <label for="gamename">Enter the name of your room!</label>
+        <label for="roomname">Enter the name of your room!</label>
         <br>
-        <input class="input-data" size="21" maxlength="24" id="gamename">
+        <input class="input-data" size="21" maxlength="24" id="roomname">
         <br>
-        <button id="submitgamename">Submit!</button>
+        <button id="submitroomname">Submit!</button>
     </div>
     <!-- Not used atm -->
     <div id="availableroomstext" class="nodisplay">
@@ -81,6 +81,9 @@
             <label for="battlecheckbox">Battle Mode</label>
             <input type="checkbox" class="input-data" id="battlecheckbox">
         </div>
+        <div>
+            <button id="updategamemode">Update Gamemode</button>
+        </div>
         <div class="table-cell">
             <label for="disablechordcheckbox">Disable Chording</label>
             <input type="checkbox" class="input-data" id="disablechordcheckbox">
@@ -100,6 +103,16 @@
         <!-- Player 2: 10% complete -->
         <!-- Player 3: Exploded at 10% completion -->
     </div>
+    <br>
+    <button class="nodisplay" id="startgamebutton">Start Game</button>
+    <br>
+    <br>
+    
+    <!-- temp stuff -->
+    <button class="nodisplay" id="jointeam1">Join Team 1</button>
+    <button class="nodisplay" id="jointeam2">Join Team 2</button>
+    
+    
     <div class="pull-left" id="game" style="padding-left: 30px; padding-right: 30px; padding-bottom: 30px;">
         <!-- Game goes here -->
     </div>

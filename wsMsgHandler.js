@@ -1,3 +1,4 @@
+import { generateBoard } from "./generateBoard.js";
 import { setupBoard } from "./setupBoard.js";
 import { removeProbabilities } from "./util/commonFunctions.js";
 
@@ -6,6 +7,8 @@ export function wsMsgHandler(ws) {
     console.log("connected to server"); 
     
     let timerTimeout = null;
+    let countdownTimer = null;
+    let countdownEnded = false;
 
     ws.addEventListener("message", (message) => {
         message = JSON.parse(message.data);
@@ -13,8 +16,17 @@ export function wsMsgHandler(ws) {
             console.log("message: ", message); // No spamming logs.
         }
         switch (message.type) {
+            case "teamUpdate": 
+                // todo
+                break;
             case "niceTry":
                 console.log("lol");
+                break;
+            case "unReady":
+                document.getElementById("readybutton").style.display = "inline-block";
+                break;
+            case "enableStartGameButton":
+                document.getElementById("startgamebutton").style.display = "inline-block";
                 break;
             case "gameProgress": {
                 const game = message.safeGameData;
@@ -50,22 +62,35 @@ export function wsMsgHandler(ws) {
                 // TODO Update HTML, "${message.playerName} has won"
                 // Current progress of board is saved, can click on something to continue playing later
             case "startGame": // Only for battle mode
-                let countdownTimer;
+                const gameData = message.safeGameData;
+                generateBoard(parseInt(gameData.rows), parseInt(gameData.columns), parseInt(gameData.mines), false);
+                
+                
+                countdownEnded = false;
                 document.querySelector('#countdown').innerHTML = 5;
                 function updateCountdown() {
-                    if (message.startTime < new Date().getTime() + 100) {
-                        // Start polling now
-                        while (message.startTime > new Date().getTime()) { }
-                        
+                    const timeLeft = message.startTime - Date.now();
+                
+                    if (timeLeft <= 0 && !countdownEnded) {
+                        countdownEnded = true;
                         document.querySelector('#countdown').innerHTML = "";
                         console.log("countdown over");
                         window.noclicking = false;
-                        clearTimeout(countdownTimer);
-                    } else {
-                        console.log("countdown number: ", Math.ceil((message.startTime / new Date().getTime()) / 1000));
-                        document.querySelector('#countdown').innerHTML = Math.ceil((message.startTime / new Date().getTime()) / 1000);
+                        return;
                     }
+                
+                    const secondsLeft = Math.ceil(timeLeft / 1000);
+                    console.log("countdown number:", secondsLeft);
+                    document.querySelector('#countdown').innerHTML = secondsLeft;
+                
+                    // Adapt timeout: check more frequently as we approach zero
+                    let nextTimeout = 1000;
+                    if (timeLeft < 2000) nextTimeout = 100;
+                    if (timeLeft < 500) nextTimeout = 50;
+                
+                    countdownTimer = setTimeout(updateCountdown, nextTimeout);
                 }
+                
                 countdownTimer = setTimeout(updateCountdown, 100);
             case "removePlayer":
                 // Remove mouse from screen
@@ -73,6 +98,7 @@ export function wsMsgHandler(ws) {
                 
                 // Remove playername from player list
                 window.playerList.splice(window.playerList.findIndex(e => e === message.playerName), 1);
+                document.querySelector('#playerlist').innerHTML = window.playerList.join(", ");
                 break;
             case "revealMinesMisflags": // This is called when the game is lost
                 // Reveal mines
@@ -155,14 +181,14 @@ export function wsMsgHandler(ws) {
                 break;
             case "sendGames":
                 document.getElementById('loader').style.display = "none";
-                for (const game of message.games) {
+                for (const room of message.rooms) {
                     const gameButton = document.createElement('button');
                     // TODO: On button hover, show who is in that room
-                    gameButton.innerHTML = game.name;
+                    gameButton.innerHTML = room.name;
                     document.getElementById('availablerooms').appendChild(gameButton);
                     gameButton.onclick = function() {
-                        ws.send(JSON.stringify({type: 'joinedRoom', gameID: game.ID}));
-                        window.gameName = game.name;
+                        ws.send(JSON.stringify({type: 'joinedRoom', roomID: room.ID}));
+                        window.roomName = room.name;
                         for (const child of document.querySelector('#availablerooms').children) {
                             child.remove();
                         }
