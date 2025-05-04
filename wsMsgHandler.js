@@ -16,6 +16,11 @@ export function wsMsgHandler(ws) {
             console.log("message: ", message); // No spamming logs.
         }
         switch (message.type) {
+            case "loss":
+                document.getElementById("losstext").style.display = "block";
+                document.getElementById("losstext").textContent = `You lost! Team ${message.teamIndex} with player(s) ${message.playerList} won in ${message.secondsPassed}`;
+                window.noclicking = true;
+                break;
             case "teamUpdate": 
                 // todo
                 break;
@@ -58,10 +63,10 @@ export function wsMsgHandler(ws) {
                 }
                 break;
             }
-            case "battleWin":
-                // TODO Update HTML, "${message.playerName} has won"
-                // Current progress of board is saved, can click on something to continue playing later
             case "startGame": // Only for battle mode
+                document.getElementById("losstext").style.display = "none";
+            
+            
                 const gameData = message.safeGameData;
                 generateBoard(parseInt(gameData.rows), parseInt(gameData.columns), parseInt(gameData.mines), false);
                 

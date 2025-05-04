@@ -50,6 +50,13 @@ wss.on('connection', function (ws) {
                     console.log("room not found");
                     break;
                 }
+                
+                // temporary safeguard
+                if (!(room instanceof BattleRoom)) {
+                    console.log("not battleroom");
+                    break;
+                }
+                
                 const newTeamIndex = parseInt(message.team);
                 
                 // Check if already in a team
@@ -162,16 +169,11 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 
-                const flagID = parseInt(message.y) * room.columns + parseInt(message.x);
-                if (room instanceof CoopRoom) {
-                    room.board.flaggedIDs.delete(flagID);
-                    room.sendMessage({type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: room.flaggedIDs.size}, ws);
-                } else if (room instanceof BattleRoom) {
-                    room.boards[room.wsToTeamsIndex.get(ws)].flaggedIDs.delete(flagID);
-                    room.sendMessage(room.teams[room.wsToTeamsIndex.get(ws)], {type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: room.flaggedIDs.size});
-                } else {
-                    console.log("unknown room found??");
-                }
+                const board = room.findBoardFromWS(ws);
+                
+                const flagID = parseInt(message.y) * board.columns + parseInt(message.x);
+                board.flaggedIDs.delete(flagID);
+                room.sendMessage({type: "unflag", id: `cell${message.x}_${message.y}`, numFlags: board.flaggedIDs.size}, ws);
                 break;
             }
             case "placeFlag": {

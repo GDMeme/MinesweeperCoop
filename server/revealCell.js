@@ -79,7 +79,6 @@ export function revealCell(room, x, y, ws) {
         
         const secondsPassed = (new Date().getTime() - board.startTime) / 1000;
         
-        // Don't send game.minePlacements to client if they weren't the one that won
-        room.sendMessage({type: "win", minePlacements: Array.from(board.minePlacements), secondsPassed}, ws);
+        room.sendWin({type: "win", minePlacements: Array.from(board.minePlacements), secondsPassed}, ws)        
     }
 }

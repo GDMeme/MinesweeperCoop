@@ -1,4 +1,5 @@
 import { BaseRoom } from './BaseRoom.js';
+import { WStoPlayerName } from '../../util/constants.js';
 
 export class BattleRoom extends BaseRoom {
     constructor(roomID, wsPlayers = [], roomName) {
@@ -8,7 +9,7 @@ export class BattleRoom extends BaseRoom {
         this.teams = []; // Each team is its own array of websockets
         this.wsToTeamInfo = new Map(); // Map ws -> { teamIndex, playerIndex }
         
-        this.boards = []; // Index mapped to wsPlayers
+        this.boards = []; // Index mapped to each team
         this.ready  = []; // Mapped to individual player, not team
     }
     
@@ -17,7 +18,7 @@ export class BattleRoom extends BaseRoom {
     }
     
     findBoardFromWS(ws) {
-        return this.boards[this.wsToPlayersIndex.get(ws)]
+        return this.boards[this.wsToTeamInfo.get(ws).teamIndex];
     }
     
     // In battle room, send to the whole team
@@ -31,6 +32,31 @@ export class BattleRoom extends BaseRoom {
         this.teams[this.wsToTeamInfo.get(ws).teamIndex].forEach(ws => {
             ws.send(JSON.stringify(message));
         });
+    }
+    
+    sendWin(message, ws) {
+        const teamInfo = this.wsToTeamInfo.get(ws);
+        if (!teamInfo) {
+            console.log("teaminfo not found");
+            console.log("message was: ", message);
+            return;
+        }
+        
+        const { teamIndex, playerIndex } = teamInfo;
+        
+        // Send message to team who won
+        this.sendMessage(message, ws);
+        
+        // Send message to all teams that lost
+        for (let i = 0; i < this.teams.length; i++) {
+            if (i === teamIndex) {
+                continue;
+            }
+            
+            const playerList = this.teams[teamIndex].map(ws => WStoPlayerName.get(ws)).join(", ");
+            
+            this.sendMessage({type: "loss", teamIndex, playerList, secondsPassed: message.secondsPassed}, this.teams[i][0]);
+        }
     }
     
     removePlayer(ws) {

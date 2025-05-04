@@ -20,4 +20,8 @@ export class BaseRoom {
     sendMessage(message, ws) {
         throw new Error("sendMessage() must be implemented by subclass");
     }
+    
+    sendWin(message, ws) {
+        throw new Error("sendWin() must be implemented by subclass");
+    }
 }
