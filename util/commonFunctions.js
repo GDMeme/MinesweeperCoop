@@ -60,6 +60,7 @@ export function HTMLtoString(children) {
 }
 
 export function removeProbabilities() { // Only used client side
+    window.stopProbabilities = true;
     for (const cell of document.getElementById("game").children) {
         if (cell.className.split(" ")[0] === "cell") {
             cell.innerHTML = "";
