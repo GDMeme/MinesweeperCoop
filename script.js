@@ -14,6 +14,7 @@ window.largeBoard = false;
 window.firstClick = true;
 window.battleMode = false;
 window.chording = true;
+window.numTeams = 0;
 
 // Setup
 initialSetup();

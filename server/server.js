@@ -2,7 +2,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 import { revealCell } from './revealCell.js';
-import { checkWin, generateRandomMines, createBattleBoard, sendToGroup } from '../util/commonFunctions.js';
+import { checkWin, generateRandomMines, createBattleBoard, sendToGroup, generateRoomID } from '../util/commonFunctions.js';
 import { WStoPlayerName, roomTypes } from '../util/constants.js';
 import { CoopRoom } from './room/CoopRoom.js';
 import { BattleRoom } from './room/BattleRoom.js';
@@ -20,7 +20,6 @@ const roomIDtoRoom = new Map(); // For players joining
 
 // NOTES
 // wsIdCounter replaced with string "ws-" + Date.now()
-// Every room needs a roomID with string "battle-" + Date.now() or "coop-" + Date.now()
 // Anytime someone leaves/joins, should reset all "ready" players
 // also need to reset wsToPlayersIndex
 
@@ -45,6 +44,19 @@ wss.on('connection', function (ws) {
         
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
+            case "generateBattleBoard": {
+                const board = findBoardFromWS.get(ws);
+                
+                if (!board) {
+                    console.log("no board found");
+                    break;
+                }
+                
+                const { rows, columns, mines } = board;
+                
+                room.sendMessage({type: "generateBattleBoard", rows, columns, mines});
+                break;
+            }
             case "joinTeam": {
                 if (!room) {
                     console.log("room not found");
@@ -57,7 +69,8 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 
-                const newTeamIndex = parseInt(message.team);
+                // message.team is 1 indexed
+                const newTeamIndex = parseInt(message.team) - 1;
                 
                 // Check if already in a team
                 if (room.wsToTeamInfo.get(ws)) {
@@ -86,10 +99,20 @@ wss.on('connection', function (ws) {
                 break;
             }
             case "updateGamemode": {
+                // Only the host should be able to change gamemode
+                if (room.wsPlayers[0] !== ws) {
+                    console.log("non-host tried to change the gamemode");
+                    break;
+                }
                 const RoomClass = roomTypes[message.gamemode];
                 if (RoomClass) {
-                    const newRoom = new RoomClass(roomID, room.wsPlayers, room.roomName);
+                    const newRoom = new RoomClass(room.ID, room.wsPlayers, room.roomName);
+                    
+                    // Overwrite previous key
                     roomIDtoRoom.set(roomID, newRoom);
+                    
+                    // Send to everyone except person who updated gamemode
+                    sendToGroup({type: "updateGamemode", roomType: message.gamemode}, room.wsPlayers.filter(currentWS => currentWS !== ws));                    
                 } else {
                     console.log("Unknown gamemode:", message.gamemode);
                 }
@@ -105,16 +128,32 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 
-                // Check if everyone is ready
-                if (!room.ready.every(e => e === true)) {
-                    console.log("not everyone is ready: ", room.ready);
+                if (ws !== room.wsPlayers[0]) {
+                    console.log("non-host tried to start the game");
                     break;
                 }
                 
-                // todo check if the host was the one that sent this message using index 0
-                // send back the enablestartgamebutton if something fails?
+                // Check if everyone is ready
+                if (room.ready.filter(e => e === true).length !== room.wsPlayers.length) {
+                    console.log("not everyone is ready: ", room.ready);
+                    room.wsPlayers[0].send(JSON.stringify({type: "enableStartGameButton"}));
+                    break;
+                }
+                
+                // Check if there are at least 2 teams and at least 1 person on each team
+                
+                const nonEmptyTeams = room.teams.filter(team => team.length > 0);
+
+                if (nonEmptyTeams.length < 2) {
+                    console.log("Less than two teams with players");
+                    
+                    // Re-enable the start game button for the host
+                    room.wsPlayers[0].send(JSON.stringify({type: "enableStartGameButton"}));
+                    break;
+                }
                 
                 // Start the game
+                
                 room.ready = [];
                 room.inProgress = true;
                 const startTime = new Date().getTime() + 5000;
@@ -157,10 +196,23 @@ wss.on('connection', function (ws) {
                 
                 room.ready[room.wsToPlayersIndex.get(ws)] = true;
                 console.log("room.ready: ", room.ready);
-                if (room.ready.every(e => e === true)) {
-                    // Enable "Start Game" button for host
-                    room.wsPlayers[0].send(JSON.stringify({type: "enableStartGameButton"}));
+                
+                const nonEmptyTeams = room.teams.filter(team => team.length > 0);
+
+                if (nonEmptyTeams.length < 2) {
+                    console.log("Less than two teams with players");
+                    break;
                 }
+                
+                // Check if everyone is ready
+                if (room.ready.filter(e => e === true).length !== room.wsPlayers.length) {
+                    console.log("not everyone is ready");
+                    break;
+                }
+                
+                // Enable the start game button for the host
+                room.wsPlayers[0].send(JSON.stringify({type: "enableStartGameButton"}));
+                    
                 break;
             }
             case "unflag": {
@@ -202,7 +254,7 @@ wss.on('connection', function (ws) {
                 }
                 
                 // Default to CoopRoom on initial creation
-                const roomID = "coop-" + Date.now();
+                const roomID = generateRoomID();
                 const newRoom = new CoopRoom(roomID, [ws], message.roomName || `${WStoPlayerName.get(ws)}'s Room`);
                 roomIDtoRoom.set(roomID, newRoom);
                 WStoRoomID.set(ws, roomID);
@@ -219,6 +271,8 @@ wss.on('connection', function (ws) {
                 const currentRoom = roomIDtoRoom.get(message.roomID);
                 
                 // todo don't show games with this condition to UI when trying to join a game
+                // if they still clicked this room, send a message back saying to join a different room
+                // maybe send games again
                 if (currentRoom instanceof BattleRoom && currentRoom.inProgress) {
                     console.log("game already started! try again later");
                     break;

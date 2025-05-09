@@ -1,13 +1,12 @@
 import { generateBoard } from "./generateBoard.js";
 import { setupBoard } from "./setupBoard.js";
-import { removeProbabilities } from "./util/commonFunctions.js";
+import { removeProbabilities, setupBattleMode } from "./util/commonFunctions.js";
 
 export function wsMsgHandler(ws) {
     window.ws = ws;
     console.log("connected to server"); 
     
     let timerTimeout = null;
-    let countdownTimer = null;
     let countdownEnded = false;
 
     ws.addEventListener("message", (message) => {
@@ -16,7 +15,28 @@ export function wsMsgHandler(ws) {
             console.log("message: ", message); // No spamming logs.
         }
         switch (message.type) {
+            case "updateGamemode":
+                // Update UI based on the new room type
+                if (message.roomType === "battle") {
+                    setupBattleMode();
+                } else if (message.roomType === "coop") {
+                    document.querySelector('#coopinputs').style.display = "block";
+                    document.querySelector('#battleinputs').style.display = "none";
+                } else {
+                    console.log("unknown room type: ", message.roomType);
+                }
+            
+                break;
+            case "generateBattleBoard":
+                window.rows = parseInt(message.rows);
+                window.columns = parseInt(message.columns);
+                window.mines = parseInt(message.mines);
+                
+                generateBoard(window.rows, winodw.columns, window.mines);
+                break;
             case "loss":
+                document.getElementById('switchtocoopmode').style.display = "block";
+                document.querySelector('#teambuttons').style.display = "block";
                 document.getElementById("losstext").style.display = "block";
                 document.getElementById("losstext").textContent = `You lost! Team ${message.teamIndex} with player(s) ${message.playerList} won in ${message.secondsPassed}`;
                 window.noclicking = true;
@@ -28,9 +48,10 @@ export function wsMsgHandler(ws) {
                 console.log("lol");
                 break;
             case "unReady":
-                document.getElementById("readybutton").style.display = "inline-block";
+                document.getElementById("readybutton").style.display = "block";
                 break;
             case "enableStartGameButton":
+                document.getElementById("countdown").style.display = "block";
                 document.getElementById("startgamebutton").style.display = "inline-block";
                 break;
             case "gameProgress": {
@@ -64,6 +85,8 @@ export function wsMsgHandler(ws) {
                 break;
             }
             case "startGame": // Only for battle mode
+                window.noclicking = true;    
+            
                 document.getElementById("losstext").style.display = "none";
             
             
@@ -81,6 +104,8 @@ export function wsMsgHandler(ws) {
                         countdownEnded = true;
                         document.querySelector('#countdown').innerHTML = "";
                         console.log("countdown over");
+                        
+                        document.getElementById('generateboardbattle').style.display = "block";
                         window.noclicking = false;
                         return;
                     }
@@ -94,10 +119,10 @@ export function wsMsgHandler(ws) {
                     if (timeLeft < 2000) nextTimeout = 100;
                     if (timeLeft < 500) nextTimeout = 50;
                 
-                    countdownTimer = setTimeout(updateCountdown, nextTimeout);
+                    setTimeout(updateCountdown, nextTimeout);
                 }
                 
-                countdownTimer = setTimeout(updateCountdown, 100);
+                setTimeout(updateCountdown, 100);
             case "removePlayer":
                 // Remove mouse from screen
                 document.querySelector(`#mouse${message.wsID}`)?.remove();
@@ -150,6 +175,9 @@ export function wsMsgHandler(ws) {
                 break;
             case "win":
                 console.log("You win");
+                document.getElementById('switchtocoopmode').style.display = "block";
+                document.querySelector('#teambuttons').style.display = "block";
+                
                 window.noclicking = true;
                 document.querySelector("#win").style.display = "block"; // TODO: Change later
                 document.querySelector('#minecounter').innerHTML = "Mines left: 0";
@@ -199,6 +227,15 @@ export function wsMsgHandler(ws) {
                             child.remove();
                         }
                         document.querySelector('#inputs').className = "table";
+                        
+                        if (room.type === "battle") {
+                            document.querySelector('#battleinputs').style.display = "block";
+                            setupBattleMode();
+                        } else if (room.type === "coop") {
+                            document.querySelector('#coopinputs').style.display = "block";
+                        } else {
+                            console.log("unknown room type: ", room.type);
+                        }
                     }
                 }
                 break;

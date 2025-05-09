@@ -4,7 +4,9 @@ export class CoopRoom extends BaseRoom {
     constructor(roomId, wsPlayers = [], roomName) {
         super(roomId, wsPlayers, roomName);
 
-        // Will be a MinesweeperGame object
+        this.type = "coop";
+        
+        // Will be a MinesweeperBoard object
         this.board;
     }
     

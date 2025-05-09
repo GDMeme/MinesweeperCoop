@@ -23,7 +23,7 @@ export function generateBoard(rows, columns, mines, largeBoard) {
     }
     
     // If in battle mode, cannot start clicking early
-    window.noclicking = document.querySelector('#battlecheckbox').checked;
+    window.noclicking = window.battleMode;
     
     window.ws.send(JSON.stringify({type: 'generateBoard', rows, columns, mines, largeBoard, battleMode: window.noclicking}));
 }

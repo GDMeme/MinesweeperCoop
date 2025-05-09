@@ -87,6 +87,9 @@ export function cellmouseenter(event) {
 };
 
 const pressCellsAround = function(event) {
+    if (!window.chording) {
+        return;
+    }
     const currentX = parseInt(event.currentTarget.dataset.x);
     const currentY = parseInt(event.currentTarget.dataset.y);
     let currentCell;
