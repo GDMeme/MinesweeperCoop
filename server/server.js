@@ -6,6 +6,7 @@ import { checkWin, generateRandomMines, createBattleBoard, sendToGroup, generate
 import { WStoPlayerName, roomTypes } from '../util/constants.js';
 import { CoopRoom } from './room/CoopRoom.js';
 import { BattleRoom } from './room/BattleRoom.js';
+import { MinesweeperBoard } from './MinesweeperGame.js';
 
 // render.com provides tls certs
 const server = createServer();
@@ -393,14 +394,13 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 
-                const board = room.findBoardFromWS(ws);
-                
-                if (!board) {
-                    console.log("no board found");
-                    break;
-                }
+                // TODO if battle room, board already exists, just modify it
+                // todo if coop room, make a new board. make a class function for this
                 
                 delete message.type; // Remove the "type" property before copying the properties to game object
+                
+                // todo fix Default constructor
+                const board = room.findBoardFromWS(ws) ?? new MinesweeperBoard(0, 0, 0, false);
                 
                 // * Adds rows, columns, mines, largeBoard, battleMode
                 Object.assign(board, message); // TODO: Add validation to message so the client can't add random properties to game object
@@ -412,6 +412,7 @@ wss.on('connection', function (ws) {
                 board.flaggedIDs.clear();
                 
                 room.inProgress = true;
+                room.board = board;
                 
                 // Need to remove wsPlayers property before sending to client
                 const { wsPlayers, ...safeGameData } = board;

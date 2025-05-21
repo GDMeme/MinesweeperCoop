@@ -28,4 +28,8 @@ export class CoopRoom extends BaseRoom {
     removePlayer(ws) {
         return;
     }
+    
+    sendWin(message, ws) {
+        this.sendMessage(message);
+    }
 }
