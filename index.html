@@ -61,56 +61,57 @@
         <button id="tryconnectagain">Click here to try to connect again!</button>
     </div>
     <div class="nodisplay" id="inputs">
-        <div class="table-cell">
-            <label for="customrows">Rows:</label>
-            <input class="input-data" size="3" id="customrows">
+        <div class="nodisplay" id="coopinputs">
+            <div class="table-cell">
+                <label for="customrows">Rows:</label>
+                <input class="input-data" size="3" id="customrows">
+            </div>
+            <div class="table-cell">
+                <label for="customcolumns">Columns:</label>
+                <input class="input-data" size="3" id="customcolumns">
+            </div>
+            <div class="table-cell">
+                <label for="custommines">Mines:</label>
+                <input class="input-data" size="3" id="custommines">
+            </div>
+            <div class="table-cell">
+                <label for="largeboard">5x5 Mine Radius</label>
+                <input type="checkbox" class="input-data" id="largeboard">
+            </div>
+            <div class="table-cell" id="switchtobattlemode">
+                <button class="input-data">Switch to Battle Mode </button>
+            </div>
+            <div class="table-cell">
+                <label for="disablechordcheckbox">Disable Chording</label>
+                <input type="checkbox" class="input-data" id="disablechordcheckbox">
+            </div>
+            <div class="table-cell">
+                <button class="input-data" id="generateboardcoop">Generate Board</button>
+            </div>
         </div>
-        <div class="table-cell">
-            <label for="customcolumns">Columns:</label>
-            <input class="input-data" size="3" id="customcolumns">
-        </div>
-        <div class="table-cell">
-            <label for="custommines">Mines:</label>
-            <input class="input-data" size="3" id="custommines">
-        </div>
-        <div class="table-cell">
-            <label for="largeboard">5x5 Mine Radius</label>
-            <input type="checkbox" class="input-data" id="largeboard">
-        </div>
-        <div class="table-cell">
-            <label for="battlecheckbox">Battle Mode</label>
-            <input type="checkbox" class="input-data" id="battlecheckbox">
-        </div>
-        <div>
-            <button id="updategamemode">Update Gamemode</button>
-        </div>
-        <div class="table-cell">
-            <label for="disablechordcheckbox">Disable Chording</label>
-            <input type="checkbox" class="input-data" id="disablechordcheckbox">
-        </div>
-        <div class="table-cell">
-            <button id="generateboard">Generate Board</button>
+        <div class="nodisplay" id="battleinputs">
+            <div class="table-cell" id="switchtocoopmode">
+                <button class="input-data">Switch to Coop Mode</button>
+            </div>
+            <div class="table-cell nodisplay" id="generateboardbattle">
+                <button class="input-data">Generate Board</button>
+            </div>
+            <div id="readybutton">
+                <button>Ready</button>
+            </div>
+            <div class="nodisplay" id="countdown">
+                Waiting for other players...
+            </div>
+            <div class="nodisplay" id="startgamebutton">
+                <button>Start Game</button>
+            </div>
+            <!-- temp stuff -->
+            <div id="teambuttons">
+                <button class="input-data" id="addteam">Add Team</button>
+                <button class="input-data" id="removeteam">Remove Team</button>
+            </div>
         </div>
     </div>
-    <br>
-    <button id="readybutton">Ready</button>
-    <br>
-    <div class="nodisplay" id="countdown">
-        Waiting for other players...
-    </div>
-    <div class="nodisplay" id="playerprogress">
-        <!-- ex. Player 1: 5% complete -->
-        <!-- Player 2: 10% complete -->
-        <!-- Player 3: Exploded at 10% completion -->
-    </div>
-    <br>
-    <button id="startgamebutton">Start Game</button>
-    <br>
-    <br>
-    
-    <!-- temp stuff -->
-    <button id="jointeam1">Join Team 1</button>
-    <button id="jointeam2">Join Team 2</button>
     
     <div id="losstext"></div>
     

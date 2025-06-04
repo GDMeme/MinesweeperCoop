@@ -1,4 +1,4 @@
-export class MinesweeperGame {
+export class MinesweeperBoard {
     constructor({ rows, columns, mines, largeBoard = false }) {
         this.minePlacements = new Set();
         this.rows = rows;

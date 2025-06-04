@@ -1,8 +1,7 @@
-import { cellmouseout, cellmouseup, cellmouseenter } from './mouseEvents.js';
 import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
-import { connect } from './connect.js'; // * MAKE SURE THIS STAYS ON LINE 4
-import { HTMLtoString } from './util/commonFunctions.js';
+import { connect } from './connect.js';
+import { HTMLtoString, setupBattleMode, addTeamButton } from './util/commonFunctions.js';
 import { doAnalysis, dropHandler } from './solver/client/main.js';
 
 export function initialSetup() {
@@ -91,6 +90,7 @@ export function initialSetup() {
         document.querySelector('#roombuttons').style.display = "none";
         document.querySelector('#roomsetup').style.display = "block";
         document.querySelector('#roomsetup').className = "setup";
+        document.querySelector('#coopinputs').style.display = "block";
     }
     
     document.querySelector('#joinroom').onclick = function() {
@@ -116,12 +116,16 @@ export function initialSetup() {
         window.ws.send(JSON.stringify({type: "createRoom", roomName: window.roomName}))
     }
     
-    document.querySelector('#generateboard').onclick = function() {
+    document.querySelector('#generateboardcoop').onclick = function() {
         const rows = parseInt(document.querySelector('#customrows').value);
         const columns = parseInt(document.querySelector('#customcolumns').value);
         const mines = parseInt(document.querySelector('#custommines').value);
         const largeBoard = document.querySelector('#largeboard').checked;
         generateBoard(rows, columns, mines, largeBoard);
+    }
+    
+    document.querySelector('#generateboardbattle').onclick = function() {
+        window.ws.send(JSON.stringify({type: "generateBattleBoard"}));
     }
     
     document.querySelector('#readybutton').onclick = function() {
@@ -131,31 +135,39 @@ export function initialSetup() {
     }
     
     document.querySelector('#startgamebutton').onclick = function() {
-        // todo put this back
-        // document.querySelector('#startgamebutton').style.display = "none";
+        document.querySelector('#startgamebutton').style.display = "none";
+        document.querySelector('#battleinputs').style.display = "block";
         document.querySelector('#countdown').style.display = "none";
+        document.querySelector('#switchtocoopmode').style.display = "none";
+        document.querySelector('#teambuttons').style.display = "none";
         window.ws.send(JSON.stringify({type: "startGame"}));
     }
     
-    document.querySelector('#updategamemode').onclick = function() {
-        const gamemode = document.querySelector("#battlecheckbox").checked ? "battle" : "coop";
-        if (gamemode === "battle") {
-            document.querySelector('#readybutton').style.display = "inline-block";
-            document.querySelector('#jointeam1').style.display = "inline-block";
-            document.querySelector('#jointeam2').style.display = "inline-block";
+    document.querySelector('#switchtobattlemode').onclick = function() {
+        setupBattleMode();
+        window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "battle"}));
+    }
+    
+    document.querySelector('#switchtocoopmode').onclick = function() {
+        document.querySelector('#coopinputs').style.display = "block";
+        document.querySelector('#battleinputs').style.display = "none";
+        
+        window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "coop"}));
+    }
+    
+    document.querySelector('#addteam').onclick = function() {
+        addTeamButton();
+    }
+    
+    document.getElementById("removeteam").onclick = () => {
+        if (window.numTeams > 2) {
+            const lastTeamButton = document.getElementById(`jointeam${window.numTeams}`);
+            lastTeamButton.remove();
+            window.numTeams--;
+        } else {
+            console.log("Can't remove below Team 2");
         }
-        window.ws.send(JSON.stringify({type: "updateGamemode", gamemode}));
-    }
-    
-    // * temp stuff
-    // Team will be 0 indexed
-    document.querySelector('#jointeam1').onclick = function() {
-        window.ws.send(JSON.stringify({type: "joinTeam", team: 0}));
-    }
-    
-    document.querySelector('#jointeam2').onclick = function() {
-        window.ws.send(JSON.stringify({type:"joinTeam", team: 1}));
-    }
+    };
     
     //* Probability Stuff
     document.getElementById("showprobabilities").addEventListener('click', async function() {

@@ -6,6 +6,8 @@ export class BattleRoom extends BaseRoom {
         // Set up roomID and wsPlayers
         super(roomID, wsPlayers, roomName);
         
+        this.type = "battle";
+        
         this.teams = []; // Each team is its own array of websockets
         this.wsToTeamInfo = new Map(); // Map ws -> { teamIndex, playerIndex }
         
