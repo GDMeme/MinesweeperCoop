@@ -172,8 +172,15 @@ export function initialSetup() {
     //* Probability Stuff
     document.getElementById("showprobabilities").addEventListener('click', async function() {
         const data = HTMLtoString(document.getElementById("game").children);
+        window.stopProbabilities = false;
         await dropHandler(data);
         const bestMove = (await doAnalysis())[0];
+        
+        // If someone revealed/flagged a cell while probabilities were being calculated, don't show probabilities
+        if (window.stopProbabilities) {
+            return;
+        }
+        
         if (bestMove !== undefined) { // Check if board is fully solved
             if (bestMove.action === 1) { // Regular left click (clear)
                 // Green
