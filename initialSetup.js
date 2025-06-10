@@ -76,7 +76,7 @@ export function initialSetup() {
         document.querySelector('#playersetup').style.display = "none";
         document.querySelector('#roombuttons').style.display = "block";
         document.querySelector('#roombuttons').className = "setup";
-        playerName = document.querySelector('#playername').value;
+        playerName = document.querySelector('#playername').value || "Anonymous";
         
         ws.send(JSON.stringify({type: "newConnection", playerName}));
         

@@ -260,7 +260,16 @@ wss.on('connection', function (ws) {
                 
                 // Default to CoopRoom on initial creation
                 const roomID = generateRoomID();
-                const newRoom = new CoopRoom(roomID, [ws], message.roomName || `${WStoPlayerName.get(ws)}'s Room`);
+                
+                let roomName;
+                const playerName = WStoPlayerName.get(ws);
+                if (playerName[playerName.length - 1] === "s") {
+                    roomName = `${playerName}' Room`;
+                } else {
+                    roomName = `${playerName}'s Room`;
+                }
+                
+                const newRoom = new CoopRoom(roomID, [ws], message.roomName || roomName);
                 roomIDtoRoom.set(roomID, newRoom);
                 WStoRoomID.set(ws, roomID);
                 break;
