@@ -46,7 +46,11 @@ wss.on('connection', function (ws) {
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
             case "generateBattleBoard": {
-                const board = findBoardFromWS.get(ws);
+                if (!room) {
+                    console.log("room not found");
+                    break;
+                }
+                const board = room.findBoardFromWS.get(ws);
                 
                 if (!board) {
                     console.log("no board found");
