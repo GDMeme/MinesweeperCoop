@@ -47,6 +47,7 @@ export function cellmouseup(event) {
         console.log("revealing cell: ", event);
         window.ws.send(JSON.stringify({type: "revealCell", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
     // Chording
+    // TODO Add chording options (Disable left click to chord, enable left + right click to chord) Maybe start with left click chord enabled?
     } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) {
         const cellNumber = parseInt(event.currentTarget.className.split('type')[1]);
         const currentX = parseInt(event.currentTarget.dataset.x);

@@ -157,6 +157,7 @@ export function wsMsgHandler(ws) {
                 document.querySelector("#lose").style.display = "block"; // TODO: Change later
                 break;
             case "revealCell": // Guaranteed not to be a bomb
+                // TODO If there was a board generated but no clicks, someone joins after (they don't see the board), then someone clicks, breaks here
                 if (window.firstClick) {
                     window.firstClick = false;
                     timerTimeout = setTimeout(updateTimer, 1000); // Chill for 1 second cuz offset

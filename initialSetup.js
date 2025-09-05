@@ -143,10 +143,30 @@ export function initialSetup() {
         window.ws.send(JSON.stringify({type: "startGame"}));
     }
     
-    document.querySelector('#switchtobattlemode').onclick = function() {
-        setupBattleMode();
-        window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "battle"}));
+    // Preset sizes of boards
+    document.querySelector('#beginnerbutton').onclick = function() {
+        document.querySelector('#customrows').value = 9;
+        document.querySelector('#customcolumns').value = 9;
+        document.querySelector('#custommines').value = 10;
     }
+    
+    document.querySelector('#intermediatebutton').onclick = function() {
+        document.querySelector('#customrows').value = 16;
+        document.querySelector('#customcolumns').value = 16;
+        document.querySelector('#custommines').value = 40;
+    }
+    
+    document.querySelector('#expertbutton').onclick = function() {
+        document.querySelector('#customrows').value = 16;
+        document.querySelector('#customcolumns').value = 30;
+        document.querySelector('#custommines').value = 99;
+    }
+    
+    // * TEMP disable battle mode
+    // document.querySelector('#switchtobattlemode').onclick = function() {
+    //     setupBattleMode();
+    //     window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "battle"}));
+    // }
     
     document.querySelector('#switchtocoopmode').onclick = function() {
         document.querySelector('#coopinputs').style.display = "block";
@@ -165,12 +185,19 @@ export function initialSetup() {
             lastTeamButton.remove();
             window.numTeams--;
         } else {
-            console.log("Can't remove below Team 2");
+            // TODO add some UI message
+            console.log("Must have minimum of 2 teams");
         }
     };
     
     //* Probability Stuff
     document.getElementById("showprobabilities").addEventListener('click', async function() {
+        // Board lost
+        // TODO maybe probabilities can still be shown when game is lost but it doesn't work in current implementation
+        if (window.noclicking) {
+            return;
+        }
+        
         const data = HTMLtoString(document.getElementById("game").children);
         window.stopProbabilities = false;
         await dropHandler(data);
@@ -178,6 +205,7 @@ export function initialSetup() {
         
         // If someone revealed/flagged a cell while probabilities were being calculated, don't show probabilities
         if (window.stopProbabilities) {
+            console.log("window.stopProbabiltiies is true, not showing probabilities");
             return;
         }
         
