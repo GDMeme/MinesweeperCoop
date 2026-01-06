@@ -46,9 +46,6 @@ wss.on('connection', function (ws) {
         
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
-            case "revealDelayedCells": {
-                
-            }
             case "addCellsToReveal": { // Only for delayed room
                 if (!room) {
                     console.log("no room detected!");
@@ -389,7 +386,15 @@ wss.on('connection', function (ws) {
                 }
                 
                 if (room.type === "delayed") {
-                    message.cellsToReveal = room.cellsToReveal;
+                    message.cellsToReveal = Array.from(room.cellsToReveal);
+                    if (!message.cellsToReveal) {
+                        break;
+                    }
+                    
+                    console.log("message.cellsToReveal: ", message.cellsToReveal);
+                    const [tempX, tempY] = message.cellsToReveal[0].split(',');
+                    message.x = tempX
+                    message.y = tempY;
                 }
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
@@ -397,7 +402,7 @@ wss.on('connection', function (ws) {
                 const board = room.findBoardFromWS(ws);
                 
                 if (board.firstClick) { // Cannot chord on first click, just reveal one cell
-                    revealCell(board, x, y, ws);
+                    revealCell(room, x, y, ws);
                     break;
                 }
                 // Reveal all chorded cells even if they hit a mine
@@ -434,8 +439,9 @@ wss.on('connection', function (ws) {
                     // * Adds rows, columns, mines, largeBoard
                     Object.assign(board, message); // TODO: Add validation to message so the client can't add random properties to game object
                     
-                    board.minePlacements = generateRandomMines(board.rows, board.columns, board.mines);
+                    console.log("board.minePlacements: ", board.minePlacements);
                     board.reset();
+                    board.minePlacements = generateRandomMines(board.rows, board.columns, board.mines);
                     room.reset();
                     room.board = board;
                     

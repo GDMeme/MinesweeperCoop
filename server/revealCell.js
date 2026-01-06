@@ -4,7 +4,6 @@ import { checkWin } from '../util/commonFunctions.js';
 
 export function revealCell(room, x, y, ws) {
     const board = room.findBoardFromWS(ws);
-    console.log("board is: ", board);
     
     if (x < 0 || y < 0 || x >= board.columns || y >= board.rows) {
         console.log("out of bounds");

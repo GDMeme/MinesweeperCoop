@@ -4,7 +4,7 @@ import { connect } from './connect.js';
 import { addTeamButton, setupBattleMode } from './util/battleFunctions.js';
 import { HTMLtoString } from './util/commonFunctions.js';
 import { doAnalysis, dropHandler } from './solver/client/main.js';
-import { setupDelayedMode } from './util/delayedFunctions.js';
+import { revealDelayedCells, setupDelayedMode } from './util/delayedFunctions.js';
 import { setupCoopMode } from './util/coopFunctions.js';
 
 export function initialSetup() {

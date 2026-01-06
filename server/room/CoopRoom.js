@@ -19,7 +19,7 @@ export class CoopRoom extends BaseRoom {
         return this.inProgress;
     }
     
-    findBoardFromWS() {
+    findBoardFromWS(ws) {
         return this.board;
     }
     

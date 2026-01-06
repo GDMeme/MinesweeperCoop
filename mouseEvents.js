@@ -2,6 +2,10 @@ import { coordinateOutOfBounds } from "./util/commonFunctions.js";
 import * as C from "./util/constants.js";
 
 export function cellmouseout(event) {
+    if (window.mode === "delayed") {
+        return;
+    }
+    
     if (event.currentTarget.className === "cell pressed" && window.leftPressed) {
         event.currentTarget.className = "cell closed";
     }
@@ -15,10 +19,6 @@ export function cellmousedown(event) {
     }
     // Left mouse button
     if (event.button === 0 && event.currentTarget.className === "cell closed") {
-        if (window.mode === "delayed") {
-            window.cellsToReveal.push([event.currentTarget.dataset.x, event.currentTarget.dataset.y].join());
-            return;
-        }
         event.currentTarget.className = "cell pressed";
     // Left or middle mouse button
     } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) {
@@ -49,7 +49,8 @@ export function cellmouseup(event) {
     // Normal reveal
     if (event.button === 0 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
         if (window.mode === "delayed") {
-            // TODO server side needs to store what people tried to reveal
+            const coordinate = `${event.currentTarget.dataset.x},${event.currentTarget.dataset.y}`;
+            window.ws.send(JSON.stringify({type: "addCellsToReveal", cellsToReveal: [coordinate]}));
             return;
         }
         console.log("revealing cell: ", event);
@@ -77,7 +78,7 @@ export function cellmouseup(event) {
         }
         if (flagCounter === cellNumber) {
             if (window.mode === "delayed") {
-                window.cellsToReveal.add(...cellsToReveal);
+                window.ws.send(JSON.stringify({type: "addCellsToReveal", cellsToReveal}));
                 return;
             }
             window.ws.send(JSON.stringify({type: "revealCells", cellsToReveal, x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
