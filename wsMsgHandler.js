@@ -1,6 +1,9 @@
 import { generateBoard } from "./generateBoard.js";
 import { setupBoard } from "./setupBoard.js";
-import { removeProbabilities, setupBattleMode } from "./util/commonFunctions.js";
+import { removeProbabilities } from "./util/commonFunctions.js";
+import { setupBattleMode } from "./util/battleFunctions.js";
+import { setupDelayedMode } from "./util/delayedFunctions.js";
+import { setupCoopMode } from "./util/coopFunctions.js";
 
 export function wsMsgHandler(ws) {
     window.ws = ws;
@@ -16,12 +19,15 @@ export function wsMsgHandler(ws) {
         }
         switch (message.type) {
             case "updateGamemode":
+                this.mode = message.roomType;
+                
                 // Update UI based on the new room type
                 if (message.roomType === "battle") {
                     setupBattleMode();
                 } else if (message.roomType === "coop") {
-                    document.querySelector('#coopinputs').style.display = "block";
-                    document.querySelector('#battleinputs').style.display = "none";
+                    setupCoopMode();
+                } else if (message.roomType === "delayed") {
+                    setupDelayedMode();
                 } else {
                     console.log("unknown room type: ", message.roomType);
                 }
@@ -105,7 +111,6 @@ export function wsMsgHandler(ws) {
                         document.querySelector('#countdown').innerHTML = "";
                         console.log("countdown over");
                         
-                        document.getElementById('generateboardbattle').style.display = "block";
                         window.noclicking = false;
                         return;
                     }

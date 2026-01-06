@@ -2,11 +2,12 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 import { revealCell } from './revealCell.js';
-import { checkWin, generateRandomMines, createBattleBoard, sendToGroup, generateRoomID } from '../util/commonFunctions.js';
+import { createBattleBoard } from '../util/battleFunctions.js';
+import { checkWin, generateRandomMines, sendToGroup, generateRoomID } from '../util/commonFunctions.js';
 import { WStoPlayerName, roomTypes } from '../util/constants.js';
 import { CoopRoom } from './room/CoopRoom.js';
 import { BattleRoom } from './room/BattleRoom.js';
-import { MinesweeperBoard } from './MinesweeperGame.js';
+import { MinesweeperBoard } from './MinesweeperBoard.js';
 
 // render.com provides tls certs
 const server = createServer();
@@ -45,21 +46,23 @@ wss.on('connection', function (ws) {
         
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
-            case "generateBattleBoard": {
+            case "revealDelayedCells": {
+                
+            }
+            case "addCellsToReveal": { // Only for delayed room
                 if (!room) {
-                    console.log("room not found");
-                    break;
-                }
-                const board = room.findBoardFromWS.get(ws);
-                
-                if (!board) {
-                    console.log("no board found");
+                    console.log("no room detected!");
                     break;
                 }
                 
-                const { rows, columns, mines } = board;
+                if (room.type !== "delayed") {
+                    console.log("not a delayed room");
+                    break;
+                }
                 
-                room.sendMessage({type: "generateBattleBoard", rows, columns, mines});
+                for (const coordinate of message.cellsToReveal) {
+                    room.cellsToReveal.add(coordinate);
+                }
                 break;
             }
             case "joinTeam": {
@@ -158,12 +161,12 @@ wss.on('connection', function (ws) {
                 }
                 
                 // Start the game
-                
-                room.ready = [];
+                room.ready = new Array(room.wsPlayers.length);
                 room.inProgress = true;
                 const startTime = new Date().getTime() + 5000;
                 room.startTime = startTime;
                 
+                // TODO Make this more customizable
                 // Randomly generate dimensions and mines within reason
                 // 10 - 30
                 const rows = Math.floor(Math.random() * 21) + 10;
@@ -373,7 +376,7 @@ wss.on('connection', function (ws) {
                 revealCell(room, x, y, ws);
                 break;
             }
-            case "revealChord": {
+            case "revealCells": {
                 if (!room) {
                     console.log("no room detected!");
                     // nice try
@@ -383,6 +386,10 @@ wss.on('connection', function (ws) {
                     console.log("not allowed to click");
                     ws.send(JSON.stringify({type: "niceTry"}));
                     break;
+                }
+                
+                if (room.type === "delayed") {
+                    message.cellsToReveal = room.cellsToReveal;
                 }
                 const x = parseInt(message.x);
                 const y = parseInt(message.y);
@@ -407,35 +414,42 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 
-                // TODO if battle room, board already exists, just modify it
-                // todo if coop room, make a new board. make a class function for this
-                
-                delete message.type; // Remove the "type" property before copying the properties to game object
-                
-                // todo fix Default constructor
-                const board = room.findBoardFromWS(ws) ?? new MinesweeperBoard(0, 0, 0, false);
-                
-                // * Adds rows, columns, mines, largeBoard, battleMode
-                Object.assign(board, message); // TODO: Add validation to message so the client can't add random properties to game object
-                
-                board.minePlacements = generateRandomMines(board.rows, board.columns, board.mines);
-       
-                board.cellsRevealed.clear();
-                board.firstClick = true;
-                board.flaggedIDs.clear();
-                
-                room.inProgress = true;
-                room.board = board;
-                
-                // Need to remove wsPlayers property before sending to client
-                const { wsPlayers, ...safeGameData } = board;
-                
-                room.sendMessage({type: "generatedBoard", safeGameData: safeGameData, boardOwnerName: WStoPlayerName.get(ws)}, ws);
-                
-                break;
+                if (room.type === "battle") {
+                    const board = room.findBoardFromWS.get(ws);
+                    
+                    if (!board) {
+                        console.log("no board found");
+                        break;
+                    }
+                    
+                    const { rows, columns, mines } = board;
+                    
+                    room.sendMessage({type: "generateBattleBoard", rows, columns, mines});
+                    break;
+                } else { // CoopRoom and DelayedRoom
+                    delete message.type; // Remove the "type" property before copying the properties to game object
+                    
+                    const board = room.findBoardFromWS(ws) ?? new MinesweeperBoard(0, 0, 0, false);
+                    
+                    // * Adds rows, columns, mines, largeBoard
+                    Object.assign(board, message); // TODO: Add validation to message so the client can't add random properties to game object
+                    
+                    board.minePlacements = generateRandomMines(board.rows, board.columns, board.mines);
+                    board.reset();
+                    room.reset();
+                    room.board = board;
+                    
+                    // Need to remove wsPlayers property before sending to client
+                    const { wsPlayers, ...safeGameData } = board;
+                    
+                    room.sendMessage({type: "generatedBoard", safeGameData, boardOwnerName: WStoPlayerName.get(ws)}, ws);
+                    
+                    break;
+                }
             }
-            default:
+            default: {
                 ws.send(JSON.stringify({type: "niceTry", message}));
+            }
         }
     });
     ws.on('close', function () {

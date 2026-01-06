@@ -1,17 +1,20 @@
 import { generateBoard } from './generateBoard.js';
 import { wsMsgHandler } from './wsMsgHandler.js';
 import { connect } from './connect.js';
-import { HTMLtoString, setupBattleMode, addTeamButton } from './util/commonFunctions.js';
+import { addTeamButton, setupBattleMode } from './util/battleFunctions.js';
+import { HTMLtoString } from './util/commonFunctions.js';
 import { doAnalysis, dropHandler } from './solver/client/main.js';
+import { setupDelayedMode } from './util/delayedFunctions.js';
+import { setupCoopMode } from './util/coopFunctions.js';
 
 export function initialSetup() {
-    
     document.body.style.backgroundColor = "#121212";
     
     // Immediately try connecting to websocket
     connect(true).then(function(ws) {
     
         // Start 5 minute timer to spam reconnects every 5 minutes
+        // This is to prevent render.com from shutting down the websocket due to inactivity
         const tryNewWSConnection = function () {
             connect(false).then(function(ws) {
                 console.log("Tried to make a new websocket connection");
@@ -72,7 +75,6 @@ export function initialSetup() {
     });
     
     document.querySelector('#submitplayername').onclick = function() {
-        // TODO: Add verification that name cannot be blank
         document.querySelector('#playersetup').style.display = "none";
         document.querySelector('#roombuttons').style.display = "block";
         document.querySelector('#roombuttons').className = "setup";
@@ -112,20 +114,15 @@ export function initialSetup() {
         document.querySelector('#roomsetup').style.display = "none";
         document.querySelector('#inputs').className = "table";
         
-        // TODO: Empty room name results in a super tiny button
         window.ws.send(JSON.stringify({type: "createRoom", roomName: window.roomName}))
     }
     
-    document.querySelector('#generateboardcoop').onclick = function() {
+    document.querySelector('#generateboard').onclick = function() {
         const rows = parseInt(document.querySelector('#customrows').value);
         const columns = parseInt(document.querySelector('#customcolumns').value);
         const mines = parseInt(document.querySelector('#custommines').value);
         const largeBoard = document.querySelector('#largeboard').checked;
         generateBoard(rows, columns, mines, largeBoard);
-    }
-    
-    document.querySelector('#generateboardbattle').onclick = function() {
-        window.ws.send(JSON.stringify({type: "generateBattleBoard"}));
     }
     
     document.querySelector('#readybutton').onclick = function() {
@@ -162,17 +159,23 @@ export function initialSetup() {
         document.querySelector('#custommines').value = 99;
     }
     
-    // * TEMP disable battle mode
-    // document.querySelector('#switchtobattlemode').onclick = function() {
-    //     setupBattleMode();
-    //     window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "battle"}));
-    // }
+    document.querySelector('#switchtobattlemode').onclick = function() {
+        setupBattleMode();
+        window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "battle"}));
+    }
+    
+    document.querySelector('#switchtodelayedmode').onclick = function() {
+        setupDelayedMode();        
+        window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "delayed"}));
+    }
     
     document.querySelector('#switchtocoopmode').onclick = function() {
-        document.querySelector('#coopinputs').style.display = "block";
-        document.querySelector('#battleinputs').style.display = "none";
-        
+        setupCoopMode();
         window.ws.send(JSON.stringify({type: "updateGamemode", gamemode: "coop"}));
+    }
+    
+    document.querySelector('#revealdelayedcells').onclick = function() {
+        revealDelayedCells();
     }
     
     document.querySelector('#addteam').onclick = function() {

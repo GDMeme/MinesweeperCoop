@@ -1,10 +1,11 @@
 import { BaseRoom } from './BaseRoom.js';
 
-export class CoopRoom extends BaseRoom {
+export class DelayedRoom extends BaseRoom {
     constructor(roomId, wsPlayers = [], roomName) {
         super(roomId, wsPlayers, roomName);
 
-        this.type = "coop";
+        this.type = "delayed";
+        this.cellsToReveal = new Set(); // Since the server needs to keep track
         
         // Will be a MinesweeperBoard object
         this.board;
@@ -23,7 +24,7 @@ export class CoopRoom extends BaseRoom {
         return this.board;
     }
     
-    // In coop room, send to all
+    // In delayed room, send to all
     sendMessage(message) {
         this.wsPlayers.forEach(ws =>
             ws.send(JSON.stringify(message))

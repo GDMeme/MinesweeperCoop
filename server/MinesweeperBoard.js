@@ -12,4 +12,11 @@ export class MinesweeperBoard {
         this.cellsRevealed = new Map(); // Map so board state requests are less server-intensive
         this.flaggedIDs = new Set(); // * Keep this so I don't need to loop through all cells when revealing misflags
     }
+    
+    reset() {
+        this.minePlacements.clear();
+        this.firstClick = true;
+        this.cellsRevealed.clear();
+        this.flaggedIDs.clear();
+    }
 }

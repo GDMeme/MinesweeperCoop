@@ -9,7 +9,6 @@ export function revealNeighbours(room, currentX, currentY, ws) {
     const frontier = [[currentX, currentY].join()];
     let tileStatus;
     const newRevealedCellsMap = new Map();
-    const newRevealedCellsMapToArray = [];
     let cellID;
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
@@ -48,6 +47,7 @@ export function revealNeighbours(room, currentX, currentY, ws) {
     }
     
     // Send new cells that were revealed
+    const newRevealedCellsMapToArray = [];
     for (const [key, value] of newRevealedCellsMap.entries()) {
         newRevealedCellsMapToArray.push({key, value});
     }

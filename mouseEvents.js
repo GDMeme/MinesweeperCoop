@@ -15,6 +15,10 @@ export function cellmousedown(event) {
     }
     // Left mouse button
     if (event.button === 0 && event.currentTarget.className === "cell closed") {
+        if (window.mode === "delayed") {
+            window.cellsToReveal.push([event.currentTarget.dataset.x, event.currentTarget.dataset.y].join());
+            return;
+        }
         event.currentTarget.className = "cell pressed";
     // Left or middle mouse button
     } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) {
@@ -44,6 +48,10 @@ export function cellmouseup(event) {
     }
     // Normal reveal
     if (event.button === 0 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
+        if (window.mode === "delayed") {
+            // TODO server side needs to store what people tried to reveal
+            return;
+        }
         console.log("revealing cell: ", event);
         window.ws.send(JSON.stringify({type: "revealCell", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
     // Chording
@@ -54,7 +62,7 @@ export function cellmouseup(event) {
         const currentY = parseInt(event.currentTarget.dataset.y);
         let flagCounter = 0;
         let currentCell;
-        const cellsToReveal = [[event.currentTarget.dataset.x, event.currentTarget.dataset.y].join()];
+        const cellsToReveal = [];
         for (const [x, y] of window.largeBoard ? C.bigDirectionArray : C.directionArray) {
             const newCoordinate = [currentX + x, currentY + y];
             if (coordinateOutOfBounds(newCoordinate, window.rows, window.columns)) {
@@ -68,7 +76,11 @@ export function cellmouseup(event) {
             }
         }
         if (flagCounter === cellNumber) {
-            window.ws.send(JSON.stringify({type: "revealChord", cellsToReveal, x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
+            if (window.mode === "delayed") {
+                window.cellsToReveal.add(...cellsToReveal);
+                return;
+            }
+            window.ws.send(JSON.stringify({type: "revealCells", cellsToReveal, x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
         } else {
             closeCellsAround(event);
         }
@@ -87,7 +99,7 @@ export function cellmouseenter(event) {
     }
 };
 
-const pressCellsAround = function(event) {
+function pressCellsAround(event) {
     if (!window.chording) {
         return;
     }
@@ -106,7 +118,7 @@ const pressCellsAround = function(event) {
     }
 }
 
-const closeCellsAround = function(event) {
+function closeCellsAround(event) {
     const currentX = parseInt(event.currentTarget.dataset.x);
     const currentY = parseInt(event.currentTarget.dataset.y);
     let currentCell;

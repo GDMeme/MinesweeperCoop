@@ -1,0 +1,13 @@
+Solver calculations will be done client-side
+When a tile is revealed (by anyone), remove probabilities 
+
+Is it possible to immediately stop client-side calculations when a tile is revealed by anyone?
+
+Change colour of tiles when probabilities are shown depending on the number
+
+Host gets "Start Game" button
+
+3 gamemodes? Casual, coop, ranked or smthing like that
+ELO system? Like bo7 or something, maybe start with smaller board and slowly increase size and density?
+Can queue into randoms or just casual play against friends
+Game size of 4?

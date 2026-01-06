@@ -3,7 +3,6 @@ import { WStoPlayerName } from '../../util/constants.js';
 
 export class BattleRoom extends BaseRoom {
     constructor(roomID, wsPlayers = [], roomName) {
-        // Set up roomID and wsPlayers
         super(roomID, wsPlayers, roomName);
         
         this.type = "battle";
@@ -13,6 +12,13 @@ export class BattleRoom extends BaseRoom {
         
         this.boards = []; // Index mapped to each team
         this.ready  = []; // Mapped to individual player, not team
+    }
+    
+    reset() { // Is only called when a new game starts
+        this.boards = [];
+        this.inProgress = true; // Should be true, only false when game ends
+        this.startTime = null;
+        this.ready = new Array(this.wsPlayers.length);
     }
     
     allowClicks() {

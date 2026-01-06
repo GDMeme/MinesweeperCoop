@@ -1,5 +1,6 @@
 import { BattleRoom } from "../server/room/BattleRoom.js";
 import { CoopRoom } from "../server/room/CoopRoom.js";
+import { DelayedRoom } from "../server/room/DelayedRoom.js";
 
 export const directionArray = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
 
@@ -9,6 +10,7 @@ export const bigDirectionArray = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1,
 export const WStoPlayerName = new Map(); // Maps client websocket to player name
 
 export const roomTypes = {
+    coop: CoopRoom,
     battle: BattleRoom,
-    coop: CoopRoom
+    delayed: DelayedRoom
 };

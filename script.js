@@ -12,9 +12,10 @@ window.roomName = null;
 window.playerList = [];
 window.largeBoard = false;
 window.firstClick = true;
-window.battleMode = false;
+window.mode = 'normal';
 window.chording = true;
 window.numTeams = 0;
+window.cellsToReveal = new Set(); // For delayed mode
 
 // Setup
 initialSetup();

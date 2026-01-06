@@ -2,11 +2,16 @@ export class BaseRoom {
     constructor(roomID, wsPlayers = [], roomName) {
         this.name = roomName;
         this.ID = roomID;
+        this.type = "base";
         this.wsPlayers = wsPlayers;
         this.wsToPlayersIndex = new Map(this.wsPlayers.map((ws,i) => [ws,i]));
         
         this.startTime; // Milliseconds since Jan 1, 1970
-        this.inProgress = false;
+        this.inProgress = false; // If a board is generated, it should count as in progress (for joining games in progress)
+    }
+    
+    reset() {
+        throw new Error("reset() must be implemented by subclass");
     }
     
     allowClicks() {
