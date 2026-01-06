@@ -44,7 +44,6 @@ wss.on('connection', function (ws) {
         const roomID = WStoRoomID.get(ws);
         const room = roomIDtoRoom.get(roomID);
         
-        // TODO add ?. when accessing properties of message object
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
             case "removeCellToReveal": { // Only for delayed room
@@ -59,8 +58,6 @@ wss.on('connection', function (ws) {
                 }
                 
                 room.cellsToReveal.delete(message.cellToRemove);
-                
-                console.log("room.cellsToReveal: ", room.cellsToReveal);
                 
                 // It's fine to send it to the person who sent the message just to keep everyone in sync
                 room.sendMessage({type: "removeCellToReveal", cellToRemove: message.cellToRemove});
@@ -83,7 +80,7 @@ wss.on('connection', function (ws) {
                     room.cellsToReveal.add(coordinate);
                 }
                 
-                // It's fine to send it to the person who sent the message just to keep everyone in sync
+                // It's fine to send it to the person who sent the message just to maintain sync
                 room.sendMessage({type: "pressCells", cellsToPress: message.cellsToReveal});
                 break;
             }
@@ -93,8 +90,7 @@ wss.on('connection', function (ws) {
                     break;
                 }
                 
-                // temporary safeguard
-                if (!(room instanceof BattleRoom)) {
+                if (room.type !== "battle") {
                     console.log("not battleroom");
                     break;
                 }
@@ -120,10 +116,13 @@ wss.on('connection', function (ws) {
                 room.wsToTeamInfo.set(ws, { teamIndex: newTeamIndex, playerIndex });
 
                 // Optional: Notify all players of team change
-                room.sendMessage({
-                    type: "teamUpdate",
-                    teams: room.teams.map(team => team.map(ws => WStoPlayerName.get(ws)))
-                }, ws);
+                room.sendMessage(
+                    {
+                        type: "teamUpdate",
+                        teams: room.teams.map(team => team.map(ws => WStoPlayerName.get(ws)))
+                    },
+                    ws
+                );
                 console.log("readable teams is now: ", room.teams.map(team => team.map(ws => WStoPlayerName.get(ws))));
                 
                 break;
@@ -141,9 +140,8 @@ wss.on('connection', function (ws) {
                     // Overwrite previous key
                     roomIDtoRoom.set(roomID, newRoom);
                     
-                    // Send to everyone except person who updated gamemode
-                    // * Is this really necessary? Nothing bad happens if we send to the person who changed it
-                    sendToGroup({type: "updateGamemode", roomType: message.gamemode}, room.wsPlayers.filter(currentWS => currentWS !== ws));                    
+                    // Sending to all players is fine to maintain sync
+                    sendToGroup({type: "updateGamemode", roomType: message.gamemode}, room.wsPlayers);                    
                 } else {
                     console.log("Unknown gamemode:", message.gamemode);
                 }
@@ -154,7 +152,7 @@ wss.on('connection', function (ws) {
                     console.log("no room found");
                     break;
                 }
-                if (!(room instanceof BattleRoom)) {
+                if (room.type !== "battle") {
                     console.log("not a battle room");
                     break;
                 }
@@ -189,7 +187,7 @@ wss.on('connection', function (ws) {
                 const startTime = new Date().getTime() + 5000;
                 room.startTime = startTime;
                 
-                // TODO Make this more customizable
+                // TODO Make this more customizable?
                 // Randomly generate dimensions and mines within reason
                 // 10 - 30
                 const rows = Math.floor(Math.random() * 21) + 10;
@@ -424,7 +422,7 @@ wss.on('connection', function (ws) {
                 if (room.type === "delayed") {
                     message.cellsToReveal = Array.from(room.cellsToReveal).slice();
                     room.cellsToReveal.clear();
-                    if (message?.cellsToReveal?.length === 0) {
+                    if (message.cellsToReveal?.length === 0) {
                         break;
                     }
                     
