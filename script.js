@@ -15,6 +15,7 @@ window.firstClick = true;
 window.mode = "coop"; // Default mode
 window.chording = true;
 window.numTeams = 0;
+window.toggleOn = true; // For delayed mode
 
 // Setup
 initialSetup();

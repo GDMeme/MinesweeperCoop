@@ -18,9 +18,14 @@ export function cellmousedown(event) {
         return;
     }
     // Left mouse button
-    if (event.button === 0 && event.currentTarget.className === "cell closed") {
+    if (event.button === 0 && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
+        if (event.currentTarget.className === "cell closed") {
+            window.toggleOn = true;
+        } else {
+            window.toggleOn = false;
+        }
         event.currentTarget.className = "cell pressed";
-    // Left or middle mouse button
+    // Left or middle mouse button (chording)
     } else if ((event.button === 0 || event.button === 1) && event.currentTarget.className !== "cell flag" && event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && window.chording) {
         pressCellsAround(event);
     // Right mouse button
@@ -50,10 +55,15 @@ export function cellmouseup(event) {
     if (event.button === 0 && event.currentTarget.className !== "cell flag" && event.currentTarget.className !== "cell exploded" && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
         if (window.mode === "delayed") {
             const coordinate = `${event.currentTarget.dataset.x},${event.currentTarget.dataset.y}`;
-            window.ws.send(JSON.stringify({type: "addCellsToReveal", cellsToReveal: [coordinate]}));
+            if (window.toggleOn) {
+                event.currentTarget.className = "cell pressed";
+                window.ws.send(JSON.stringify({type: "addCellsToReveal", cellsToReveal: [coordinate]}));
+            } else {
+                event.currentTarget.className = "cell closed";
+                window.ws.send(JSON.stringify({type: "removeCellToReveal", cellToRemove: coordinate}));
+            }
             return;
         }
-        console.log("revealing cell: ", event);
         window.ws.send(JSON.stringify({type: "revealCell", x: event.currentTarget.dataset.x, y: event.currentTarget.dataset.y}));
     // Chording
     // TODO Add chording options (Disable left click to chord, enable left + right click to chord) Maybe start with left click chord enabled?

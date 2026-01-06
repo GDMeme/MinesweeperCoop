@@ -44,8 +44,30 @@ wss.on('connection', function (ws) {
         const roomID = WStoRoomID.get(ws);
         const room = roomIDtoRoom.get(roomID);
         
+        // TODO add ?. when accessing properties of message object
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
+            case "removeCellToReveal": { // Only for delayed room
+                if (!room) {
+                    console.log("no room detected!");
+                    break;
+                }
+                
+                if (room.type !== "delayed") {
+                    console.log("not a delayed room");
+                    break;
+                }
+                
+                room.cellsToReveal.delete(message.cellToRemove);
+                
+                console.log("room.cellsToReveal: ", room.cellsToReveal);
+                
+                // It's fine to send it to the person who sent the message just to keep everyone in sync
+                room.sendMessage({type: "removeCellToReveal", cellToRemove: message.cellToRemove});
+                room.sendMessage({type: "closeCell", cellToClose: message.cellToRemove});
+                break;
+                
+            }
             case "addCellsToReveal": { // Only for delayed room
                 if (!room) {
                     console.log("no room detected!");
@@ -60,6 +82,9 @@ wss.on('connection', function (ws) {
                 for (const coordinate of message.cellsToReveal) {
                     room.cellsToReveal.add(coordinate);
                 }
+                
+                // It's fine to send it to the person who sent the message just to keep everyone in sync
+                room.sendMessage({type: "pressCells", cellsToPress: message.cellsToReveal});
                 break;
             }
             case "joinTeam": {
@@ -117,6 +142,7 @@ wss.on('connection', function (ws) {
                     roomIDtoRoom.set(roomID, newRoom);
                     
                     // Send to everyone except person who updated gamemode
+                    // * Is this really necessary? Nothing bad happens if we send to the person who changed it
                     sendToGroup({type: "updateGamemode", roomType: message.gamemode}, room.wsPlayers.filter(currentWS => currentWS !== ws));                    
                 } else {
                     console.log("Unknown gamemode:", message.gamemode);
@@ -322,6 +348,16 @@ wss.on('connection', function (ws) {
                     currentRoom.ready = new Array(currentRoom.wsPlayers.length);
                     
                     currentRoom.sendMessage({type: "unReady"}, ws);
+                } else if (currentRoom.type === "delayed" && currentRoom.inProgress) {
+                    // TODO fix duplicate code
+                    const currentGame = currentRoom.board;
+                    if (currentGame.cellsRevealed.size > 0 && !checkWin(currentGame)) {
+                        // Need to remove wsPlayers property before sending to client
+                        const { wsPlayers: _, ...safeGameData } = currentGame;
+                        safeGameData.cellsRevealed = Array.from(safeGameData.cellsRevealed);
+                        safeGameData.flaggedIDs = Array.from(safeGameData.flaggedIDs);
+                        ws.send(JSON.stringify({type: "gameProgress", safeGameData}))
+                    }
                 }
                 
                 // Add the new player to the game
@@ -386,8 +422,9 @@ wss.on('connection', function (ws) {
                 }
                 
                 if (room.type === "delayed") {
-                    message.cellsToReveal = Array.from(room.cellsToReveal);
-                    if (!message.cellsToReveal) {
+                    message.cellsToReveal = Array.from(room.cellsToReveal).slice();
+                    room.cellsToReveal.clear();
+                    if (message?.cellsToReveal?.length === 0) {
                         break;
                     }
                     
@@ -401,6 +438,7 @@ wss.on('connection', function (ws) {
                 
                 const board = room.findBoardFromWS(ws);
                 
+                // This is fine for DelayedRoom, should only be able to click one cell on first move
                 if (board.firstClick) { // Cannot chord on first click, just reveal one cell
                     revealCell(room, x, y, ws);
                     break;
@@ -444,6 +482,7 @@ wss.on('connection', function (ws) {
                     board.minePlacements = generateRandomMines(board.rows, board.columns, board.mines);
                     room.reset();
                     room.board = board;
+                    room.inProgress = true;
                     
                     // Need to remove wsPlayers property before sending to client
                     const { wsPlayers, ...safeGameData } = board;

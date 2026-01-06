@@ -18,6 +18,20 @@ export function wsMsgHandler(ws) {
             console.log("message: ", message); // No spamming logs.
         }
         switch (message.type) {
+            case "closeCell": {
+                const [x, y] = message.cellToClose.split(',');
+                document.querySelector(`#cell${x}_${y}`).className = "cell closed";
+                removeProbabilities();
+                break;
+            }
+            case "pressCells": {
+                for (const coordinate of message.cellsToPress) {
+                    const [x, y] = coordinate.split(',');
+                    document.querySelector(`#cell${x}_${y}`).className = "cell pressed";
+                }
+                removeProbabilities();
+                break;
+            }
             case "updateGamemode":
                 this.mode = message.roomType;
                 
@@ -239,6 +253,10 @@ export function wsMsgHandler(ws) {
                             setupBattleMode();
                         } else if (room.type === "coop") {
                             document.querySelector('#coopinputs').style.display = "block";
+                            setupCoopMode();
+                        } else if (room.type === "delayed") {
+                            document.querySelector('#delayedinputs').style.display = "block";
+                            setupDelayedMode();
                         } else {
                             console.log("unknown room type: ", room.type);
                         }
@@ -264,7 +282,7 @@ export function wsMsgHandler(ws) {
         } 
     });
     
-    const updateTimer = function () {
+    function updateTimer() {
         // Only update timer if game is still in progress
         if (!window.noclicking) {
             const timerNode = document.querySelector('#timer');
