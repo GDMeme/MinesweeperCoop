@@ -18,7 +18,7 @@ export function cellmousedown(event) {
         return;
     }
     // Left mouse button
-    if (event.button === 0 && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$')) {
+    if (event.button === 0 && !event.currentTarget.className.match('^(cell type)[0-9]|[1][0-9]|[2][0-4]$') && event.currentTarget.className !== "cell flag") {
         if (event.currentTarget.className === "cell closed") {
             window.toggleOn = true;
         } else {

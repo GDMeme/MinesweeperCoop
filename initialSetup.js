@@ -23,7 +23,7 @@ export function initialSetup() {
             setTimeout(tryNewWSConnection, 300000); // 5 minutes
         }
         
-        tryNewWSConnection();
+        setTimeout(tryNewWSConnection, 300000); // 5 minutes;
     
         wsMsgHandler(ws);    
     }); 

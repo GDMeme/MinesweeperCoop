@@ -422,7 +422,7 @@ wss.on('connection', function (ws) {
                 if (room.type === "delayed") {
                     message.cellsToReveal = Array.from(room.cellsToReveal).slice();
                     room.cellsToReveal.clear();
-                    if (message.cellsToReveal?.length === 0) {
+                    if (message.cellsToReveal.length === 0) {
                         break;
                     }
                     
