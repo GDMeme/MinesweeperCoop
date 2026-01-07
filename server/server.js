@@ -376,11 +376,11 @@ wss.on('connection', function (ws) {
                 // If player who moved mouse sent the message, don't send mouseMoved message
                 // Send ID of client who moved
                 let group;
-                if (room instanceof BattleRoom) {
+                if (room.type === "battle") {
                     group = room?.teams[room.wsToTeamInfo.get(ws)?.teamIndex]?.filter(e => e !== ws);
-                } else if (room instanceof CoopRoom) {
+                } else if (room.type === "coop" || room.type === "delayed") {
                     group = room.wsPlayers.filter(e => e !== ws);
-                }
+                } 
                 
                 if (group) {
                     sendToGroup({type: "mouseMoved", name: WStoPlayerName.get(ws), scrollY: message.scrollY, scrollX: message.scrollX, x: message.x, y: message.y, wsID: ws.ID}, group);
@@ -475,7 +475,6 @@ wss.on('connection', function (ws) {
                     // * Adds rows, columns, mines, largeBoard
                     Object.assign(board, message); // TODO: Add validation to message so the client can't add random properties to game object
                     
-                    console.log("board.minePlacements: ", board.minePlacements);
                     board.reset();
                     board.minePlacements = generateRandomMines(board.rows, board.columns, board.mines);
                     room.reset();

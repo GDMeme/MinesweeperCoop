@@ -33,8 +33,6 @@ export function wsMsgHandler(ws) {
                 break;
             }
             case "updateGamemode":
-                this.mode = message.roomType;
-                
                 // Update UI based on the new room type
                 if (message.roomType === "battle") {
                     setupBattleMode();
@@ -279,6 +277,7 @@ export function wsMsgHandler(ws) {
                 break;
             default: 
                 console.log("How did you get here" + message);
+                console.log("message.type: ", message.type);
         } 
     });
     
