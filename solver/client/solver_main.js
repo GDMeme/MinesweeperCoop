@@ -343,7 +343,7 @@ export async function solver(board, options) {
                 result.push(new Action(tile.getX(), tile.getY(), 1, ACTION_CLEAR))
             }
             console.log("No mines left to find all remaining tiles are safe");
-            return new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, null, allCoveredTiles, risky3BVRevealed, options).process();
+            return await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, null, allCoveredTiles, risky3BVRevealed, options).process();
         }
         
         // there are no safe tiles left to find everything is a mine
@@ -390,7 +390,7 @@ export async function solver(board, options) {
                 }
                 // if we are playing for efficiency and a mine wasn't found then go on to do the probability engine - this gets us all the possible clears and mines
                 result = [];  // clear down any actions we found  trivially
-                //return new EfficiencyHelper(board, witnesses, noFlagResult).process();
+                //return await new EfficiencyHelper(board, witnesses, noFlagResult).process();
             } else {
                 return result;
             }
@@ -545,7 +545,7 @@ export async function solver(board, options) {
                 totalSafe++;
             }
             console.log("The solver has found " + totalSafe + " safe tiles." + formatSolutions(pe.finalSolutionsCount));
-            result = new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process()
+            result = await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
             
             if (!options.noGuessingMode) {
                 // See if there are any unavoidable 2 tile 50/50 guesses 
@@ -674,7 +674,7 @@ export async function solver(board, options) {
         if (options.playStyle == PLAY_STYLE_NOFLAGS_EFFICIENCY) {
             writeToConsole("Doing NF efficiency logic rather than best guess logic");
             showMessage("");
-            const resultEff = new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
+            const resultEff = await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
             if (resultEff.length > 0) {
                 return resultEff;
             }
@@ -891,7 +891,7 @@ export async function solver(board, options) {
                     }
                 }
  
-                result = new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
+                result = await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
             } else {
  
                 if (pe.duration < 50) {  // if the probability engine didn't take long then use some tie-break logic
