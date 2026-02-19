@@ -27,7 +27,10 @@ export class Tile {
 		this.efficiencyText = "";  
 		
 		this.winRate = 0;   // win rate as determined by the Brute force analysis
-		this.winRateText = "";  
+		this.winRateText = "";
+		
+		this.zeroProbability = 0;
+		this.zeroPoison = false;
 
 		// is there an mine adjacent to this tile?  Set as part of the No flag efficiency logic
 		this.adjacentMine = false;
@@ -137,6 +140,7 @@ export class Tile {
 		this.probability = -1;
 		this.winRate = 0;
 		this.winRateText = "";
+		this.zeroPoison = false;
     }
 
     setOnEdge() {

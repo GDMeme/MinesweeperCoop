@@ -260,6 +260,7 @@ export async function solver(board, options) {
 
         let deadTiles = [];  // used to hold the tiles which have been determined to be dead by either the probability engine or deep analysis
 
+        const risky3BVRevealed = new Set(); // use a map to deduplicate the tiles
         const work = new Set();  // use a map to deduplicate the witnessed tiles
 
         console.log("The solver is thinking...");
@@ -289,18 +290,25 @@ export async function solver(board, options) {
             const adjTiles = board.getAdjacent(tile);
 
             let needsWork = false;
+            let adjacentToZero = false;
             for (let j = 0; j < adjTiles.length; j++) {
                 const adjTile = adjTiles[j];
                 if (adjTile.isCovered() && !adjTile.isSolverFoundBomb()) {
                     needsWork = true;
                     work.add(adjTile.index);
                 }
+                if (!adjTile.isCovered() && !adjTile.isSolverFoundBomb() && adjTile.getValue() == 0) {
+                    adjacentToZero = true;
+                }
             }
 
             if (needsWork) {  // the witness still has some unrevealed adjacent tiles
                 witnesses.push(tile);
+                if (!adjacentToZero) {  // the witness is not next to a zero, i.e. can't have been revealed by a zero being clicked
+                    //writeToConsole(tile.asText() + " is revealed and not next to a zero");
+                    risky3BVRevealed.add(tile.index);
+                }
             }
-
         }
 
         // generate an array of tiles from the map
@@ -335,7 +343,7 @@ export async function solver(board, options) {
                 result.push(new Action(tile.getX(), tile.getY(), 1, ACTION_CLEAR))
             }
             console.log("No mines left to find all remaining tiles are safe");
-            return new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, null, allCoveredTiles).process();
+            return new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, null, allCoveredTiles, risky3BVRevealed, options).process();
         }
         
         // there are no safe tiles left to find everything is a mine
@@ -403,6 +411,13 @@ export async function solver(board, options) {
         if (pe.finalSolutionsCount == 0) { // * GDMem edited this
             console.log("The board is in an illegal state");
             return result;
+        }
+        
+        // if we need to calculate zeros then do so
+        // if we are playing NF efficiency then we'll do this any way as part of that processing
+        if (options.calculateZeros != null && options.calculateZeros && options.playStyle != PLAY_STYLE_NOFLAGS_EFFICIENCY) {
+            calculateValueProbability(board, 0, pe);
+            options.calculateZeros = false;
         }
 
         // If we have a full analysis then set the probabilities on the tile tooltips
@@ -530,11 +545,11 @@ export async function solver(board, options) {
                 totalSafe++;
             }
             console.log("The solver has found " + totalSafe + " safe tiles." + formatSolutions(pe.finalSolutionsCount));
-            result = await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles).process();
+            result = new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process()
             
             if (!options.noGuessingMode) {
                 // See if there are any unavoidable 2 tile 50/50 guesses 
-                if (SolverGlobal.EARLY_FIFTY_FIFTY_CHECKING && !options.hardcore && minesLeft > 1) {
+                if (SolverGlobal.EARLY_FIFTY_FIFTY_CHECKING && !options.hardcore && minesLeft > 0) {
                     let unavoidable5050a;
                     if (options.playStyle == PLAY_STYLE_EFFICIENCY || options.playStyle == PLAY_STYLE_NOFLAGS_EFFICIENCY) {
                         unavoidable5050a = pe.checkForUnavoidable5050();
@@ -624,7 +639,7 @@ export async function solver(board, options) {
         
         /*
         // See if there are any unavoidable 2 tile 50/50 guesses 
-        if (pe.bestOnEdgeProbability != 1 && minesLeft > 1) {
+        if (pe.bestOnEdgeProbability != 1 && minesLeft > 0) {
             //const unavoidable5050a = pe.checkForUnavoidable5050();
             const unavoidable5050a = pe.checkForUnavoidable5050OrPseudo();
             if (unavoidable5050a != null) {
@@ -654,6 +669,16 @@ export async function solver(board, options) {
             }
         }
         */
+       
+        // if we are playing NF efficiency then do that processing rather than normal best guess processing
+        if (options.playStyle == PLAY_STYLE_NOFLAGS_EFFICIENCY) {
+            writeToConsole("Doing NF efficiency logic rather than best guess logic");
+            showMessage("");
+            const resultEff = new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
+            if (resultEff.length > 0) {
+                return resultEff;
+            }
+        }
 
         // if we have an isolated edge process that
         if (pe.bestProbability < 1 && pe.isolatedEdgeBruteForce != null) {
@@ -866,7 +891,7 @@ export async function solver(board, options) {
                     }
                 }
  
-                result = new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles).process();
+                result = new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
             } else {
  
                 if (pe.duration < 50) {  // if the probability engine didn't take long then use some tie-break logic
@@ -1526,6 +1551,83 @@ export async function solver(board, options) {
         commonClears = commonClears === null ? [] : Array.from(commonClears);
         writeToConsole("Tile " + tile.asText() + ", secondary safety = " + secondarySafety + ", 50/50 influence = " + fiftyFiftyInfluence
             + ", blended safety = " + blendedSafety + ", progress = " + action.progress+ ", expected clears = " + action.expectedClears + ", always clear = " + commonClears.length + ", final score = " + action.weight);
+    }
+    
+    function calculateValueProbability(board, value, pe) {
+
+        const start = Date.now();
+
+        let base;
+        if (pe != null) {
+            base = pe;
+        } else {
+            base = runProbabilityEngine(board, null);
+            if (base.finalSolutionCount == 0) {
+                console.log("Board is in an invalid state");
+                return;
+            }
+        }
+
+        // an array of probabilities for simple cases where the tile is surrounded by n-floating tiles and nothing else.
+        let simple = new Array(9).fill(-1);
+
+        for (let i = 0; i < board.tiles.length; i++) {
+            const tile = board.getTile(i);
+
+            tile.zeroProbability = 0;
+
+            // no need to analyse a bomb
+            if (tile.isSolverFoundBomb()) {
+                //console.log(tile.asText() + " is a mine");
+                continue;
+            }
+
+            // no need to analyse a reveled tile
+            if (!tile.isCovered()) {
+                //console.log(tile.asText() + " is revealed");
+                continue;
+            }
+
+            tile.hasHint = true;
+
+            // if the number of mines adjacent is > 0 then this can't be a zero
+            const adjMines = board.adjacentFoundMineCount(tile);
+            if (adjMines > 0) {
+                //console.log(tile.asText() + " is adjacent to a mine");
+                continue;
+            }
+
+            const floating = evaluateTileForValue(board, tile, base);
+            if (floating != -1 && simple[floating] != -1) {
+                tile.zeroProbability = simple[floating];
+                //console.log(tile.asText() + " has " + tile.zeroProbability + " probability being a '" + value + "' (simple)");
+
+            } else {
+                // do the work
+                tile.setValue(value);
+                const work = runProbabilityEngine(board, null);
+                tile.setCovered(true);
+
+                // if this is a valid board state
+                if (work.finalSolutionsCount > 0) {
+                    const valueProbability = divideBigInt(work.finalSolutionsCount, base.finalSolutionsCount, 6);
+                    tile.zeroProbability = valueProbability;
+
+                    //console.log(tile.asText() + " has " + tile.zeroProbability + " probability being a '" + value + "'");
+
+                    if (floating != -1) {
+                        simple[floating] = valueProbability;
+                    }
+
+                } else {
+                    //console.log(tile.asText() + " can't be a '" + value + "'");
+                }
+            }
+ 
+        }
+
+        console.log("Evaluating Zero probabilities took " + (Date.now() - start) + " milliseconds");
+
     }
 
     function runProbabilityEngine(board, notMines) {
