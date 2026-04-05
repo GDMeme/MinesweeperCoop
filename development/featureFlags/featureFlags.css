@@ -1,6 +1,6 @@
 #featureflagsmodal {
     border-style: solid;
-    background-color: blue;
+    background-color: green;
     position: fixed;
     top: 20vh;
     height: 75vh;
@@ -10,6 +10,7 @@
 }
 
 #featureflagslist {
+    background-color: blue;
     overflow-y: scroll;
     max-height: 66vh;
 }
@@ -18,7 +19,8 @@
     border-style: solid;
     border-color: red;
     border-width: 2px;
-    max-width: fit-content;
+    width: 70%;
+    max-width: 11cm;
     padding: 3%;
     margin: 3% auto;
 }
