@@ -1,7 +1,9 @@
-import { getGameServerUrl } from './developerMode.js';
+import { getGameServerUrl } from './development/developerMode.js';
+import { initFeatureFlags } from './development/featureFlags/featureFlags.js'
 
 export function connect(firstTime) {
     return new Promise(function(resolve, reject) {
+        initFeatureFlags();
         const gameServerUrl = getGameServerUrl();
         console.log(`server url: ${gameServerUrl}`);
         var ws = new WebSocket(gameServerUrl);
