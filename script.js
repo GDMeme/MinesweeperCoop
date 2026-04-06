@@ -1,5 +1,5 @@
 import { initialSetup } from './initialSetup.js';
-import { initFeatureFlags } from './development/featureFlags/featureFlags.js'
+import { initFeatureFlagsClient } from './development/featureFlags/featureFlags.js'
 
 // Globals (Nothing will go wrong)
 window.leftPressed = false;
@@ -17,7 +17,7 @@ window.mode = "coop"; // Default mode
 window.chording = true;
 window.numTeams = 0;
 window.toggleOn = true; // For delayed mode
-window.featureFlags = initFeatureFlags();
+window.featureFlags = initFeatureFlagsClient();
 
 // Setup
 initialSetup();

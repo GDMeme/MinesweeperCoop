@@ -1,6 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
+import { FeatureFlagsFeatures } from '../development/featureFlags/featureFlags.js'
 import { revealCell } from './revealCell.js';
 import { createBattleBoard } from '../util/battleFunctions.js';
 import { checkWin, generateRandomMines, sendToGroup, generateRoomID } from '../util/commonFunctions.js';
@@ -8,6 +9,8 @@ import { WStoPlayerName, roomTypes } from '../util/constants.js';
 import { CoopRoom } from './room/CoopRoom.js';
 import { BattleRoom } from './room/BattleRoom.js';
 import { MinesweeperBoard } from './MinesweeperBoard.js';
+
+const featureFlagsFeatures = new FeatureFlagsFeatures("server");
 
 // render.com provides tls certs
 const server = createServer();
@@ -46,6 +49,14 @@ wss.on('connection', function (ws) {
         
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
+            case "enableFeatureFlagInEnvironment": {
+                featureFlagsFeatures.enableInEnvironment(message.featureName, message.environmentName);
+                break;
+            }
+            case "disableFeatureFlagInEnvironment": {
+                featureFlagsFeatures.disableInEnvironment(message.featureName, message.environmentName);
+                break;
+            }
             case "removeCellToReveal": { // Only for delayed room
                 if (!room) {
                     console.log("no room detected!");

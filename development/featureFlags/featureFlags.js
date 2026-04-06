@@ -5,9 +5,10 @@
 
 import { FEATURES_FLAGS_CONFIG } from './features.js';
 
-class FeatureFlagsFeatures {
-    constructor(featuresList = []) {
-        this.featuresList = featuresList;
+export class FeatureFlagsFeatures {
+    constructor(clientOrServer = "server") {
+        this.featuresList   = loadFeatures(FEATURES_FLAGS_CONFIG);
+        this.clientOrServer = clientOrServer;
     }
 
     getFeaturesList() {
@@ -24,12 +25,24 @@ class FeatureFlagsFeatures {
         this.featuresList.find(
             feature => feature.name == featureName
         ).enabledInEnvironment[environmentName] = true;
+
+        if(this.clientOrServer == "client") {
+            window.ws.send(JSON.stringify({ type: 'enableFeatureFlagInEnvironment', featureName, environmentName }));    
+        }
+        
+        console.log(`ENABLED feature "${featureName}" in "${environmentName}"`);
     }
 
     disableInEnvironment(featureName, environmentName) {
         this.featuresList.find(
             feature => feature.name == featureName
         ).enabledInEnvironment[environmentName] = false;
+
+        if(this.clientOrServer == "client") {
+            window.ws.send(JSON.stringify({ type: 'disableFeatureFlagInEnvironment', featureName, environmentName }));    
+        }
+
+        console.log(`DISABLED feature "${featureName}" in "${environmentName}"`);
     }
 
     toggleInEnvironment(featureName, environmentName) {
@@ -45,7 +58,7 @@ function toggleFeatureFlagsModal() {
     const featureFlagsModalElement = document.getElementById("featureflagsmodal");
     const featureFlagsListElement = document.getElementById("featureflagslist");
     
-    if(featureFlagsModalElement.style.display == "none") {
+    if(["none", ""].includes(featureFlagsModalElement.style.display)) {
         featureFlagsListElement.replaceChildren();
         for(const feature of featureFlagsFeatures.getFeaturesList()) 
             renderFeatureFlag(feature, featureFlagsListElement);
@@ -115,12 +128,11 @@ function loadFeatures(featuresList) {
 }
 
 let featureFlagsFeatures;
-export function initFeatureFlags() {
-    const featureFlagsButton = document.getElementById('featureflagsbutton');
+export function initFeatureFlagsClient() {
         
-    const featuresList = loadFeatures(FEATURES_FLAGS_CONFIG);
-    featureFlagsFeatures = new FeatureFlagsFeatures(featuresList);
+    featureFlagsFeatures = new FeatureFlagsFeatures("client");
     
+    const featureFlagsButton = document.getElementById('featureflagsbutton');
     featureFlagsButton.addEventListener('click', toggleFeatureFlagsModal);
 
     return featureFlagsFeatures;
