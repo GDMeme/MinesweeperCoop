@@ -1,4 +1,4 @@
-export const FEATURES_LIST = [
+export const FEATURES_FLAGS_CONFIG = [
     {
         "name": "unfinished feature implementation"
     },

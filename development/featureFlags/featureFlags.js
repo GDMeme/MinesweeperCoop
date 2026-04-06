@@ -3,42 +3,93 @@
  * e.g. toggles features for testing locally, enable/disable features in prod
  */
 
-import { FEATURES_LIST } from './features.js';
+import { FEATURES_FLAGS_CONFIG } from './features.js';
+
+class FeatureFlagsFeatures {
+    constructor(featuresList = []) {
+        this.featuresList = featuresList;
+    }
+
+    getFeaturesList() {
+        return this.featuresList;
+    }
+
+    isEnabledInEnvironment(featureName, environmentName) {
+        return this.featuresList.find(
+            feature => feature.name == featureName
+        )?.enabledInEnvironment[environmentName] ?? false;
+    }
+
+    enableInEnvironment(featureName, environmentName) {
+        this.featuresList.find(
+            feature => feature.name == featureName
+        ).enabledInEnvironment[environmentName] = true;
+    }
+
+    disableInEnvironment(featureName, environmentName) {
+        this.featuresList.find(
+            feature => feature.name == featureName
+        ).enabledInEnvironment[environmentName] = false;
+    }
+
+    toggleInEnvironment(featureName, environmentName) {
+        if(this.isEnabledInEnvironment(featureName, environmentName)) {
+            this.disableInEnvironment(featureName, environmentName);
+        } else {
+            this.enableInEnvironment(featureName, environmentName);
+        }
+    }
+}
 
 function toggleFeatureFlagsModal() {
-    featureFlagsRevealed = !featureFlagsRevealed;
-    if(featureFlagsRevealed) {
-        const featureFlagsListElement = document.getElementById("featureflagslist");
+    const featureFlagsModalElement = document.getElementById("featureflagsmodal");
+    const featureFlagsListElement = document.getElementById("featureflagslist");
+    
+    if(featureFlagsModalElement.style.display == "none") {
         featureFlagsListElement.replaceChildren();
-        for(const feature of featuresList) renderFeatureFlag(feature.name, featureFlagsListElement);
-        document.getElementById("featureflagsmodal").style.display = "block";
+        for(const feature of featureFlagsFeatures.getFeaturesList()) 
+            renderFeatureFlag(feature, featureFlagsListElement);
+        featureFlagsModalElement.style.display = "block";
     } else {
-        document.getElementById("featureflagsmodal").style.display = "none";
+        featureFlagsModalElement.style.display = "none";
     }
+}
+
+function toggleFeatureFlag(event) {
+    const featureName = event.target.parentElement.id;
+    const environmentName = event.target.id;
+    featureFlagsFeatures.toggleInEnvironment(featureName, environmentName);
 }
 
 function createChildElementWithProperties(childType, properties) {
     let childElement = document.createElement(childType);
     for(const [propertyName,propertyValue] of Object.entries(properties)) {
         childElement[propertyName] = propertyValue;
+
+        if(childType == "input" && propertyName == "type" && propertyValue == "checkbox") {
+            childElement.addEventListener('click', toggleFeatureFlag);
+        }
     }
     return childElement;
 }
 
-function renderFeatureFlag(featureName, featureFlagsListElement) {
+function renderFeatureFlag(feature, featureFlagsListElement) {
     let featureFlagElement = document.createElement("div")
     
-    featureFlagElement.id = featureName;
+    featureFlagElement.id = feature.name;
     featureFlagElement.classList.add("featureflagcontainer");
-    featureFlagElement.textContent = featureName;
+    featureFlagElement.textContent = feature.name;
 
     featureFlagElement.appendChild(document.createElement("br"));
     featureFlagElement.appendChild(document.createElement("br"));
+
+    const devEnabled  = featureFlagsFeatures.isEnabledInEnvironment(feature.name, "dev");
+    const prodEnabled = featureFlagsFeatures.isEnabledInEnvironment(feature.name, "prod");
 
     const childElementsWithProperties = [
-        {"type": "input", "properties": {"id":"dev",  "type":"checkbox"   }},
+        {"type": "input", "properties": {"id":"dev",  "type":"checkbox", "checked": devEnabled }},
         {"type": "label", "properties": {"id":"dev",  "textContent":"dev" }},
-        {"type": "input", "properties": {"id":"prod", "type":"checkbox"   }},
+        {"type": "input", "properties": {"id":"prod", "type":"checkbox", "checked": prodEnabled }},
         {"type": "label", "properties": {"id":"prod", "textContent":"prod"}},
     ]
 
@@ -57,21 +108,20 @@ function loadFeatures(featuresList) {
         (feature) => {
             let result = {};
             result.name = feature.name;
-            result.enabledEnvironments = ["none"]
+            result.enabledInEnvironment = {}
             return result;
         }
     )
 }
 
+let featureFlagsFeatures;
 export function initFeatureFlags() {
     const featureFlagsButton = document.getElementById('featureflagsbutton');
+        
+    const featuresList = loadFeatures(FEATURES_FLAGS_CONFIG);
+    featureFlagsFeatures = new FeatureFlagsFeatures(featuresList);
     
-    featuresList = loadFeatures(FEATURES_LIST);
-    featureFlagsButton
-        .addEventListener(
-            'click',
-            toggleFeatureFlagsModal
-        );
+    featureFlagsButton.addEventListener('click', toggleFeatureFlagsModal);
+
+    return featureFlagsFeatures;
 }
-let featureFlagsRevealed = false;
-let featuresList = []
