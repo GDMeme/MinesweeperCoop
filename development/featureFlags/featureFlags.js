@@ -25,12 +25,20 @@ export class FeatureFlagsFeatures {
         )?.enabledInEnvironment[environmentName] ?? false;
     }
 
+    #selectedServerMatchesEnabledEnvironment(environmentName) {
+        const devModeServerSelector = document.querySelector('#developermodebannerserverselector');
+        const selectedServer = devModeServerSelector[devModeServerSelector.selectedIndex].text;
+        if(environmentName == "dev" && selectedServer == "localhost") return true;
+        if(environmentName == "prod" && selectedServer == "Render") return true;
+        return false;
+    }
+
     enableInEnvironment(featureName, environmentName) {
         this.featuresList.find(
             feature => feature.name == featureName
         ).enabledInEnvironment[environmentName] = true;
 
-        if(this.clientOrServer == "client") {
+        if(this.clientOrServer == "client" && this.#selectedServerMatchesEnabledEnvironment(environmentName)) {
             window.ws.send(JSON.stringify({ type: 'enableFeatureFlagInEnvironment', featureName, environmentName }));    
         }
         
@@ -42,7 +50,7 @@ export class FeatureFlagsFeatures {
             feature => feature.name == featureName
         ).enabledInEnvironment[environmentName] = false;
 
-        if(this.clientOrServer == "client") {
+        if(this.clientOrServer == "client" && this.#selectedServerMatchesEnabledEnvironment(environmentName)) {
             window.ws.send(JSON.stringify({ type: 'disableFeatureFlagInEnvironment', featureName, environmentName }));    
         }
 

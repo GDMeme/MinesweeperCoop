@@ -22,6 +22,7 @@ export function wsMsgHandler(ws) {
             case "getFeatureFlagsResponse": {
                 window.featureFlags.setFeaturesList(message.featureFlagsList);
                 refreshFeatureFlagsModal();
+                break;
             }
             case "closeCell": {
                 const [x, y] = message.cellToClose.split(',');
