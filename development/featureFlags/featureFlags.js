@@ -50,7 +50,7 @@ export class FeatureFlagsFeatures {
         if(
             this.clientOrServer == "client" &&
             this.#selectedServerMatchesEnabledEnvironment(environmentName) &&
-            wasEnabled
+            wasEnabled == false
         ) {
             window.ws.send(JSON.stringify({ type: 'enableFeatureFlagInEnvironment', featureName, environmentName }));    
         }
