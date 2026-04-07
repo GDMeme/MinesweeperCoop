@@ -10,7 +10,7 @@ import { CoopRoom } from './room/CoopRoom.js';
 import { BattleRoom } from './room/BattleRoom.js';
 import { MinesweeperBoard } from './MinesweeperBoard.js';
 
-const featureFlagsFeatures = new FeatureFlagsFeatures("server");
+const featureFlags = new FeatureFlagsFeatures("server");
 
 // render.com provides tls certs
 const server = createServer();
@@ -50,15 +50,15 @@ wss.on('connection', function (ws) {
         // * Remember to check in certain cases if room is undefined (will cause server crash)
         switch (message.type) {
             case "enableFeatureFlagInEnvironment": {
-                featureFlagsFeatures.enableInEnvironment(message.featureName, message.environmentName);
+                featureFlags.enableInEnvironment(message.featureName, message.environmentName);
                 break;
             }
             case "disableFeatureFlagInEnvironment": {
-                featureFlagsFeatures.disableInEnvironment(message.featureName, message.environmentName);
+                featureFlags.disableInEnvironment(message.featureName, message.environmentName);
                 break;
             }
             case "getFeatureFlags": {
-                const featureFlagsList = featureFlagsFeatures.getFeaturesList();
+                const featureFlagsList = featureFlags.getFeaturesList();
                 ws.send(JSON.stringify({type:"getFeatureFlagsResponse", featureFlagsList: featureFlagsList}))
                 break;
             }
