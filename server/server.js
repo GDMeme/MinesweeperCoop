@@ -57,6 +57,11 @@ wss.on('connection', function (ws) {
                 featureFlagsFeatures.disableInEnvironment(message.featureName, message.environmentName);
                 break;
             }
+            case "getFeatureFlags": {
+                const featureFlagsList = featureFlagsFeatures.getFeaturesList();
+                ws.send(JSON.stringify({type:"getFeatureFlagsResponse", featureFlagsList: featureFlagsList}))
+                break;
+            }
             case "removeCellToReveal": { // Only for delayed room
                 if (!room) {
                     console.log("no room detected!");

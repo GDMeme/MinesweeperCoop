@@ -15,6 +15,10 @@ export class FeatureFlagsFeatures {
         return this.featuresList;
     }
 
+    setFeaturesList(newFeaturesList) {
+        this.featuresList = newFeaturesList;
+    }
+
     isEnabledInEnvironment(featureName, environmentName) {
         return this.featuresList.find(
             feature => feature.name == featureName
@@ -54,14 +58,22 @@ export class FeatureFlagsFeatures {
     }
 }
 
+function pullFeatureFlagsFromServer() {
+    window.ws.send(JSON.stringify({ type: 'getFeatureFlags' }));  
+}
+
+export function refreshFeatureFlagsModal() {
+    const featureFlagsListElement = document.getElementById("featureflagslist");
+    featureFlagsListElement.replaceChildren();
+    for(const feature of featureFlagsFeatures.getFeaturesList()) 
+        renderFeatureFlag(feature, featureFlagsListElement);
+}
+
 function toggleFeatureFlagsModal() {
     const featureFlagsModalElement = document.getElementById("featureflagsmodal");
-    const featureFlagsListElement = document.getElementById("featureflagslist");
     
     if(["none", ""].includes(featureFlagsModalElement.style.display)) {
-        featureFlagsListElement.replaceChildren();
-        for(const feature of featureFlagsFeatures.getFeaturesList()) 
-            renderFeatureFlag(feature, featureFlagsListElement);
+        refreshFeatureFlagsModal();
         featureFlagsModalElement.style.display = "block";
     } else {
         featureFlagsModalElement.style.display = "none";
@@ -133,7 +145,10 @@ export function initFeatureFlagsClient() {
     featureFlagsFeatures = new FeatureFlagsFeatures("client");
     
     const featureFlagsButton = document.getElementById('featureflagsbutton');
-    featureFlagsButton.addEventListener('click', toggleFeatureFlagsModal);
+    featureFlagsButton.addEventListener ('click', toggleFeatureFlagsModal);
+   
+    const pullFeatureFlagsFromServerButton = document.getElementById('pullFeatureFlagsFromServerButton');
+    pullFeatureFlagsFromServerButton.addEventListener('click', pullFeatureFlagsFromServer);
 
     return featureFlagsFeatures;
 }

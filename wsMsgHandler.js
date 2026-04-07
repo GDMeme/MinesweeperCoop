@@ -4,6 +4,7 @@ import { removeProbabilities } from "./util/commonFunctions.js";
 import { setupBattleMode } from "./util/battleFunctions.js";
 import { setupDelayedMode } from "./util/delayedFunctions.js";
 import { setupCoopMode } from "./util/coopFunctions.js";
+import { refreshFeatureFlagsModal } from './development/featureFlags/featureFlags.js'
 
 export function wsMsgHandler(ws) {
     window.ws = ws;
@@ -18,6 +19,10 @@ export function wsMsgHandler(ws) {
             console.log("message: ", message); // No spamming logs.
         }
         switch (message.type) {
+            case "getFeatureFlagsResponse": {
+                window.featureFlags.setFeaturesList(message.featureFlagsList);
+                refreshFeatureFlagsModal();
+            }
             case "closeCell": {
                 const [x, y] = message.cellToClose.split(',');
                 document.querySelector(`#cell${x}_${y}`).className = "cell closed";
