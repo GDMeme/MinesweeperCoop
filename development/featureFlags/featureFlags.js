@@ -4,10 +4,14 @@
  */
 
 import { FEATURES_FLAGS_CONFIG } from './features.js';
+import { getCookie, cookieExists, setCookie } from '../cookies.js'
 
 export class FeatureFlagsFeatures {
     constructor(clientOrServer = "server") {
-        this.featuresList   = loadFeatures(FEATURES_FLAGS_CONFIG);
+        this.featuresList = clientOrServer == "client" && 
+            cookieExists("featuresList") ?
+                JSON.parse(getCookie("featuresList")) :
+                loadFeatures(FEATURES_FLAGS_CONFIG);
         this.clientOrServer = clientOrServer;
     }
 
@@ -34,27 +38,45 @@ export class FeatureFlagsFeatures {
     }
 
     enableInEnvironment(featureName, environmentName) {
-        this.featuresList.find(
+        const foundFeature = this.featuresList.find(
             feature => feature.name == featureName
-        ).enabledInEnvironment[environmentName] = true;
+        )
+        const wasEnabled = this.isEnabledInEnvironment(foundFeature.name, environmentName);
 
-        if(this.clientOrServer == "client" && this.#selectedServerMatchesEnabledEnvironment(environmentName)) {
+        foundFeature.enabledInEnvironment[environmentName] = true;
+        
+        if(this.clientOrServer == "client") setCookie("featuresList", JSON.stringify(this.featuresList));
+
+        if(
+            this.clientOrServer == "client" &&
+            this.#selectedServerMatchesEnabledEnvironment(environmentName) &&
+            wasEnabled
+        ) {
             window.ws.send(JSON.stringify({ type: 'enableFeatureFlagInEnvironment', featureName, environmentName }));    
         }
         
-        console.log(`ENABLED feature "${featureName}" in "${environmentName}"`);
+        if(wasEnabled == false) console.log(`ENABLED feature "${featureName}" in "${environmentName}"`);
     }
 
     disableInEnvironment(featureName, environmentName) {
-        this.featuresList.find(
+        const foundFeature = this.featuresList.find(
             feature => feature.name == featureName
-        ).enabledInEnvironment[environmentName] = false;
+        )
+        const wasEnabled = this.isEnabledInEnvironment(foundFeature.name, environmentName);
 
-        if(this.clientOrServer == "client" && this.#selectedServerMatchesEnabledEnvironment(environmentName)) {
+        foundFeature.enabledInEnvironment[environmentName] = false;
+        
+        if(this.clientOrServer == "client") setCookie("featuresList", JSON.stringify(this.featuresList));
+
+        if(
+            this.clientOrServer == "client" && 
+            this.#selectedServerMatchesEnabledEnvironment(environmentName) &&
+            wasEnabled
+        ) {
             window.ws.send(JSON.stringify({ type: 'disableFeatureFlagInEnvironment', featureName, environmentName }));    
         }
 
-        console.log(`DISABLED feature "${featureName}" in "${environmentName}"`);
+        if(wasEnabled) console.log(`DISABLED feature "${featureName}" in "${environmentName}"`);
     }
 
     toggleInEnvironment(featureName, environmentName) {
@@ -75,6 +97,14 @@ export function refreshFeatureFlagsModal() {
     featureFlagsListElement.replaceChildren();
     for(const feature of featureFlagsFeatures.getFeaturesList()) 
         renderFeatureFlag(feature, featureFlagsListElement);
+}
+
+function disableAllFeatures() {
+    for(const feature of featureFlagsFeatures.getFeaturesList()){
+        featureFlagsFeatures.disableInEnvironment(feature.name, "dev");
+        featureFlagsFeatures.disableInEnvironment(feature.name, "prod");
+        refreshFeatureFlagsModal()
+    }
 }
 
 function toggleFeatureFlagsModal() {
@@ -157,6 +187,9 @@ export function initFeatureFlagsClient() {
    
     const pullFeatureFlagsFromServerButton = document.getElementById('pullFeatureFlagsFromServerButton');
     pullFeatureFlagsFromServerButton.addEventListener('click', pullFeatureFlagsFromServer);
+    
+    const disableAllFeaturesButtonElement = document.getElementById('disableAllFeaturesButton');
+    disableAllFeaturesButtonElement.addEventListener('click', disableAllFeatures);
 
     return featureFlagsFeatures;
 }
