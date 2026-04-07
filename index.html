@@ -10,6 +10,13 @@
             <option value="ws://127.0.0.1:10000">localhost</option>
             <option value="wss://minesweepercoop-6gn2.onrender.com">Render</option>
         </select>
+        <button id="featureflagsbutton">toggle features</button>
+    </div>
+    <div id="featureflagsmodal" class="nodisplay">
+        <h1>Feature Flags</h1>
+        <button id="pullFeatureFlagsFromServerButton">pull feature flags from server</button>
+        <button id="disableAllFeaturesButton">disable all features</button>
+        <div id="featureflagslist"></div>
     </div>
     <div id="playersetup" class="nodisplay">
         <label for="playername">Enter your name:</label>

@@ -1,3 +1,5 @@
+@import "development/featureFlags/featureFlags.css";
+
 * {
     text-align: center;
     color: white;

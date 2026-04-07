@@ -1,0 +1,26 @@
+#featureflagsmodal {
+    border-style: solid;
+    background-color: green;
+    position: fixed;
+    top: 20vh;
+    height: 75vh;
+    left: 10vw;
+    min-width: 80vw;
+    z-index: 1;
+}
+
+#featureflagslist {
+    background-color: blue;
+    overflow-y: scroll;
+    max-height: 66vh;
+}
+
+.featureflagcontainer {
+    border-style: solid;
+    border-color: red;
+    border-width: 2px;
+    width: 70%;
+    max-width: 11cm;
+    padding: 3%;
+    margin: 3% auto;
+}
