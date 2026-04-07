@@ -21,6 +21,7 @@ export class FeatureFlagsFeatures {
 
     setFeaturesList(newFeaturesList) {
         this.featuresList = newFeaturesList;
+        if(this.clientOrServer == "client") setCookie("featuresList", JSON.stringify(this.featuresList));
     }
 
     isEnabledInEnvironment(featureName, environmentName) {
@@ -49,6 +50,7 @@ export class FeatureFlagsFeatures {
 
         if(
             this.clientOrServer == "client" &&
+            window.ws &&
             this.#selectedServerMatchesEnabledEnvironment(environmentName) &&
             wasEnabled == false
         ) {
@@ -70,6 +72,7 @@ export class FeatureFlagsFeatures {
 
         if(
             this.clientOrServer == "client" && 
+            window.ws &&
             this.#selectedServerMatchesEnabledEnvironment(environmentName) &&
             wasEnabled
         ) {
@@ -103,8 +106,10 @@ function disableAllFeatures() {
     for(const feature of featureFlagsFeatures.getFeaturesList()){
         featureFlagsFeatures.disableInEnvironment(feature.name, "dev");
         featureFlagsFeatures.disableInEnvironment(feature.name, "prod");
-        refreshFeatureFlagsModal()
     }
+
+    setCookie("featuresList", "", 0);
+    refreshFeatureFlagsModal()
 }
 
 function toggleFeatureFlagsModal() {
