@@ -198,12 +198,11 @@ export class ProbabilityEngine {
 
  	}
 
-    checkForUnavoidableGuess() {
+     checkForUnavoidableGuess() {
 
         for (let i = 0; i < this.prunedWitnesses.length; i++) {
             const witness = this.prunedWitnesses[i];
 
-            if (witness.minesToFind > 0 && witness.minesToFind < witness.tiles.length && witness.tiles.length > 1) {
             if (witness.minesToFind > 0 && witness.minesToFind < witness.tiles.length && witness.tiles.length > 1) {
 
                 //console.log("Witness " + witness.tile.asText() + " is a possible unavoidable guess witness");
