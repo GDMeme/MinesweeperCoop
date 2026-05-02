@@ -280,7 +280,7 @@ export async function solver(board, options) {
 
         let deadTiles = [];  // used to hold the tiles which have been determined to be dead by either the probability engine or deep analysis
 
-        const risky3BVRevealed = new Set();  // use a map to deduplicate the tiles
+        const risky3BVRevealed = new Set(); // use a map to deduplicate the tiles
         const work = new Set();  // use a map to deduplicate the witnessed tiles
 
         console.log("The solver is thinking...");
@@ -412,7 +412,7 @@ export async function solver(board, options) {
                 }
                 // if we are playing for efficiency and a mine wasn't found then go on to do the probability engine - this gets us all the possible clears and mines
                 result = [];  // clear down any actions we found  trivially
-                //return new EfficiencyHelper(board, witnesses, noFlagResult).process();
+                //return await new EfficiencyHelper(board, witnesses, noFlagResult).process();
             } else {
                 return result;
             }
@@ -576,7 +576,6 @@ export async function solver(board, options) {
             if (!options.noGuessingMode) {
                 // See if there are any unavoidable 2 tile 50/50 guesses 
                 if (SolverGlobal.EARLY_FIFTY_FIFTY_CHECKING && !options.hardcore && minesLeft > 0) {
-                    //const unavoidable5050a = pe.checkForUnavoidable5050();
                     let unavoidable5050a;
                     if (options.playStyle == PLAY_STYLE_EFFICIENCY || options.playStyle == PLAY_STYLE_NOFLAGS_EFFICIENCY) {
                         unavoidable5050a = pe.checkForUnavoidable5050();
@@ -1681,9 +1680,8 @@ export async function solver(board, options) {
 
         console.log("Tile " + tile.asText() + ", secondary safety = " + secondarySafety + ", 50/50 influence = " + fiftyFiftyInfluence
             + ", blended safety = " + blendedSafety + ", progress = " + action.progress+ ", expected clears = " + action.expectedClears + ", always clear = " + commonClears.length + ", final score = " + action.weight);
-
     }
-
+    
     function calculateValueProbability(board, value, pe) {
 
         const start = Date.now();

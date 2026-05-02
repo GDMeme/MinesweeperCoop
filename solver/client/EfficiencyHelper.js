@@ -29,7 +29,7 @@ export class EfficiencyHelper {
         this.pe = pe;
         this.coveredTiles = coveredTiles;
         this.options = options;
-
+        
         // this is a set() of tile indexes
         this.risky3BVRevealed = risky3BVRevealed;
 
@@ -39,8 +39,7 @@ export class EfficiencyHelper {
 
         // try the No flag efficiency strategy
         if (this.playStyle == PLAY_STYLE_NOFLAGS_EFFICIENCY) {
-            return this.processImprovedNF();
-            //return this.processNF(false);
+            return this.processImprovedNF(false);
         }
 
         if (this.playStyle != PLAY_STYLE_EFFICIENCY || this.actions.length == 0) {

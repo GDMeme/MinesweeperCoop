@@ -27,7 +27,10 @@ export class Tile {
 		this.efficiencyText = "";  
 
 		this.winRate = 0;   // win rate as determined by the Brute force analysis
-		this.winRateText = "";  
+		this.winRateText = "";
+		
+		this.zeroProbability = 0;
+		this.zeroPoison = false;
 
 		this.zeroProbability = 0;
 		this.zeroPoison = false;
