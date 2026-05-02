@@ -1,15 +1,33 @@
+/**
+ * 
+ */
+
+"use strict";
+
 import { SolutionCounter } from "./SolutionCounter.js";
 import { combination, divideBigInt } from './solver_main.js';
 import { Action } from "./solver_main.js";
+import { binomialCache } from "./global.js";
+
 import { WitnessWebIterator, Cruncher } from "./Brute_force.js";
 
-import { PLAY_STYLE_EFFICIENCY, PLAY_STYLE_NOFLAGS_EFFICIENCY, ACTION_CLEAR, binomialCache } from "./global.js";
-
+const PLAY_STYLE_FLAGS = 1;
+const PLAY_STYLE_NOFLAGS = 2;
+const PLAY_STYLE_EFFICIENCY = 3;
+const PLAY_STYLE_NOFLAGS_EFFICIENCY = 4;
 
 let analysisMode = true;
+
+const ACTION_CLEAR = 1;
+const ACTION_FLAG = 2;
+const ACTION_CHORD = 3;
+
 export class ProbabilityEngine {
 
     static SMALL_COMBINATIONS = [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1], [1, 6, 15, 20, 15, 6, 1], [1, 7, 21, 35, 35, 21, 7, 1], [1, 8, 28, 56, 70, 56, 28, 8, 1]];
+
+    static LOW_SAFETY = 0.00000001;
+    static HIGH_SAFETY = 1 - ProbabilityEngine.LOW_SAFETY;
 
 	constructor(board, allWitnesses, allWitnessed, squaresLeft, minesLeft, options) {
 
@@ -77,15 +95,16 @@ export class ProbabilityEngine {
         this.recursions = 0;
 
         Object.seal(this); // prevent new values being created
-        
+
         if (binomialCache.getMaxN() < this.TilesOffEdge) {
             this.validWeb = false;
-            this.writeToConsole("Too many floating tiles to calculate the Binomial Coefficient, max permitted is " + binomialCache.getMaxN());
+            console.log("Too many floating tiles to calculate the Binomial Coefficient, max permitted is " + binomialCache.getMaxN(), true);
             return;
         }
 
         // can't have less than zero mines
         if (minesLeft < 0) {
+            console.log("Mines Left=" + minesLeft, true);
             this.validWeb = false;
             return;
         }
@@ -99,6 +118,7 @@ export class ProbabilityEngine {
 
             // can't have too many or too few mines 
             if (boxWit.minesToFind < 0 || boxWit.minesToFind > boxWit.tiles.length) {
+                console.log("Too Many or too few mines: " + boxWit.minesToFind, true);
                 this.validWeb = false;
             }
 
@@ -124,8 +144,8 @@ export class ProbabilityEngine {
             }
             this.boxWitnesses.push(boxWit);  // all witnesses are needed for the probability engine
         }
-        this.writeToConsole("Pruned " + pruned + " witnesses as duplicates");
-        this.writeToConsole("There are " + this.boxWitnesses.length + " Box witnesses");
+        console.log("Pruned " + pruned + " witnesses as duplicates");
+        console.log("There are " + this.boxWitnesses.length + " Box witnesses");
 
 		// allocate each of the witnessed squares to a box
 		let uid = 0;
@@ -183,7 +203,7 @@ export class ProbabilityEngine {
         for (let i = 0; i < this.prunedWitnesses.length; i++) {
             const witness = this.prunedWitnesses[i];
 
-            if (witness.minesToFind == 1 && witness.tiles.length == 2) {
+            if (witness.minesToFind > 0 && witness.minesToFind < witness.tiles.length && witness.tiles.length > 1) {
 
                 //console.log("Witness " + witness.tile.asText() + " is a possible unavoidable guess witness");
                 let unavoidable = true;
@@ -222,8 +242,8 @@ export class ProbabilityEngine {
                     }
                 }
                 if (unavoidable) {
-                    this.writeToConsole("Tile " + witness.tile.asText() + " is an unavoidable guess");
-                    return witness.tiles[0];
+                    console.log("Tile " + witness.tile.asText() + " is an unavoidable guess");
+                    return this.notDead(witness.tiles);
                 } 
             }
         }
@@ -233,15 +253,15 @@ export class ProbabilityEngine {
 
 
     checkForUnavoidable5050() {
-        
-        this.writeToConsole("Checking for unavoidable 50/50.");
+
+        console.log("Checking for unavoidable 50/50.");
 
         const links = [];
 
         for (let i = 0; i < this.prunedWitnesses.length; i++) {
             const witness = this.prunedWitnesses[i];
 
-            if (witness.minesToFind == 1 && witness.tiles.length == 2) {
+            if (witness.minesToFind > 0 && witness.minesToFind < witness.tiles.length && witness.tiles.length > 1) {
 
                 // create a new link
                 const link = new Link();
@@ -249,7 +269,6 @@ export class ProbabilityEngine {
                 link.tile2 = witness.tiles[1];
 
                 //console.log("Witness " + witness.tile.asText() + " is a possible unavoidable guess witness");
-                let unavoidable = true;
                 // if every monitoring tile also monitors all the other tiles then it can't provide any information
                 for (let j = 0; j < witness.tiles.length; j++) {
                     const tile = witness.tiles[j];
@@ -284,19 +303,21 @@ export class ProbabilityEngine {
                                         link.closed2 = false;
                                     }
 
-                                    unavoidable = false;
+                                    link.unavoidable = false;
                                     //break check;
                                 }
                             }
                         }
                     }
                 }
-                if (unavoidable) {
-                    this.writeToConsole("Tile " + link.tile1.asText() + " is an unavoidable 50/50 guess");
-                    return this.notDead([link.tile1, link.tile2]);
+                if (link.unavoidable) {
+                    console.log("Tile " + witness.tile.asText() + " is an unavoidable guess");
+                    return this.notDead(witness.tiles);
                 }
 
-                links.push(link);
+                if (witness.minesToFind == 1 && witness.tiles.length == 2) {
+                    links.push(link);
+                }
             }
         }
 
@@ -331,26 +352,27 @@ export class ProbabilityEngine {
                         if (!extension.processed) {
 
                             if (extension.tile1.isEqual(openTile)) {
-                                extensions++;
                                 extension.processed = true;
                                 noMatch = false;
 
                                 // accumulate the potential breaker tiles as we progress;
                                 link.breaker.push(...extension.breaker);
-                                if (openTile2 == null || !extension.tile1.isEqual(openTile2)) {
+
+                                if (openTile2 == null || !extension.tile2.isEqual(openTile2)) {
                                     extensions++;
                                     area5050.push(extension.tile2);   // tile2 is the new tile
                                 }
-                                
+
                                 if (extension.closed2 && openTile2 != null) {
                                     openTile = openTile2;
                                     openTile2 = null;
-                                } else if (extension.closed2 || openTile2 != null && extension.tile2.isEqual(openTile2)) {
+                                }
+                                else if (extension.closed2 || openTile2 != null && extension.tile2.isEqual(openTile2)) {
                                     if (extensions % 2 == 0 && this.noBreaker(link, area5050)) {
-                                        this.writeToConsole("Tile " + openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
+                                        console.log("Tile " + openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
                                         return this.notDead(area5050);
                                     } else {
-                                        this.writeToConsole("Tile " + openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
+                                        console.log("Tile " + openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
                                         openTile = null;
                                     }
                                 } else {  // found an open extension, now look for an extension for this
@@ -364,6 +386,7 @@ export class ProbabilityEngine {
 
                                 // accumulate the potential breaker tiles as we progress;
                                 link.breaker.push(...extension.breaker);
+
                                 if (openTile2 == null || !extension.tile1.isEqual(openTile2)) {
                                     extensions++;
                                     area5050.push(extension.tile1);   // tile 1 is the new tile
@@ -372,12 +395,13 @@ export class ProbabilityEngine {
                                 if (extension.closed1 && openTile2 != null) {
                                     openTile = openTile2;
                                     openTile2 = null;
-                                } else if (extension.closed1 || openTile2 != null && extension.tile1.isEqual(openTile2)) {
+                                }
+                                else if (extension.closed1 || openTile2 != null && extension.tile1.isEqual(openTile2)) {
                                     if (extensions % 2 == 0 && this.noBreaker(link, area5050)) {
-                                        this.writeToConsole("Tile " + openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
+                                        console.log("Tile " + openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
                                         return this.notDead(area5050);
                                     } else {
-                                        this.writeToConsole("Tile " + openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
+                                        console.log("Tile " + openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
                                         openTile = null;
                                     }
 
@@ -401,8 +425,8 @@ export class ProbabilityEngine {
     }
 
     checkForUnavoidable5050OrPseudo() {
-        
-        this.writeToConsole("Checking for unavoidable 50/50 or pseudo 50/50.");
+
+        console.log("Checking for unavoidable 50/50 or pseudo 50/50.");
 
         const links = [];
         const pseudoLinks = [];
@@ -410,26 +434,73 @@ export class ProbabilityEngine {
         for (let i = 0; i < this.prunedWitnesses.length; i++) {
             const witness = this.prunedWitnesses[i];
 
-            if (witness.minesToFind == 1) {
+            if (witness.minesToFind > 0 && witness.minesToFind < witness.tiles.length && witness.tiles.length > 1) {
 
                 // create a new link
                 const link = new Link();
-                link.witness = witness;
+                link.tile1 = witness.tiles[0];
+                link.tile2 = witness.tiles[1];
 
-                if (witness.tiles.length == 2) {
-                    link.tile1 = witness.tiles[0];
-                    link.tile2 = witness.tiles[1];
+                //console.log("Witness " + witness.tile.asText() + " is a possible unavoidable guess witness");
+                // if every monitoring tile also monitors all the other tiles then it can't provide any information
+                for (let j = 0; j < witness.tiles.length; j++) {
+                    const tile = witness.tiles[j];
 
-                    this.assessLink(link);
-                    links.push(link);
+                    // get the witnesses monitoring this tile
+                    for (let adjTile of this.board.getAdjacent(tile)) {
 
-                } else {
-                    const rooted = this.findRootedLinks(witness);
-                    if (rooted.length == 0) {
-                        pseudoLinks.push(witness);
+                        // ignore tiles which are mines
+                        if (adjTile.isSolverFoundBomb()) {
+                            continue;
+                        }
+
+                        // are we one of the tiles other tiles, if so then no need to check
+                        let toCheck = true;
+                        for (let otherTile of witness.tiles) {
+                            if (otherTile.isEqual(adjTile)) {
+                                toCheck = false;
+                                break;
+                            }
+                        }
+
+                        // if we are monitoring and not a mine then see if we are also monitoring all the other mines
+                        if (toCheck) {
+                            for (let otherTile of witness.tiles) {
+                                if (!adjTile.isAdjacent(otherTile)) {
+
+                                    //console.log("Tile " + adjTile.asText() + " is not monitoring all the other witnessed tiles");
+                                    link.breaker.push(adjTile);
+                                    if (tile.isEqual(link.tile1)) {
+                                        link.closed1 = false;
+                                    } else {
+                                        link.closed2 = false;
+                                    }
+
+                                    link.unavoidable = false;
+                                    //break check;
+                                }
+                            }
+                        }
                     }
+                }
+                if (link.unavoidable) {
+                    console.log("Tile " + witness.tile.asText() + " is an unavoidable guess");
+                    return this.notDead(witness.tiles);
+                }
 
-                    links.push(...rooted);
+                if (witness.minesToFind == 1) {
+                    if (witness.tiles.length == 2) {
+                        links.push(link);
+                    } else {
+                        const rooted = this.findRootedLinks(witness);
+                        if (rooted.length == 0) {
+                            //console.log("Witness " + witness.tile.asText() + " is a possible pseudo connection");
+
+                            pseudoLinks.push(witness);
+                        }
+
+                        links.push(...rooted);
+                    }
                 }
             }
         }
@@ -445,7 +516,7 @@ export class ProbabilityEngine {
             }
         }
         if (unavoidableLink != null) {
-            this.writeToConsole("Tiles " + unavoidableLink.tile1.asText() + " and " + unavoidableLink.tile2.asText() + " form an unavoidable 50/50 guess");
+            console.log("Tiles " + unavoidableLink.tile1.asText() + " and " + unavoidableLink.tile2.asText() + " form an unavoidable 50/50 guess");
             return this.notDead([unavoidableLink.tile1, unavoidableLink.tile2]);
         }
 
@@ -455,13 +526,14 @@ export class ProbabilityEngine {
 
         // try and connect 2 or more links together to form an unavoidable 50/50
         for (let link of links) {
+            //if (!link.processed && (!link.closed2 && link.closed1 || !link.closed1 && link.closed2)) {  // one end open and one closed
             if (!link.processed && (!link.closed1 || !link.closed2)) {  // at least one end open
 
                 const chain = new Chain();
                 chain.whole5050.push(link.tile1);
                 chain.whole5050.push(link.tile2);
                 chain.breaker.push(...link.breaker);
-                
+
                 if (link.pseudo) {
                     chain.pseudo = true;
                 }
@@ -472,7 +544,8 @@ export class ProbabilityEngine {
                     if (!link.closed2) {
                         chain.openTile2 = link.tile2;
                     }
-                } else {
+                }
+                else {
                     chain.openTile = link.tile2;
                 }
 
@@ -500,6 +573,9 @@ export class ProbabilityEngine {
                         if (!extension.processed && !(chain.pseudo && extension.pseudo)) {  // can't add another pseudo link to an already pseudo chain
 
                             if (extension.tile1.isEqual(chain.openTile)) {
+
+                                //console.log("Tile " + extension.tile1.asText() + " extends the current chain");
+
                                 extension.processed = true;
                                 noMatch = false;
 
@@ -517,22 +593,22 @@ export class ProbabilityEngine {
                                 // accumulate the potential breaker tiles as we progress;
                                 chain.breaker.push(...extension.breaker);
 
-
                                 if (chain.openTile2 == null || !extension.tile2.isEqual(chain.openTile2)) {
                                     extensions++;
                                     chain.whole5050.push(extension.tile2);   // tile2 is the new tile
+
                                     if (!extension.dead2) {
                                         chain.living5050.push(extension.tile2);
                                     }
-
                                 }
 
                                 if (extension.closed2 && chain.openTile2 != null) {
                                     chain.openTile = chain.openTile2;
                                     chain.openTile2 = null;
-                                } else if (extension.closed2 || chain.openTile2 != null && extension.tile2.isEqual(chain.openTile2)) {
+                                }
+                                else if (extension.closed2 || chain.openTile2 != null && extension.tile2.isEqual(chain.openTile2)) {
                                     if (extensions % 2 == 0 && this.noBreaker(chain, chain.whole5050)) {
-                                        this.writeToConsole("Tile " + chain.openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
+                                        console.log("Tile " + chain.openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
 
                                         if (extension.pseudo) {
                                             return this.notDead([extension.tile1, extension.tile2]);
@@ -543,7 +619,7 @@ export class ProbabilityEngine {
                                         }
                                         
                                     } else {
-                                        this.writeToConsole("Tile " + chain.openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
+                                        console.log("Tile " + chain.openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
                                         chain.openTile = null;
                                     }
                                 } else {  // found an open extension, now look for an extension for this
@@ -552,6 +628,9 @@ export class ProbabilityEngine {
                                 break;
                             }
                             if (extension.tile2.isEqual(chain.openTile)) {
+
+                                //console.log("Tile " + extension.tile2.asText() + " extends the current chain");
+
                                 extension.processed = true;
                                 noMatch = false;
 
@@ -568,20 +647,23 @@ export class ProbabilityEngine {
 
                                 // accumulate the potential breaker tiles as we progress;
                                 chain.breaker.push(...extension.breaker);
+
                                 if (chain.openTile2 == null || !extension.tile1.isEqual(chain.openTile2)) {
                                     extensions++;
                                     chain.whole5050.push(extension.tile1);   // tile 1 is the new tile
+
                                     if (!extension.dead1) {
                                         chain.living5050.push(extension.tile1);
                                     }
                                 }
-                                
+
                                 if (extension.closed1 && chain.openTile2 != null) {
                                     chain.openTile = chain.openTile2;
                                     chain.openTile2 = null;
-                                } else if (extension.closed1 || chain.openTile2 != null && extension.tile1.isEqual(chain.openTile2)) {
+                                }
+                                else if (extension.closed1 || chain.openTile2 != null && extension.tile1.isEqual(chain.openTile2)) {
                                     if (extensions % 2 == 0 && this.noBreaker(chain, chain.whole5050)) {
-                                        this.writeToConsole("Tile " + chain.openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
+                                        console.log("Tile " + chain.openTile.asText() + " is an unavoidable guess, with " + extensions + " extensions");
 
                                         if (extension.pseudo) {
                                             return this.notDead([extension.tile1, extension.tile2]);
@@ -592,41 +674,47 @@ export class ProbabilityEngine {
                                         }
 
                                     } else {
-                                        this.writeToConsole("Tile " + chain.openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
+                                        console.log("Tile " + chain.openTile.asText() + " is a closed extension with " + (extensions + 1) + " parts");
                                         chain.openTile = null;
                                     }
 
                                 } else {  // found an open extension, now look for an extension for this
                                     chain.openTile = extension.tile1;
                                 }
+
                                 break;
                             }
+
                         }
+
                     }
-                    
+
                     // if we didn't match open tile 1 but open tile 2 is still unprocessed then go back and see if we can extend that.
                     if (noMatch && chain.openTile2 != null && !chain.secondPass) {
-                        //this.writeToConsole("Tile " + chain.openTile2.asText() + " will now be processed");
+
+                        //console.log("Tile " + chain.openTile2.asText() + " will now be processed");
 
                         // swap them over
                         const temp = chain.openTile;
                         chain.openTile = chain.openTile2;
                         chain.openTile2 = temp;
-                        
+
                         chain.secondPass = true;
                         noMatch = false;
                     }
-                }
 
+                }
 
                 if (noMatch && chain.openTile2 == null) {
                     let openTile1 = "null";
                     if (chain.openTile != null) {
                         openTile1 = chain.openTile.asText();
                     }
-                    this.writeToConsole("Tile " + openTile1 + " is the open end of a chain consisting of " + (chain.whole5050.length) + " tiles");
+
+                    console.log("Tile " + openTile1 + " is the open end of a chain consisting of " + (chain.whole5050.length) + " tiles");
                     chains.push(chain);
                 }
+
             }
         }
 
@@ -835,25 +923,29 @@ export class ProbabilityEngine {
 
     }
 
-    
     isNewMine(tile) {
+
         for (let mine of this.minesFound) {
             if (mine.isEqual(tile)) {
                 return true;
             }
         }
+
+        return false;
+
     }
 
-
-
     noBreaker(link, area) {
+
         // each potential breaker location must be adjacent to 2 tiles in the extended 50/50
         top: for (let tile of link.breaker) {
+
             for (let tile5050 of area) {
                 if (tile.isEqual(tile5050)) {
                     continue top;    //if a breaker tile is part of the 50/50 it can't break it
                 }
             }
+
 
             let adjCount = 0;
             for (let tile5050 of area) {
@@ -862,11 +954,13 @@ export class ProbabilityEngine {
                 }
             }
             if (adjCount % 2 !=0) {
-                this.writeToConsole("Tile " + tile.asText() + " breaks the 50/50 as it isn't adjacent to an even number of tiles in the extended candidate 50/50, adjacent " + adjCount + " of " + area.length);
+                console.log("Tile " + tile.asText() + " breaks the 50/50 as it isn't adjacent to an even number of tiles in the extended candidate 50/50, adjacent " + adjCount + " of " + area.length);
                 return false;
             }
         }
+
         return true;
+
     }
 
     // calculate a probability for each un-revealed tile on the board
@@ -919,13 +1013,14 @@ export class ProbabilityEngine {
         }
 
         if (this.fullAnalysis) {
-            this.writeToConsole("The probability engine did a full analysis - probability data is available")
+            console.log("The probability engine did a full analysis - probability data is available")
         } else {
-            this.writeToConsole("The probability engine did a truncated analysis - probability data is not available")
+            console.log("The probability engine did a truncated analysis - probability data is not available")
         }
 
         this.duration = Date.now() - peStart;
-        
+
+		
 	}
 
 
@@ -1082,7 +1177,7 @@ export class ProbabilityEngine {
         // there are less ways to place the mines if we know one of the tiles doesn't contain a mine
         const modifiedTilesCount = newBox.tiles.length - newBox.emptyTiles;
 
-        const combination = SolutionCounter.SMALL_COMBINATIONS[modifiedTilesCount][mines];
+        const combination = ProbabilityEngine.SMALL_COMBINATIONS[modifiedTilesCount][mines];
         //const combination = ProbabilityEngine.SMALL_COMBINATIONS[newBox.tiles.length][mines];
         const bigCom = BigInt(combination);
 
@@ -1123,7 +1218,7 @@ export class ProbabilityEngine {
         //this.checkCandidateDeadLocations();
 
         if (this.workingProbs.length == 0) {
-            //this.writeToConsole("working probabilites list is empty!!", true);
+            //console.log("working probabilites list is empty!!", true);
             this.heldProbs = [];
         	return;
         } 
@@ -1236,7 +1331,7 @@ export class ProbabilityEngine {
         result.push(current);
         //}	
 
-        this.writeToConsole(target.length + " Probability Lines compressed to " + result.length); 
+        console.log(target.length + " Probability Lines compressed to " + result.length); 
 
         return result;
 
@@ -1313,7 +1408,7 @@ export class ProbabilityEngine {
         if (bestWitness != null) {
             return new NextWitness(bestWitness);
         } else {
-            this.writeToConsole("Ending independent edge");
+            console.log("Ending independent edge");
         }
 
         // if we are down here then there is no witness which is on the boundary, so we have processed a complete set of independent witnesses 
@@ -1339,7 +1434,7 @@ export class ProbabilityEngine {
 
                             const tile = this.boxes[i].tiles[j];
 
-                            this.writeToConsole(tile.asText() + " has been determined to be locally clear");
+                            console.log(tile.asText() + " has been determined to be locally clear");
                             this.localClears.push(tile);
                         }
                     }
@@ -1356,7 +1451,7 @@ export class ProbabilityEngine {
                         // if the box contains all mines then store the tiles in it
                         for (let j = 0; j < this.boxes[i].tiles.length; j++) {
                             const tile = this.boxes[i].tiles[j];
-                            this.writeToConsole(tile.asText() + " has been determined to be locally a mine");
+                            console.log(tile.asText() + " has been determined to be locally a mine");
                             this.minesFound.push(tile);
                         }
                     }
@@ -1388,7 +1483,7 @@ export class ProbabilityEngine {
         // get an unprocessed witness
         const nw = this.findFirstWitness();
         if (nw != null) {
-            this.writeToConsole("Starting a new independent edge");
+            console.log("Starting a new independent edge");
         }
 
         // Store the probabilities for later consolidation
@@ -1420,13 +1515,13 @@ export class ProbabilityEngine {
                 }
             }
             if (completeScan) {
-                this.writeToConsole("This is a complete scan");
+                console.log("This is a complete scan");
             } else {
-                this.writeToConsole("This is not a complete scan");
+                console.log("This is not a complete scan");
             }
         } else {
             completeScan = false;
-            this.writeToConsole("This is not a complete scan because there are squares off the edge");
+            console.log("This is not a complete scan because there are squares off the edge");
         }
 
 
@@ -1455,14 +1550,14 @@ export class ProbabilityEngine {
             if (boxesInScope == 0) {
                 continue;
             } else if (boxesInScope != dc.goodBoxes.length + dc.badBoxes.length) {
-                this.writeToConsole("Location " + dc.candidate.asText() + " has some boxes in scope and some out of scope so assumed alive");
+                console.log("Location " + dc.candidate.asText() + " has some boxes in scope and some out of scope so assumed alive");
                 dc.isAlive = true;
                 continue;
             }
 
             //if we can't do the check because the edge has been compressed mid process then assume alive
             if (!checkPossible) {
-                this.writeToConsole("Location " + dc.candidate.asText() + " was on compressed edge so assumed alive");
+                console.log("Location " + dc.candidate.asText() + " was on compressed edge so assumed alive");
                 dc.isAlive = true;
                 continue;
             }
@@ -1497,7 +1592,7 @@ export class ProbabilityEngine {
 
                     // a bad box must have either no mines or all mines
                     if (pl.mineBoxCount[b.uid] != 0 && pl.mineBoxCount[b.uid] != neededMines) {
-                        this.writeToConsole("Location " + dc.candidate.asText() + " is not dead because a bad box has neither zero or all mines: " + pl.mineBoxCount[b.uid] + "/" + neededMines);
+                        console.log("Location " + dc.candidate.asText() + " is not dead because a bad box has neither zero or all mines: " + pl.mineBoxCount[b.uid] + "/" + neededMines);
                         okay = false;
                         break line;
                     }
@@ -1515,7 +1610,7 @@ export class ProbabilityEngine {
                     dc.firstCheck = false;
                 } else {
                     if (dc.total != tally) {
-                        this.writeToConsole("Location " + dc.candidate.asText() + " is not dead because the sum of mines in good boxes is not constant. Was "
+                        console.log("Location " + dc.candidate.asText() + " is not dead because the sum of mines in good boxes is not constant. Was "
                             + dc.total + " now " + tally + ". Mines in probability line " + pl.mineCount);
                         okay = false;
                         break;
@@ -1574,7 +1669,7 @@ export class ProbabilityEngine {
             }
 
             if (dc.goodBoxes.length == 0 && dc.badBoxes.length == 0) {
-                this.writeToConsole(dc.candidate.asText() + " is lonely since it has no open tiles around it");
+                console.log(dc.candidate.asText() + " is lonely since it has no open tiles around it");
                 this.lonelyTiles.push(dc);
             } else {
                 this.deadCandidates.push(dc);
@@ -1585,7 +1680,7 @@ export class ProbabilityEngine {
 
         for (let i = 0; i < this.deadCandidates.length; i++) {
             const dc = this.deadCandidates[i];
-            this.writeToConsole(dc.candidate.asText() + " is candidate dead with " + dc.goodBoxes.length + " good boxes and " + dc.badBoxes.length + " bad boxes");
+            console.log(dc.candidate.asText() + " is candidate dead with " + dc.goodBoxes.length + " good boxes and " + dc.badBoxes.length + " bad boxes");
         }
 
     }
@@ -1599,7 +1694,7 @@ export class ProbabilityEngine {
             }
         }
 
-        //this.writeToConsole("ERROR - tile " + tile.asText() + " doesn't belong to a box");
+        //console.log("ERROR - tile " + tile.asText() + " doesn't belong to a box");
 
         return null;
     }
@@ -1691,12 +1786,12 @@ export class ProbabilityEngine {
 
         // if this edge is everything then it isn't an isolated edge
         //if (everything) {
-        //    this.writeToConsole("Not isolated because the edge is everything");
+        //    console.log("Not isolated because the edge is everything");
         //    return false;
         //}
 
         if (this.isolatedEdgeBruteForce != null && edgeTiles.size >= this.isolatedEdgeBruteForce.tiles.length) {
-            this.writeToConsole("Already found an isolated edge of smaller size");
+            console.log("Already found an isolated edge of smaller size");
         }
 
         // check whether every tile adjacent to the tiles on the edge is itself on the edge
@@ -1708,7 +1803,7 @@ export class ProbabilityEngine {
                     for (let k = 0; k < adjTiles.length; k++) {
                         const adjTile = adjTiles[k];
                         if (adjTile.isCovered() && !adjTile.isSolverFoundBomb() && !edgeTiles.has(adjTile)) {
-                            this.writeToConsole("Not isolated because a tile's adjacent tiles isn't on the edge: " + tile.asText() + " ==> " + adjTile.asText());
+                            console.log("Not isolated because a tile's adjacent tiles isn't on the edge: " + tile.asText() + " ==> " + adjTile.asText());
                             return false;
                         }
                     }
@@ -1716,7 +1811,7 @@ export class ProbabilityEngine {
             }
         }
 
-        this.writeToConsole("*** Isolated Edge found ***");
+        console.log("*** Isolated Edge found ***");
 
         const tiles = [...edgeTiles];
         const witnesses = [...edgeWitnesses];
@@ -1767,7 +1862,7 @@ export class ProbabilityEngine {
             }
         }
 
-        this.writeToConsole("Calculated " + this.independentWitnesses.length + " independent witnesses");
+        console.log("Calculated " + this.independentWitnesses.length + " independent witnesses");
 
     }
 
@@ -1800,7 +1895,7 @@ export class ProbabilityEngine {
                 const mult = combination(this.minesLeft - pl.mineCount, this.TilesOffEdge);  //# of ways the rest of the board can be formed
                 const newSolutions = mult * pl.solutionCount;
 
-                this.writeToConsole(newSolutions + " solutions with " + pl.mineCount + " mines on Perimeter");
+                console.log(newSolutions + " solutions with " + pl.mineCount + " mines on Perimeter");
 
                 outsideTally = outsideTally + mult * BigInt(this.minesLeft - pl.mineCount) * (pl.solutionCount);
 
@@ -1828,8 +1923,15 @@ export class ProbabilityEngine {
                     this.boxProb[i] = 1;
                     this.emptyBoxes.push(this.boxes[i]);
 
-                } else {  // neither mine nor safe
-                    this.boxProb[i] = 1 - divideBigInt(tally[i], totalTally, 8);
+                } else {  // neither mine nor safe, but need to be careful of rounding down to zero, or up to one.
+                    const safety = 1 - divideBigInt(tally[i], totalTally, 8);
+                    if (safety == 0) {
+                        this.boxProb[i] = ProbabilityEngine.LOW_SAFETY;
+                    } else if (safety == 1) {
+                        this.boxProb[i] = ProbabilityEngine.HIGH_SAFETY;
+                    } else {
+                        this.boxProb[i] = safety;
+                    }
                 }
 
                 this.boxes[i].mineTally = tally[i]; 
@@ -1855,7 +1957,7 @@ export class ProbabilityEngine {
             const dc = this.lonelyTiles[i];
             //if (this.boxProb[dc.myBox.uid] != 0 && this.boxProb[dc.myBox.uid] != 1) {   // a lonely tile is dead if not a definite mine or safe
             if (this.boxProb[dc.myBox.uid] != 0) {
-                this.writeToConsole("PE found Lonely tile " + dc.candidate.asText() + " is dead with value +" + dc.total);
+                console.log("PE found Lonely tile " + dc.candidate.asText() + " is dead with value +" + dc.total);
                 this.deadTiles.push(dc.candidate);
             }
         }
@@ -1865,7 +1967,7 @@ export class ProbabilityEngine {
             const dc = this.deadCandidates[i];
             //if (!dc.isAlive && this.boxProb[dc.myBox.uid] != 0 && this.boxProb[dc.myBox.uid] != 1) {   // if it is dead and not a definite mine or safe
             if (!dc.isAlive && this.boxProb[dc.myBox.uid] != 0) {
-                this.writeToConsole("PE found " + dc.candidate.asText() + " to be dead with value +" + dc.total);
+                console.log("PE found " + dc.candidate.asText() + " to be dead with value +" + dc.total);
                 this.deadTiles.push(dc.candidate);
             }
         }
@@ -1976,13 +2078,13 @@ export class ProbabilityEngine {
 
         this.bestProbability = Math.max(this.bestOnEdgeProbability, this.offEdgeProbability);            ;
 
-        this.writeToConsole("Safe tiles " + this.localClears.length + ", Mines found " + this.minesFound.length);
-        this.writeToConsole("Off edge Safety is " + this.offEdgeProbability);
-        this.writeToConsole("Best on edge safety is " + this.bestOnEdgeProbability);
-        this.writeToConsole("Best safety is " + this.bestProbability);
-        this.writeToConsole("Best living safety is " + this.bestLivingSafety);
-        this.writeToConsole("Blended safety is " + this.blendedSafety);
-        this.writeToConsole("Game has  " + this.finalSolutionsCount + " candidate solutions" );
+        console.log("Safe tiles " + this.localClears.length + ", Mines found " + this.minesFound.length);
+        console.log("Off edge Safety is " + this.offEdgeProbability);
+        console.log("Best on edge safety is " + this.bestOnEdgeProbability);
+        console.log("Best safety is " + this.bestProbability);
+        console.log("Best living safety is " + this.bestLivingSafety);
+        console.log("Blended safety is " + this.blendedSafety);
+        console.log("Game has  " + this.finalSolutionsCount + " candidate solutions" );
 
         this.fullAnalysis = true;
  
@@ -2002,7 +2104,7 @@ export class ProbabilityEngine {
             test = this.bestProbability * freshhold;
         }
 
-        this.writeToConsole("Best probability is " + this.bestProbability + " freshhold is " + test);
+        console.log("Best probability is " + this.bestProbability + " freshhold is " + test);
 
         for (let i = 0; i < this.boxProb.length; i++) {
             if (this.boxProb[i] >= test) {
@@ -2020,7 +2122,7 @@ export class ProbabilityEngine {
                     if (!dead || this.boxProb[i] == 1) {   // if not dead or 100% safe then use the tile
                         best.push(new Action(squ.x, squ.y, this.boxProb[i], ACTION_CLEAR));
                     } else {
-                        this.writeToConsole("Tile " + squ.asText() + " is ignored because it is dead");
+                        console.log("Tile " + squ.asText() + " is ignored because it is dead");
                     }
  
                 }
@@ -2437,7 +2539,7 @@ class Chain {
 
         this.openTile = null;
         this.openTile2 = null;
-        
+
         this.secondPass = false;
         this.pseudo = false;
 

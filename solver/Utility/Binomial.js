@@ -3,7 +3,7 @@
 import { PrimeSieve } from "./PrimeSieve.js";
 
 export class BinomialCache {
- 
+
 	constructor(cacheSize, cacheFreshold, binomialEngine) {
 		this.cacheSize = cacheSize;
 		this.cacheFreshold = cacheFreshold;
@@ -87,7 +87,7 @@ export class BinomialCache {
 		this.start = this.start - this.cacheRemoval;
 		this.cache.length = this.start + 1;
 	}
-	
+
 	// the largest Binomial co-efficient computable in Choose k from N
 	getMaxN() {
 		return this.binomialEngine.max;
@@ -102,6 +102,7 @@ export class BinomialCache {
 
 
 class BinomialEntry {
+
 	constructor(k, n, bco) {
 		this.k = k;
 		this.n = n;

@@ -107,7 +107,7 @@ export class Board {
 	}
 	
 	getTile(index) {
-		return this.tiles[index];		
+		return this.tiles[index];
 	}
 	
 	// true if number of flags == tiles value

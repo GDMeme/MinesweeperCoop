@@ -25,15 +25,18 @@ export class Tile {
 		this.efficiencyValue = "";   // the value we need to be to be chordable
 		this.efficiencyProbability = 0;  // the probability of being that value
 		this.efficiencyText = "";  
-		
+
 		this.winRate = 0;   // win rate as determined by the Brute force analysis
 		this.winRateText = "";  
+
+		this.zeroProbability = 0;
+		this.zeroPoison = false;
 
 		// is there an mine adjacent to this tile?  Set as part of the No flag efficiency logic
 		this.adjacentMine = false;
 
 		this.skull = false;  // used when hardcore rule triggers
-		
+
 		this.inflate = false; // used when constructing a compressed board
 
 		Object.seal(this); // prevent new values being created
@@ -75,10 +78,6 @@ export class Tile {
 	asText() {
 		return "(" + this.x + "," + this.y + ")";
 	}
-	
-	asCoordinates() {
-		return this.x + "," + this.y;
-	}
 
     getHintText() {
 
@@ -116,7 +115,7 @@ export class Tile {
 
 		this.efficiencyText = "\n" + (probability * 100).toFixed(2) + "% value '" + value + "'"
 	}
-	
+
 	setWinRate(winRate) {
 		this.winRate = winRate;
 
@@ -137,21 +136,29 @@ export class Tile {
 		this.probability = -1;
 		this.winRate = 0;
 		this.winRateText = "";
+		this.zeroPoison = false;
     }
 
-    setOnEdge() {
+	setOnEdge() {
+		//console.log(this.asText() + " Setting on edge");
         this.onEdge = true;
     }
+
+	isOnEdge() {
+		return this.onEdge;
+	}
 
 	isCovered() {
 		return this.is_covered;
 	}
 
 	setCovered(covered) {
+		//console.log(this.asText() + " covered: " + covered);
 		this.is_covered = covered;
     }
 
 	setValue(value) {
+		//console.log(this.asText() + " setting value " + value + " and not covered");
 		this.value = value;
 		this.is_covered = false;
 	}
@@ -160,6 +167,7 @@ export class Tile {
 		if (this.is_flagged) {
 			console.error(this.asText() + " assigning a value " + value + " to a flagged tile!");
 		}
+
 		this.value = value;
     }
 

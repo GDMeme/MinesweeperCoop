@@ -212,6 +212,8 @@ export function initialSetup() {
             return;
         }
         
+        console.log("Best move:", bestMove);
+        
         if (bestMove !== undefined) { // Check if board is fully solved
             if (bestMove.action === 1) { // Regular left click (clear)
                 // Green

@@ -12,7 +12,6 @@ const SKULL = 14;
 const ACTION_CLEAR = 1;
 const ACTION_FLAG = 2;
 const ACTION_CHORD = 3;
-
 // these variables are used across the family of classes used in this process
 export class BruteForceGlobal {
 
@@ -21,7 +20,8 @@ export class BruteForceGlobal {
     static ANALYSIS_BFDA_THRESHOLD = 5000;               // number of solutions for the Brute force analysis to start when pressing "analyse"
     static BRUTE_FORCE_ANALYSIS_MAX_NODES = 100000000;   // Max number of nodes processed during brute force before we stop
     static BRUTE_FORCE_CYCLES_THRESHOLD = 75000000;      // Max number of cycles used to try and find the remaining solutions 
-    static PRUNE_BF_ANALYSIS = true;                     // Performance. Change to false to see the exact win rate for every living tile.
+    static PRUNE_BF_ANALYSIS = true;                     // Performance. Change to false to see the exact win rate for every living tile. Only stops prunning at the top node.
+    static INCLUDE_DEAD_TOP_TILES = false;               // Performance. Include top tiles which are dead.  Dead tiles at non-top locations in the tree are still ignored.
     static BRUTE_FORCE_ANALYSIS_TREE_DEPTH = 4;          // Depth of tree kept and displayed in the console after a successful brute force
 
     static INDENT = "................................................................................";
@@ -77,8 +77,8 @@ export class BruteForceAnalysis {
 
         const start = performance.now();
 
-        this.writeToConsole("----- Brute Force Deep Analysis starting ----");
-        this.writeToConsole(BruteForceGlobal.allSolutions.size() + " solutions in BruteForceAnalysis");
+        console.log("----- Brute Force Deep Analysis starting ----");
+        console.log(BruteForceGlobal.allSolutions.size() + " solutions in BruteForceAnalysis");
 
         // create the top node 
         let top = this.buildTopNode(BruteForceGlobal.allSolutions);  // top is class 'Node'
@@ -89,6 +89,8 @@ export class BruteForceAnalysis {
 
         let best = 0;
 
+        let linesArray = new Array(BruteForceGlobal.allTiles.length);
+
         for (let i = 0; i < top.getLivingLocations().length; i++) {
 
             if (this.verbose) {
@@ -97,9 +99,14 @@ export class BruteForceAnalysis {
             }
  
             const move = top.getLivingLocations()[i];  // move is class 'Livinglocation'
+
             const tile = BruteForceGlobal.allTiles[move.index];
 
-            const winningLines = top.getWinningLinesStart(move);  // calculate the number of winning lines if this move is played
+            let winningLines = 0;   // calculate the number of winning lines if this move is played
+            if (!move.linked) {
+                winningLines = top.getWinningLinesStart(move);
+                linesArray[move.index] = winningLines;
+            }
 
             // if the move wasn't pruned is it a better move
             if (!move.pruned) {
@@ -117,10 +124,10 @@ export class BruteForceAnalysis {
             const singleProb = (BruteForceGlobal.allSolutions.size() - move.mineCount) / BruteForceGlobal.allSolutions.size();
 
             if (move.pruned) {
-                this.writeToConsole(BruteForceGlobal.allTiles[move.index].asText() + " is living with " + move.count + " possible values and safety "
+                console.log(BruteForceGlobal.allTiles[move.index].asText() + " is living with " + move.count + " possible values and safety "
                     + this.percentage(singleProb) + ", this location was pruned (max winning solutions " + winningLines + ", process count " + BruteForceGlobal.processCount + ")");
             } else {
-                this.writeToConsole(BruteForceGlobal.allTiles[move.index].asText() + " is living with " + move.count + " possible values and safety "
+                console.log(BruteForceGlobal.allTiles[move.index].asText() + " is living with " + move.count + " possible values and safety "
                     + this.percentage(singleProb) + ", winning solutions " + winningLines + " (" + "process count " + BruteForceGlobal.processCount + ")");
             }
 
@@ -129,6 +136,33 @@ export class BruteForceAnalysis {
             }
 
         }
+
+        // find the winning lines for linked tiles
+        for (let i = 0; i < top.getLivingLocations().length; i++) {
+            const move = top.getLivingLocations()[i];  // move is class 'Livinglocation'
+            if (move.linked) {
+                const tile = BruteForceGlobal.allTiles[move.index];
+
+                // find the tile we are linked to 
+                for (let j = 0; j < top.getLivingLocations().length; j++) {
+                    const checkMove = top.getLivingLocations()[j];
+
+                    if (move.linkedHash == checkMove.linkedHash) {
+                        if (checkMove.pruned) {
+                            console.log(BruteForceGlobal.allTiles[move.index].asText() + " is linked to " + BruteForceGlobal.allTiles[checkMove.index].asText() +
+                                " with max winning solutions " + linesArray[checkMove.index] + " (pruned)");
+                        } else {
+                            tile.setWinRate(linesArray[checkMove.index] / BruteForceGlobal.allSolutions.size());
+                            console.log(BruteForceGlobal.allTiles[move.index].asText() + " is linked to " + BruteForceGlobal.allTiles[checkMove.index].asText() +
+                                " with winning solutions " + linesArray[checkMove.index]);
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
 
         top.winningLines = best;
 
@@ -154,16 +188,16 @@ export class BruteForceAnalysis {
 
             this.completed = true;
             if (true) {
-                this.writeToConsole("--------- Probability Tree dump start ---------");
+                console.log("--------- Probability Tree dump start ---------");
                 this.showTree(0, 0, top);
-                this.writeToConsole("---------- Probability Tree dump end ----------");
+                console.log("---------- Probability Tree dump end ----------");
             }
         }
 
         const end = performance.now();;
-        this.writeToConsole("Total nodes in cache = " + BruteForceGlobal.cache.size + ", total cache hits = " + BruteForceGlobal.cacheHit + ", total processing saved = " + BruteForceGlobal.cacheWork);
-        this.writeToConsole("process took " + (end - start).toFixed(2) + " milliseconds and explored " + BruteForceGlobal.processCount + " nodes");
-        this.writeToConsole("----- Brute Force Deep Analysis finished ----");
+        console.log("Total nodes in cache = " + BruteForceGlobal.cache.size + ", total cache hits = " + BruteForceGlobal.cacheHit + ", total processing saved = " + BruteForceGlobal.cacheWork);
+        console.log("process took " + (end - start).toFixed(2) + " milliseconds and explored " + BruteForceGlobal.processCount + " nodes");
+        console.log("----- Brute Force Deep Analysis finished ----");
 
         // clear down the cache
         BruteForceGlobal.cache.clear();
@@ -205,44 +239,58 @@ export class BruteForceAnalysis {
             let value;
 
             const valueCount = new Array(9).fill(0);
-            let mines = 0;
+            let mineCount = 0;
             let maxSolutions = 0;
-            let count = 0;
+            let distinctValues = 0;
             let minValue = 0;
             let maxValue = 0;
+            let hashValue = 0;
 
             for (let j = 0; j < result.getSolutionSize(); j++) {
                 if (solutionTable.get(j)[i] != BOMB) {
                     value = solutionTable.get(j)[i];
                     valueCount[value]++;
+                    hashValue += solutionTable.getHash(j);
                 } else {
-                    mines++;
+                    mineCount++;
+                    hashValue -= solutionTable.getHash(j);
                 }
             }
 
             for (let j = 0; j < valueCount.length; j++) {
                 if (valueCount[j] > 0) {
-                    if (count == 0) {
+                    if (distinctValues == 0) {
                         minValue = j;
                     }
                     maxValue = j;
-                    count++;
+                    distinctValues++;
                     if (maxSolutions < valueCount[j]) {
                         maxSolutions = valueCount[j];
                     }
                 }
             }
-            if (count > 1) {
+            if (distinctValues > 1 || BruteForceGlobal.INCLUDE_DEAD_TOP_TILES) {
                 const alive = new LivingLocation(i);   // alive is class 'LivingLocation'
-                alive.mineCount = mines;
-                alive.count = count;
+                alive.mineCount = mineCount;
+                alive.count = distinctValues;
                 alive.minValue = minValue;
                 alive.maxValue = maxValue;
                 alive.maxSolutions = maxSolutions;
                 alive.zeroSolutions = valueCount[0];
+                alive.linkedHash = hashValue;
+                for (let ll of living) {
+                    if (ll.linkedHash == alive.linkedHash) {
+                        console.log(BruteForceGlobal.allTiles[alive.index].asText() + " is linked to " + BruteForceGlobal.allTiles[ll.index].asText());
+                        alive.linked = true;
+                        alive.pruned = true;
+                    }
+                }
+
                 living.push(alive);
-            } else {
-                this.writeToConsole(BruteForceGlobal.allTiles[i].asText() + " is dead with value " + minValue);
+            }
+
+            if (distinctValues == 1) {
+                console.log(BruteForceGlobal.allTiles[i].asText() + " is dead with value " + minValue);
                 this.deadTiles.push(BruteForceGlobal.allTiles[i]);   // store the dead tiles
             }
 
@@ -270,7 +318,7 @@ export class BruteForceAnalysis {
         //solver.display("first best move is " + loc.display());
         const prob = 1 - (bestLiving.mineCount / this.currentNode.getSolutionSize());
 
-        this.writeToConsole("mines = " + bestLiving.mineCount + " solutions = " + this.currentNode.getSolutionSize());
+        console.log("mines = " + bestLiving.mineCount + " solutions = " + this.currentNode.getSolutionSize());
         for (let i = 0; i < bestLiving.children.length; i++) {
             if (bestLiving.children[i] == null) {
                 //solver.display("Value of " + i + " is not possible");
@@ -283,7 +331,7 @@ export class BruteForceAnalysis {
             } else {
                 probText = bestLiving.children[i].getProbability();
             }
-            this.writeToConsole("Value of " + i + " leaves " + bestLiving.children[i].getSolutionSize() + " solutions and winning probability " + probText + " (work size " + bestLiving.children[i].work + ")");
+            console.log("Value of " + i + " leaves " + bestLiving.children[i].getSolutionSize() + " solutions and winning probability " + probText + " (work size " + bestLiving.children[i].work + ")");
         }
 
         const action = new Action(loc.getX(), loc.getY(), prob, ACTION_CLEAR);
@@ -311,7 +359,7 @@ export class BruteForceAnalysis {
         if (node.bestLiving == null) {
             const line = BruteForceGlobal.INDENT.substring(0, depth * 3) + condition + " Solve chance " + node.getProbability();
 
-            this.writeToConsole(line);
+            console.log(line);
             return;
         }
 
@@ -321,7 +369,7 @@ export class BruteForceAnalysis {
 
 
         const line = BruteForceGlobal.INDENT.substring(0, depth * 3) + condition + " play " + loc.asText() + " Survival chance " + prob + ", Solve chance " + node.getProbability();
-        this.writeToConsole(line);
+        console.log(line);
 
         for (let val = 0; val < node.bestLiving.children.length; val++) {
             const nextNode = node.bestLiving.children[val];
@@ -365,7 +413,6 @@ class Position {
         this.hash = 0;
         this.mod = BigInt(Number.MAX_SAFE_INTEGER);
 
-
         if (p == null) {
             this.position = new Array(BruteForceGlobal.allTiles.length).fill(15);
         } else {
@@ -406,10 +453,13 @@ class LivingLocation {
         this.zeroSolutions = 0;    // the number of solutions that have a '0' value here
         this.maxValue = -1;
         this.minValue = -1;
-        this.count;  // number of possible values at this location
+        this.count = 0;  // number of possible values at this location
+        this.linkedHash = 0;
+        this.linked = false;
 
-        this.children;  // children is an array of class 'Node'
+        this.children = [];  // children is an array of class 'Node'
 
+        Object.seal(this) // prevent new properties being created
     }
 
     /**
@@ -489,6 +539,18 @@ class LivingLocation {
             return test;
         }
 
+        // linked tiles come after the non-linked tiles
+        if (this.linked) {
+            if (!o.linked) {
+                return 1;
+            }
+        } else {
+            if (o.linked) {
+                return -1;
+            }
+        }
+
+
         // then the location most likely to have a zero
         test = o.zeroSolutions - this.zeroSolutions;
         if (test != 0) {
@@ -565,7 +627,13 @@ class Node {
             return this.getSolutionSize() - move.mineCount;
         }
 
-        var winningLines = this.getWinningLines(1, move, this.winningLines);
+        var winningLines;
+        if (BruteForceGlobal.PRUNE_BF_ANALYSIS) { // when pruning pass the current best winning lines
+            winningLines = this.getWinningLines(1, move, this.winningLines);           
+
+        } else {  // when not pruning passing zero forces the move to be calculated.  Branches below the first move are still pruned.
+            winningLines = this.getWinningLines(1, move, 0);
+        }
 
         if (winningLines > this.winningLines) {
             this.winningLines = winningLines;
@@ -594,7 +662,7 @@ class Node {
         let notMines = this.getSolutionSize() - move.mineCount;   // number of solutions (at this node) which don't have a mine at this location 
 
         // if the max possible winning lines is less than the current cutoff then no point doing the analysis
-        if (BruteForceGlobal.PRUNE_BF_ANALYSIS && (result + notMines <= cutoff)) {
+        if (result + notMines <= cutoff) {
             move.pruned = true;
             return result + notMines;
         }
@@ -625,6 +693,11 @@ class Node {
                     for (let j = 0; j < child.getLivingLocations().length; j++) {
 
                         const childMove = child.getLivingLocations()[j];  // childmove is class 'LivingLocation'
+
+                        // don't need to analysed a linked tile
+                        if (childMove.linked) {
+                            continue; 
+                        }
 
                         // if the number of safe solutions <= the best winning lines then we can't do any better, so skip the rest
                         if (child.getSolutionSize() - childMove.mineCount <= child.winningLines) {
@@ -673,7 +746,7 @@ class Node {
             notMines = notMines - child.getSolutionSize();  // reduce the number of not mines
 
             // if the max possible winning lines is less than the current cutoff then no point doing the analysis
-            if (BruteForceGlobal.PRUNE_BF_ANALYSIS && (result + notMines <= cutoff)) {
+            if (result + notMines <= cutoff) {
                 move.pruned = true;
                 return result + notMines;
             }
@@ -708,13 +781,17 @@ class Node {
             let count = 0;
             let minValue = 0;
             let maxValue = 0;
+            let hashValue = 0;
+
 
             for (let j = this.startLocation; j < this.endLocation; j++) {
                 value = BruteForceGlobal.allSolutions.get(j)[live.index];
                 if (value != BOMB) {
-                     valueCount[value]++;
+                    valueCount[value]++;
+                    hashValue += BruteForceGlobal.allSolutions.getHash(j);
                 } else {
                     mines++;
+                    hashValue -= BruteForceGlobal.allSolutions.getHash(j);
                 }
             }
 
@@ -739,6 +816,16 @@ class Node {
                 alive.maxValue = maxValue;
                 alive.maxSolutions = maxSolutions;
                 alive.zeroSolutions = valueCount[0];
+                alive.linkedHash = hashValue;
+
+                // see if this tile is linked to another
+                for (let ll of living) {
+                    if (ll.linkedHash == alive.linkedHash) {
+                        alive.linked = true;
+                        alive.pruned = true;
+                    }
+                }
+
                 living.push(alive);
             }
 
@@ -757,10 +844,18 @@ class SolutionTable {
 
     constructor(solutions) {
         this.solutions = solutions;
+        this.hash = new Array(solutions.length);
+        for (let i = 0; i < solutions.length; i++) {
+            this.hash[i] = Math.floor(Math.random() * 4294967296);  // 32 bit random number
+        }
     }
 
     get(index) {
         return this.solutions[index];
+    }
+
+    getHash(index) {
+        return this.hash[index];
     }
 
     size() {
