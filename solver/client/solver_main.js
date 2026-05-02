@@ -449,35 +449,108 @@ export async function solver(board, options) {
             // TODO GDMEM: Maybe just set some global variables instead of doing the logic in here
             // This way it'll be more organized, don't have to look in this folder to find HTML logic
             
+            document.querySelectorAll(".cell").forEach(el => {
+                el.classList.remove("solver-safe", "solver-mine", "solver-guess");
+            });
+            
+            let bestGuess = null;
+            let bestProb = -1;
+            let hasSafeMove = false;
+            
             // Set the probability for each tile on the edge 
             let x, y;
+
             for (let i = 0; i < pe.boxes.length; i++) {
                 for (let j = 0; j < pe.boxes[i].tiles.length; j++) {
-                    pe.boxes[i].tiles[j].setProbability(pe.boxProb[i]);
-                    ({x, y} = pe.boxes[i].tiles[j]);
-                    const probability = (1 - pe.boxProb[i]) * 100;
-                    document.getElementById(`cell${x}_${y}`).innerHTML = Math.trunc(probability) === 0 || 0 ? Math.round((probability) * 100) / 100 : Math.round(probability);
+                    const tile = pe.boxes[i].tiles[j];
+                    tile.setProbability(pe.boxProb[i]);
+            
+                    ({ x, y } = tile);
+            
+                    const prob = 1 - pe.boxProb[i]; // safe probability (0–1)
+                    const percent = prob * 100;
+            
+                    const el = document.getElementById(`cell${x}_${y}`);
+                    if (!el) continue;
+            
+                    // set text
+                    if (prob !== 1 && prob !== 0) {
+                        el.innerHTML = Math.trunc(percent) === 0
+                            ? Math.round(percent * 100) / 100
+                            : Math.round(percent);
+                    } else {
+                        el.innerHTML = ""; // clear text for safe/mine tiles
+                    }
+            
+                    if (prob === 1) {
+                        el.classList.add("solver-safe");
+                        hasSafeMove = true;
+                    } else if (prob === 0) {
+                        el.classList.add("solver-mine");
+                    }
+            
+                    // track best guess
+                    if (prob > bestProb && prob < 1) {
+                        bestProb = prob;
+                        bestGuess = { x, y };
+                    }
                 }
             }
             
             // set all off edge probabilities
             for (let i = 0; i < board.tiles.length; i++) {
-                
                 const tile = board.getTile(i);
-                
+            
                 if (tile.isSolverFoundBomb()) {
                     if (!tile.isFlagged()) {
-                        ({x, y} = tile);
-                        document.getElementById(`cell${x}_${y}`).innerHTML = 100;
-                        
+                        ({ x, y } = tile);
+                        const el = document.getElementById(`cell${x}_${y}`);
+                        if (!el) continue;
+            
+                        el.innerHTML = ""; // clear text for mines
+                        el.classList.add("solver-mine");
+            
                         tile.setProbability(0);
                     }
-                } else if (tile.isCovered() && !tile.onEdge) {
+                } 
+                else if (tile.isCovered() && !tile.onEdge) {
                     tile.setProbability(pe.offEdgeProbability);
-                    ({x, y} = tile);
-                    const probability = (1 - pe.offEdgeProbability) * 100;
-                    document.getElementById(`cell${x}_${y}`).innerHTML = Math.trunc(probability) === 0 ? Math.round((probability) * 100) / 100 : Math.round(probability);                    
+            
+                    ({ x, y } = tile);
+            
+                    const prob = 1 - pe.offEdgeProbability;
+                    const percent = prob * 100;
+            
+                    const el = document.getElementById(`cell${x}_${y}`);
+                    if (!el) continue;
+            
+                    if (prob !== 1 && prob !== 0) {
+                        el.innerHTML = Math.trunc(percent) === 0
+                            ? Math.round(percent * 100) / 100
+                            : Math.round(percent);
+                    } else {
+                        el.innerHTML = ""; // clear text for safe/mine tiles
+                    }
+            
+                    // highlighting
+                    if (prob === 1) {
+                        el.classList.add("solver-safe");
+                        hasSafeMove = true;
+                    } else if (prob === 0) {
+                        el.classList.add("solver-mine");
+                    }
+            
+                    if (prob > bestProb && prob < 1) {
+                        bestProb = prob;
+                        bestGuess = { x, y };
+                    }
                 }
+            }
+            
+            if (!hasSafeMove && bestGuess) {
+                document
+                    .getElementById(`cell${bestGuess.x}_${bestGuess.y}`)
+                    ?.classList.add("solver-guess");
             }
 
             // all tiles are either dead or mines. At least one tile should not be a mine, or the game is finished.  
