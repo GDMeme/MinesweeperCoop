@@ -118,7 +118,7 @@ class SolverGlobal {
     static PRUNE_GUESSES = true;                      // Determines whether calculations continue after the tile can no longer be the best
     static EARLY_FIFTY_FIFTY_CHECKING = true;         // Determines whether 50/50 checking is done when there are safe tiles
     static CALCULATE_LONG_TERM_SAFETY = true;         // Switches 50/50 influence processing on or off, also most pseudo-50/50 detection
-
+    static REUSE_BRUTE_FORCE_ANALYSIS = false;        // Keeps track of the best path to victory and follows it rather than doing a full recalculation
 }
 
 // solver entry point
@@ -196,6 +196,8 @@ export async function solver(board, options) {
         const actions = await doSolve(board, options);  // look for solutions
         //console.log(actions);
 
+        cleanActions = actions;
+        /*
         if (options.playStyle == PLAY_STYLE_EFFICIENCY || options.playStyle == PLAY_STYLE_NOFLAGS_EFFICIENCY) {
             cleanActions = actions;
  
@@ -240,6 +242,7 @@ export async function solver(board, options) {
                 }
             }
         }
+        */
 
         // only pass back the result if we have a clear or a chord.
         // Otherwise try again with the flags we've discovered
@@ -256,6 +259,21 @@ export async function solver(board, options) {
         }
     }
 
+    let bestSafety = 0;
+    for (const action of cleanActions) {
+        bestSafety = action.prob;
+    }
+
+    // if we are flagging then add the flags into the next playable actions
+    // unless we are making a guess
+    if (options.playStyle == PLAY_STYLE_FLAGS && bestSafety == 1) {
+        for (const tile of board.unflaggedMines) {
+            cleanActions.push(new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG));
+        }
+    }
+
+    board.nextMoves = cleanActions;
+
     const reply = {};
     reply.actions = cleanActions;
     reply.fillers = fillerTiles;
@@ -267,6 +285,9 @@ export async function solver(board, options) {
 
     // this finds the best moves 
     async function doSolve(board, options) {
+
+        // reset the results stored on the board
+        board.reset();
 
         // find all the tiles which are revealed and have un-revealed / un-flagged adjacent squares
         let startTile = null;
@@ -280,10 +301,10 @@ export async function solver(board, options) {
 
         let deadTiles = [];  // used to hold the tiles which have been determined to be dead by either the probability engine or deep analysis
 
-        const risky3BVRevealed = new Set(); // use a map to deduplicate the tiles
+        const risky3BVRevealed = new Set();  // use a map to deduplicate the tiles
         const work = new Set();  // use a map to deduplicate the witnessed tiles
 
-        console.log("The solver is thinking...");
+        console.log("Thinking...");
 
         for (let i = 0; i < board.tiles.length; i++) {
 
@@ -347,12 +368,15 @@ export async function solver(board, options) {
 
         let result = [];
 
-        // if we are in flagged mode then flag any mines currently unflagged
-        if (options.playStyle != PLAY_STYLE_EFFICIENCY && options.playStyle != PLAY_STYLE_NOFLAGS_EFFICIENCY) {
+        // if we are in flagged mode then flag any known mines currently unflagged
+        //if (options.playStyle != PLAY_STYLE_EFFICIENCY && options.playStyle != PLAY_STYLE_NOFLAGS_EFFICIENCY) {
             for (let tile of unflaggedMines) {
-                result.push(new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG));
+                //if (options.playStyle == PLAY_STYLE_FLAGS) {
+                //    result.push(new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG));
+                //}
+                board.unflaggedMines.push(tile);
             }
-        }
+        //}
 
         // if there are no mines left to find the everything else is to be cleared
         if (minesLeft == 0) {
@@ -360,8 +384,13 @@ export async function solver(board, options) {
                 const tile = allCoveredTiles[i];
 
                 tile.setProbability(1);
-                result.push(new Action(tile.getX(), tile.getY(), 1, ACTION_CLEAR))
+                tile.isSafe = true;
+
+                result.push(new Action(tile.getX(), tile.getY(), 1, ACTION_CLEAR));
+
+                board.safeTiles.push(tile);
             }
+
             console.log("No mines left to find, all the remaining tiles are safe");
             return await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, null, allCoveredTiles, risky3BVRevealed, options).process();
 
@@ -373,7 +402,9 @@ export async function solver(board, options) {
                 const tile = allCoveredTiles[i];
 
                 tile.setProbability(0);
-                result.push(new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG))
+                //result.push(new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG));
+
+                board.unflaggedMines.push(tile);
             }
             console.log("No safe tiles left to find, all the remaining tiles are mines");
             return result;
@@ -389,7 +420,7 @@ export async function solver(board, options) {
         }
  
         if (result.length > oldMineCount) {
-            console.log("The solver found " + result.length + " trivial safe moves");
+            console.log("Found " + result.length + " trivial safe moves");
             return result;
             /*
             if (options.playStyle != PLAY_STYLE_FLAGS) {
@@ -412,7 +443,7 @@ export async function solver(board, options) {
                 }
                 // if we are playing for efficiency and a mine wasn't found then go on to do the probability engine - this gets us all the possible clears and mines
                 result = [];  // clear down any actions we found  trivially
-                //return await new EfficiencyHelper(board, witnesses, noFlagResult).process();
+                //return new EfficiencyHelper(board, witnesses, noFlagResult).process();
             } else {
                 return result;
             }
@@ -431,7 +462,7 @@ export async function solver(board, options) {
 
         console.log("Probability Engine took " + pe.duration + " milliseconds to complete");
 
-        if (pe.finalSolutionsCount == 0) {
+        if (pe.finalSolutionCount == 0) {
             console.log("The board is in an illegal state");
             return result;
         }
@@ -446,112 +477,61 @@ export async function solver(board, options) {
         // If we have a full analysis then set the probabilities on the tile tooltips
         if (pe.fullAnalysis) {
 
-            // TODO GDMEM: Maybe just set some global variables instead of doing the logic in here
-            // This way it'll be more organized, don't have to look in this folder to find HTML logic
-            
-            document.querySelectorAll(".cell").forEach(el => {
-                el.classList.remove("solver-safe", "solver-mine", "solver-guess");
-            });
-            
-            let bestGuess = null;
-            let bestProb = -1;
-            let hasSafeMove = false;
-            
-            // Set the probability for each tile on the edge 
-            let x, y;
+            // allCoveredTiles is all the tiles still covered, but not already determined to be a mine.
+            for (const tile of allCoveredTiles) {
 
-            for (let i = 0; i < pe.boxes.length; i++) {
-                for (let j = 0; j < pe.boxes[i].tiles.length; j++) {
-                    const tile = pe.boxes[i].tiles[j];
-                    tile.setProbability(pe.boxProb[i]);
-            
-                    ({ x, y } = tile);
-            
-                    const prob = 1 - pe.boxProb[i]; // safe probability (0–1)
-                    const percent = prob * 100;
-            
-                    const el = document.getElementById(`cell${x}_${y}`);
-                    if (!el) continue;
-            
-                    // set text
-                    if (prob !== 1 && prob !== 0) {
-                        el.innerHTML = Math.trunc(percent) === 0
-                            ? Math.round(percent * 100) / 100
-                            : Math.round(percent);
-                    } else {
-                        el.innerHTML = ""; // clear text for safe/mine tiles
-                    }
-            
-                    if (prob === 1) {
-                        el.classList.add("solver-safe");
-                        hasSafeMove = true;
-                    } else if (prob === 0) {
-                        el.classList.add("solver-mine");
-                    }
-            
-                    // track best guess
-                    if (prob > bestProb && prob < 1) {
-                        bestProb = prob;
-                        bestGuess = { x, y };
+                if (tile.isCovered()) {
+                    const safety = pe.getProbability(tile);
+
+                    tile.setProbability(safety);
+
+                    if (safety == 1) {
+                        board.safeTiles.push(tile);
+                        tile.isSafe = true;
+                    } else if (safety == 0 && !tile.isFlagged()) {
+                        tile.setProbability(0);
+                        board.unflaggedMines.push(tile);
                     }
                 }
             }
-            
+
+           /*
+            // Set the probability for each tile on the edge 
+            for (let i = 0; i < pe.boxes.length; i++) {
+                let safety = pe.boxProb[i];
+                for (let j = 0; j < pe.boxes[i].tiles.length; j++) {
+                    let tile = pe.boxes[i].tiles[j];
+                    tile.setProbability(safety);
+                    if (safety == 0) {
+                        if (!tile.isFlagged()) {
+                            board.unflaggedMines.push(tile);
+                        }
+                    } else if (safety == 1) {
+                        board.safeTiles.push(tile);
+                        tile.isSafe = true;
+                    }
+                }
+            }
+
             // set all off edge probabilities
             for (let i = 0; i < board.tiles.length; i++) {
+
                 const tile = board.getTile(i);
-            
+
                 if (tile.isSolverFoundBomb()) {
-                    if (!tile.isFlagged()) {
-                        ({ x, y } = tile);
-                        const el = document.getElementById(`cell${x}_${y}`);
-                        if (!el) continue;
-            
-                        el.innerHTML = ""; // clear text for mines
-                        el.classList.add("solver-mine");
-            
-                        tile.setProbability(0);
-                    }
-                } 
-                else if (tile.isCovered() && !tile.onEdge) {
+                    //if (!tile.isFlagged()) {
+                    //    tile.setProbability(0);
+                    //    board.unflaggedMines.push(tile);
+                    //}
+                } else if (tile.isCovered() && !tile.onEdge) {
                     tile.setProbability(pe.offEdgeProbability);
-            
-                    ({ x, y } = tile);
-            
-                    const prob = 1 - pe.offEdgeProbability;
-                    const percent = prob * 100;
-            
-                    const el = document.getElementById(`cell${x}_${y}`);
-                    if (!el) continue;
-            
-                    if (prob !== 1 && prob !== 0) {
-                        el.innerHTML = Math.trunc(percent) === 0
-                            ? Math.round(percent * 100) / 100
-                            : Math.round(percent);
-                    } else {
-                        el.innerHTML = ""; // clear text for safe/mine tiles
-                    }
-            
-                    // highlighting
-                    if (prob === 1) {
-                        el.classList.add("solver-safe");
-                        hasSafeMove = true;
-                    } else if (prob === 0) {
-                        el.classList.add("solver-mine");
-                    }
-            
-                    if (prob > bestProb && prob < 1) {
-                        bestProb = prob;
-                        bestGuess = { x, y };
+                    if (pe.offEdgeProbability == 1) {
+                        board.safeTiles.push(tile);
+                        tile.isSafe = true;
                     }
                 }
             }
-            
-            if (!hasSafeMove && bestGuess) {
-                document
-                    .getElementById(`cell${bestGuess.x}_${bestGuess.y}`)
-                    ?.classList.add("solver-guess");
-            }
+            */
 
             // all tiles are either dead or mines. At least one tile should not be a mine, or the game is finished.  
             if (pe.bestProbability == 0) {
@@ -561,7 +541,9 @@ export async function solver(board, options) {
                 // find the first non mine dead tile
                 for (let deadTile of pe.deadTiles) {
                     if (deadTile.probability != 0) {
-                        result.push(new Action(deadTile.getX(), deadTile.getY(), deadTile.probability, ACTION_CLEAR));
+                        const action = new Action(deadTile.getX(), deadTile.getY(), deadTile.probability, ACTION_CLEAR);
+                        action.dead = true;
+                        result.push(action);
                         console.log("All tiles are dead, try tile " + deadTile.asText() + "." + formatSolutions(pe.finalSolutionsCount));
                         break;
                     }
@@ -572,14 +554,35 @@ export async function solver(board, options) {
                 }
 
                 // pass back all the discovered mines
-                for (let tile of pe.minesFound) {   // place each found flag
-                    const action = new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG);
-                    result.push(action);
-                }
+                //for (let tile of pe.minesFound) {   // place each found flag
+                //    const action = new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG);
+                //    result.push(action);
+                //}
 
-                return addDeadTiles(result, pe.deadTiles, pe.minesFound);
+                return addDeadTiles(result, pe.deadTiles, pe.minesFound, board);
             }
 
+        }
+
+        // if we have already got a brute force then follow that path
+        if (board.bestTree != null) {
+            if (SolverGlobal.REUSE_BRUTE_FORCE_ANALYSIS) {
+                const bestTile = board.bestTree.getBestMove(pe.finalSolutionsCount);
+                if (bestTile != null) {
+                    console.log("Best tile is " + bestTile.asText());
+                    console.log("Best follow up move is " + bestTile.asText() + " with " + (bestTile.winRate * 100).toFixed(2) + "% win rate." + formatSolutions(pe.finalSolutionsCount));
+
+                    let safety = pe.getProbability(bestTile);
+                    const action = new Action(bestTile.getX(), bestTile.getY(), safety, ACTION_CLEAR);
+                    result.push(action);
+
+                    return addDeadTiles(result, pe.deadTiles, pe.minesFound, board);
+                } else {
+                    console.log("No entry found in the Brute force analysis winning tree");
+                }
+            } else {
+                console.log("REUSE_BRUTE_FORCE_ANALYSIS is set to false, winning path is not being re-used");
+            }
         }
 
         // if the tiles off the edge are definitely safe then clear them all
@@ -627,12 +630,13 @@ export async function solver(board, options) {
                 result.push(action);
             }
 
-            for (let tile of pe.minesFound) {   // place each found flag
-                tile.setProbability(0);
+            // identify each discovered mine to help the efficiency processing
+            for (let tile of pe.minesFound) {   
+                //tile.setProbability(0);
                 tile.setFoundBomb();
                 //if (options.playStyle == PLAY_STYLE_FLAGS) {
-                    const action = new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG);
-                    result.push(action);
+                //    const action = new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG);
+                //    result.push(action);
                 //}
             }
 
@@ -643,12 +647,13 @@ export async function solver(board, options) {
                 result.push(action);
                 totalSafe++;
             }
-            console.log("The solver has found " + totalSafe + " safe tiles." + formatSolutions(pe.finalSolutionsCount));
+            console.log("Found " + totalSafe + " safe tiles." + formatSolutions(pe.finalSolutionsCount));
             result = await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process()
 
             if (!options.noGuessingMode) {
                 // See if there are any unavoidable 2 tile 50/50 guesses 
                 if (SolverGlobal.EARLY_FIFTY_FIFTY_CHECKING && !options.hardcore && minesLeft > 0) {
+                    //const unavoidable5050a = pe.checkForUnavoidable5050();
                     let unavoidable5050a;
                     if (options.playStyle == PLAY_STYLE_EFFICIENCY || options.playStyle == PLAY_STYLE_NOFLAGS_EFFICIENCY) {
                         unavoidable5050a = pe.checkForUnavoidable5050();
@@ -669,12 +674,21 @@ export async function solver(board, options) {
                         if (actions.length != 0) {
                             const returnActions = await tieBreak(pe, actions, null, null, false);
 
+                            /*
                             const recommended = returnActions[0];
-                            result.unshift(...returnActions);
+                            //result.unshift(...returnActions);
+
+                            result = [];
+                            result.push(...returnActions);
+                            */
+
+                            const recommended = seperateTiebreakResult(board, returnActions);
+                            result = [recommended];
+
                             if (recommended.prob == 0.5) {
-                                console.log(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                                console.log("Tile " + recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                             } else {
-                                console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                                console.log("Tile " + recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                             }
 
                             // combine the dead tiles from the probability engine and the unavoidable 5050s
@@ -691,17 +705,17 @@ export async function solver(board, options) {
                                 }
                             }
 
-                            return addDeadTiles(result, deadTiles, pe.minesFound);
+                            return addDeadTiles(result, deadTiles, pe.minesFound, board);
                         }
                     }
                 }
-                result = addDeadTiles(result, pe.getDeadTiles(), pe.minesFound);
+                result = addDeadTiles(result, pe.getDeadTiles(), pe.minesFound, board);
             }
 
             return result;
         } 
 
-
+        /*
         for (let tile of pe.minesFound) {   // place each found flag
             tile.setProbability(0);
             //tile.setFoundBomb();
@@ -710,15 +724,16 @@ export async function solver(board, options) {
                 result.push(action);
             //}
         }
+        */
 
         // if we've found some mines but not any safe tiles then return what we know
         if (pe.bestProbability < 1 && pe.minesFound.length > 0) {
             console.log("Returning mines only result");
-            for (let tile of pe.minesFound) {   // place each found flag
-                tile.setProbability(0);
-                tile.setFoundBomb();
-            }
-            return addDeadTiles(result, pe.deadTiles, pe.minesFound);
+            //for (let tile of pe.minesFound) {   // place each found flag
+            //    tile.setProbability(0);
+            //    tile.setFoundBomb();
+            //}
+            return addDeadTiles(result, pe.deadTiles, pe.minesFound, board);
         }
 
         // this is part of the no-guessing board creation logic
@@ -734,7 +749,7 @@ export async function solver(board, options) {
             // find some witnesses which can be adjusted to remove the guessing
             findBalancingCorrections(pe);
 
-            return addDeadTiles(result, [], pe.minesFound);
+            return addDeadTiles(result, [], pe.minesFound, board);
         }
 
 
@@ -743,7 +758,7 @@ export async function solver(board, options) {
         if (!options.advancedGuessing) {
             console.log("Advanced guessing is turned off so exiting the solver after the probability engine");
             console.log("Press 'Analyse' for advanced guessing");
-            return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound);
+            return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound, board);
         }
 
         /*
@@ -808,11 +823,15 @@ export async function solver(board, options) {
                     result.push(nextmove);
 
                     var winChanceText = (bfda.winChance * 100).toFixed(2);
-                    console.log("The solver has calculated tile " + nextmove.asText()  + " has a " + winChanceText + "% chance to solve the isolated edge." + formatSolutions(pe.finalSolutionsCount));
+                    console.log("Tile " + nextmove.asText()  + " has a " + winChanceText + "% chance to solve the isolated edge." + formatSolutions(pe.finalSolutionsCount));
 
                 } else {  // seed 6674107430895333
                     if (bfda.bestTile != null) {
-                        console.log("The solver has calculated that all the tiles on an isolated edge are dead, try tile " + bfda.bestTile.asText() + "?" + formatSolutions(pe.finalSolutionsCount));
+                        const action = new Action(bfda.bestTile.getX(), bfda.bestTile.getY(), pe.getProbability(bfda.bestTile), ACTION_CLEAR);
+                        action.dead = true;
+                        result.push(action);
+
+                        console.log("All the tiles on an isolated edge are dead, try tile " + bfda.bestTile.asText() + "?" + formatSolutions(pe.finalSolutionsCount));
                     }
                 }
 
@@ -831,7 +850,7 @@ export async function solver(board, options) {
                         deadTiles.push(deadTile);
                     }
                 }
-                return addDeadTiles(result, deadTiles, pe.minesFound);
+                return addDeadTiles(result, deadTiles, pe.minesFound, board);
             }
 
         }
@@ -847,8 +866,7 @@ export async function solver(board, options) {
         let partialBFDA = null;
         if (pe.bestProbability < 1 && pe.finalSolutionsCount < bfdaThreshold) {
 
-            //console.log("The solver is starting brute force deep analysis on " + pe.finalSolutionsCount + " solutions");
-            console.log("The solver is determining the " + pe.finalSolutionsCount + " solutions so they can be brute forced.");
+            console.log("Determining the " + pe.finalSolutionsCount + " solutions so they can be brute forced.");
             await sleep(1);
 
             pe.generateIndependentWitnesses();
@@ -876,6 +894,7 @@ export async function solver(board, options) {
 
             // if the brute force deep analysis completed then use the results
             if (bfdaCompleted) {
+
                 // if they aren't all dead then send the best guess
                 if (!bfda.allTilesDead()) {
                     const nextmove = bfda.getNextMove();
@@ -883,14 +902,22 @@ export async function solver(board, options) {
 
                     deadTiles = bfda.deadTiles;
                     const winChanceText = (bfda.winChance * 100).toFixed(2);
-                    console.log("The solver has calculated tile " + nextmove.asText() + " has a " + winChanceText + "% chance to win the game." + formatSolutions(pe.finalSolutionsCount));
+                    console.log("Tile " + nextmove.asText() + " has a " + winChanceText + "% chance to win the game." + formatSolutions(pe.finalSolutionsCount));
+
+                    board.bestTree = bfda.getBestTree();
+                    console.log("Storing winning path with " + board.bestTree.nodes.size + " nodes");
 
                 } else {
-                    console.log("The solver has calculated that all the remaining tiles are dead, try tile " + bfda.bestTile.asText() + "?" + formatSolutions(pe.finalSolutionsCount));
+
+                    const action = new Action(bfda.bestTile.getX(), bfda.bestTile.getY(), pe.getProbability(bfda.bestTile), ACTION_CLEAR);
+                    action.dead = true;
+                    result.push(action);
+
+                    console.log("All the remaining tiles are dead, try tile " + bfda.bestTile.asText() + "?" + formatSolutions(pe.finalSolutionsCount));
                     deadTiles = allCoveredTiles;   // all the tiles are dead
                 }
 
-                return addDeadTiles(result, deadTiles, pe.minesFound);
+                return addDeadTiles(result, deadTiles, pe.minesFound, board);
             } else {
                 deadTiles = pe.getDeadTiles();  // use the dead tiles from the probability engine
                 partialBFDA = bfda;
@@ -919,22 +946,28 @@ export async function solver(board, options) {
 
             ltr = new LongTermRiskHelper(board, pe, minesLeft, options);
             const unavoidable5050b = await ltr.findInfluence();
-            if (unavoidable5050b) { // GDMEM seems like this will only return 1 tile
+            if (unavoidable5050b.length != 0) {
 
                 const actions = [];
-                actions.push(new Action(unavoidable5050b.getX(), unavoidable5050b.getY(), unavoidable5050b.probability, ACTION_CLEAR)); // GDMEM this line was edited due to reason above
+                for (const tile of unavoidable5050b) {
+                    actions.push(new Action(tile.getX(), tile.getY(), tile.probability, ACTION_CLEAR));
+                }
 
                 const returnActions = await tieBreak(pe, actions, partialBFDA, ltr, false);
 
-                const recommended = returnActions[0];
-                result.push(...returnActions);
+                //const recommended = returnActions[0];
+                //result.push(...returnActions);
+
+                const recommended = seperateTiebreakResult(board, returnActions);
+                result = [recommended];
+
                 if (recommended.prob == 0.5) {  // 2935898204031399
-                    console.log(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                    console.log("Tile " + recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                 } else {
-                    console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                    console.log("Tile " + recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                 }
                 //console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
-                return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound);
+                return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound, board);
             }
         }
 
@@ -949,18 +982,22 @@ export async function solver(board, options) {
                     actions.push(new Action(tile.getX(), tile.getY(), tile.probability, ACTION_CLEAR));
                 }
 
-                const returnActions = await tieBreak(pe, actions, partialBFDA, ltr, false);
+                const returnActions = tieBreak(pe, actions, partialBFDA, ltr, false);
 
-                const recommended = returnActions[0];
-                result.push(...returnActions);
+                //const recommended = returnActions[0];
+                //result.push(...returnActions);
+
+                const recommended = seperateTiebreakResult(board, returnActions);
+                result = [recommended];
+
                 //console.log(recommended.prob);
                 if (recommended.prob == 0.5) {  // 2935898204031399
-                    console.log(recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
+                    console.log("Tile " + recommended.asText() + " is an unavoidable 50/50 guess." + formatSolutions(pe.finalSolutionsCount));
                 } else {
-                    console.log(recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
+                    console.log("Tile " + recommended.asText() + " is an unavoidable 50/50 guess, or safe." + formatSolutions(pe.finalSolutionsCount));
                 }
 
-                return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound);
+                return addDeadTiles(result, pe.getDeadTiles(), pe.minesFound, board);
             }
         }
 
@@ -976,6 +1013,7 @@ export async function solver(board, options) {
 
         // if we have some good guesses on the edge
         if (result.length > 0) {
+
             for (let i = 0; i < deadTiles.length; i++) {
                 const tile = deadTiles[i];
 
@@ -990,15 +1028,15 @@ export async function solver(board, options) {
             }
 
             if (pe.bestProbability == 1) {
-                console.log("The solver has found some certain moves using the probability engine." + formatSolutions(pe.finalSolutionsCount));
+                console.log("The probability engine has found some safe tiles." + formatSolutions(pe.finalSolutionsCount));
 
-                 // identify where the bombs are
+                 // identify where the bombs are to help the efficiency processing
                 for (let tile of pe.minesFound) {
                     tile.setFoundBomb();
-                    if (options.playStyle == PLAY_STYLE_FLAGS) {
-                        const action = new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG);
-                        result.push(action);
-                    }
+                    //if (options.playStyle == PLAY_STYLE_FLAGS) {
+                    //    const action = new Action(tile.getX(), tile.getY(), 0, ACTION_FLAG);
+                    //    result.push(action);
+                    //}
                 }
  
                 result = await new EfficiencyHelper(board, witnesses, witnessed, result, options.playStyle, pe, allCoveredTiles, risky3BVRevealed, options).process();
@@ -1006,13 +1044,17 @@ export async function solver(board, options) {
             } else {
  
                 if (pe.duration < 50) {  // if the probability engine didn't take long then use some tie-break logic
-                    result = await tieBreak(pe, result, partialBFDA, ltr, SolverGlobal.CALCULATE_LONG_TERM_SAFETY);
+                    let returnActions = await tieBreak(pe, result, partialBFDA, ltr, SolverGlobal.CALCULATE_LONG_TERM_SAFETY);
+
+                    const recommended = seperateTiebreakResult(board, returnActions);
+                    result = [recommended];
+
                     if (result.length != 0) {
-                        const recommended = result[0];
-                        console.log("The solver recommends clearing tile " + recommended.asText() + "." + formatSolutions(pe.finalSolutionsCount));
+                        //const recommended = result[0];
+                        console.log("Guessing heuristic suggests clearing tile " + recommended.asText() + "." + formatSolutions(pe.finalSolutionsCount));
                     }
                 } else {
-                    console.log("The solver has found the safest guess using the probability engine." + formatSolutions(pe.finalSolutionsCount));
+                    console.log("Found the safest guess using the probability engine." + formatSolutions(pe.finalSolutionsCount));
                 }
             }
 
@@ -1021,17 +1063,17 @@ export async function solver(board, options) {
 
             result.push(new Action(bestGuessTile.getX(), bestGuessTile.getY(), pe.offEdgeProbability), ACTION_CLEAR);
 
-            console.log("The solver has decided the best guess is off the edge." + formatSolutions(pe.finalSolutionsCount));
+            console.log("The best guess is off the edge." + formatSolutions(pe.finalSolutionsCount));
 
         }
 
-        return addDeadTiles(result, deadTiles, pe.minesFound);
+        return addDeadTiles(result, deadTiles, pe.minesFound, board);
 
     }
 
     // used to add the dead tiles to the results
     // also used to mark the found mines
-    function addDeadTiles(result, deadTiles, mines) {
+    function addDeadTiles(result, deadTiles, mines, board) {
 
         for (let tile of mines) {   //mark each found mine
             tile.setFoundBomb();
@@ -1040,13 +1082,40 @@ export async function solver(board, options) {
         // identify the dead tiles
         for (let tile of deadTiles) {   // show all dead tiles 
             if (tile.probability != 0 && tile.probability != 1) {
-                const action = new Action(tile.getX(), tile.getY(), tile.probability);
-                action.dead = true;
-                result.push(action);
+                //const action = new Action(tile.getX(), tile.getY(), tile.probability);
+                //action.dead = true;
+                //result.push(action);
+                board.deadTiles.push(tile);
             }
         }
 
         return result;
+
+    }
+
+    // takes the result of the tiebreak processing and splits the result into:
+    // - Recommended move tile
+    // - Dead tiles
+    // - Also considered tiles
+    function seperateTiebreakResult(board, result) {
+
+        if (result.length == 0) {
+            return;
+        }
+
+        //board.nextMoves.push(result[0]);
+
+        for (let i = 1; i < result.length; i++) {
+            let action = result[i];
+            let tile = board.getTileXY(action.x, action.y);
+            if (action.dead) {
+                board.deadTiles.push(tile);
+            } else {
+                board.considered.push(tile);
+            }
+        }
+
+        return result[0];
 
     }
 
@@ -1753,8 +1822,9 @@ export async function solver(board, options) {
 
         console.log("Tile " + tile.asText() + ", secondary safety = " + secondarySafety + ", 50/50 influence = " + fiftyFiftyInfluence
             + ", blended safety = " + blendedSafety + ", progress = " + action.progress+ ", expected clears = " + action.expectedClears + ", always clear = " + commonClears.length + ", final score = " + action.weight);
+
     }
-    
+
     function calculateValueProbability(board, value, pe) {
 
         const start = Date.now();
@@ -1764,7 +1834,7 @@ export async function solver(board, options) {
             base = pe;
         } else {
             base = runProbabilityEngine(board, null);
-            if (base.finalSolutionsCount == 0) {
+            if (base.finalSolutionCount == 0) {
                 console.log("Board is in an invalid state");
                 return;
             }
@@ -2180,7 +2250,7 @@ export async function solver(board, options) {
 
     }
 
-    function writeToConsole(text, always) {
+    function console.log(text, always) {
 
         if (always == null) {
             always = false;
