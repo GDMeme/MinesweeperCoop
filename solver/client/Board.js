@@ -14,17 +14,17 @@ const ACTION_CHORD = 3;
 export class Board {
 	
 	constructor(id, width, height, num_bombs, seed, gameType) {
-		
+
 		//console.log("Creating a new board with id=" + id + " ...");
 
 		this.MAX = 4294967295;
 
-        this.id = id;
-        this.gameType = gameType;
+		this.id = id;
+		this.gameType = gameType;
 		this.width = width;
 		this.height = height;
-        this.num_bombs = num_bombs;
-        this.seed = seed;
+		this.num_bombs = num_bombs;
+		this.seed = seed;
 
 		this.tiles = [];
 		this.started = false;
@@ -39,9 +39,27 @@ export class Board {
 
 		this.compressor = new Compressor();
 
-		//console.log("... board created");
+
+		// information calculated within the solver
+		this.nextMoves = [];       // Action
+		this.safeTiles = [];       // Tile  
+		this.unflaggedMines = [];  // Tile
+		this.deadTiles = [];       // Tile
+		this.considered = [];      // Tile
+
+		this.bestTree = null;      // BestTree
 
 		Object.seal(this) // prevent new properties being created
+	}
+
+	reset() {
+
+		this.nextMoves = [];
+		this.safeTiles = [];
+		this.unflaggedMines = [];
+		this.deadTiles = [];
+		this.considered = [];
+
 	}
 
 	isStarted() {
@@ -107,7 +125,9 @@ export class Board {
 	}
 	
 	getTile(index) {
+		
 		return this.tiles[index];
+		
 	}
 	
 	// true if number of flags == tiles value
@@ -266,6 +286,12 @@ export class Board {
 
 		for (let i = 0; i < this.tiles.length; i++) {
 			const tile = this.tiles[i];
+
+			if (!tile.isCovered() && tile.isFlagged()) {
+				console.warn(tile.asText() + " is flagged but not covered! Resetting to covered.");
+				tile.setCovered(true);
+			}
+
 			if (tile.isFlagged()) {
 				tile.foundBomb = flagIsMine;
 			} else {
@@ -310,9 +336,9 @@ export class Board {
 				//	}
 				//}
 			} else if (tile.getValue() < flagCount) {
-				console.log(tile.asText() + " is over flagged");
+				//console.log(tile.asText() + " is over flagged");
 			} else if (tile.getValue() > coveredCount) {
-				console.log(tile.asText() + " has an invalid value");
+				//console.log(tile.asText() + " has an invalid value of " + tile.getValue() + " with only " + coveredCount + " surrounding covered tiles");
 				return tile;
             }
 
@@ -527,8 +553,11 @@ export class Board {
 				if (tile.isFlagged()) {
 					data = data + "F";
 
-				} else if (tile.isCovered() || tile.isBomb()) {
+				} else if (tile.isCovered() && !tile.isBomb()) {
 					data = data + "H";
+
+				} else if (tile.isBomb()) {
+					data = data + "?";
 
 				} else {
 					data = data + tile.getValue();
@@ -541,7 +570,166 @@ export class Board {
 
     }
 
-	
+	// this version of the compression only deflates flags which don't result in values < 0
+	getSimpleCompressedData() {
+
+		const start = Date.now();
+
+		// The games dimensions
+		const width = this.width;
+		const height = this.height;
+		const mines = this.num_bombs;
+
+		// an array to do the processing
+		let a = [];
+
+		// transfer the values into an array
+		for (let y = 0; y < height; y++) {
+
+			let xa = [];
+
+			for (let x = 0; x < width; x++) {
+				const tile = this.getTileXY(x, y);
+
+				if (tile.isFlagged()) {
+					xa.push(10);  // placed flag
+
+				} else if (tile.isCovered() || tile.isBomb()) { // a covered tile, or an exploded mine
+					xa.push(9);  // hidden
+
+				} else {
+					xa.push(tile.getValue());  // revealed
+
+				}
+			}
+			a.push(xa);
+		}
+
+		// find obvious mines not flagged, we need these otherwise we can't deflate games with NF style 
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+
+				const value = a[y][x];
+
+				if (value < 9) {
+					const ys = Math.max(0, y - 1);
+					const ye = Math.min(height - 1, y + 1);
+
+					const xs = Math.max(0, x - 1);
+					const xe = Math.min(width - 1, x + 1);
+
+					let spaces = 0;
+					for (let y1 = ys; y1 <= ye; y1++) {
+						for (let x1 = xs; x1 <= xe; x1++) {
+							if (a[y1][x1] > 8) {
+								spaces++;
+							}
+						}
+					}
+					if (spaces == value) { // if the number of spaces equals the value then anything unflagged is a 'hidden flag'
+						//console.log(x + " " + y + " " + value + " " + spaces);
+						for (let y1 = ys; y1 <= ye; y1++) {
+							for (let x1 = xs; x1 <= xe; x1++) {
+								if (a[y1][x1] == 9) {
+									//console.log( "-- " + x1 + " " + y1);
+									a[y1][x1] = 11;  // a trivially found mine but not flagged
+								}
+							}
+						}
+					}
+
+				}
+			}
+		}
+
+		// see which flags can be deflated
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+
+				const value = a[y][x];
+
+				if (value == 10 || value == 11) {
+					const ys = Math.max(0, y - 1);
+					const ye = Math.min(height - 1, y + 1);
+
+					const xs = Math.max(0, x - 1);
+					const xe = Math.min(width - 1, x + 1);
+
+					// check that all the adjacent revealed tiles can be reduced (i.e. not already zero)
+					let okay = true;
+					for (let y1 = ys; y1 <= ye; y1++) {
+						for (let x1 = xs; x1 <= xe; x1++) {
+							if (a[y1][x1] == 0) {
+								okay = false
+							}
+						}
+					}
+					if (okay) { // every adjacent revealed tile can be reduced by 1
+						for (let y1 = ys; y1 <= ye; y1++) {
+							for (let x1 = xs; x1 <= xe; x1++) {
+								if (a[y1][x1] < 9) {
+									a[y1][x1]--;
+								}
+							}
+						}
+					} else {
+						if (a[y][x] == 10) {  // placed flag that overflags a revealed tile
+							a[y][x] = 12;  // overflagged ==> flag that isn't inflated
+
+						} else if (a[y][x] == 11) {  // hidden flag that overflags a revealed tile
+							a[y][x] = 9;  // revert back to a hidden tile
+						} 
+						
+					}
+
+				}
+			}
+		}
+
+		let data = "";
+
+		// convert to a string
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+
+				const value = a[y][x];
+
+				if (value == 10) { // flagged and deflated
+					data = data + "F";
+
+				} else if (value == 11) { // a mine is here but not flagged, deflated 
+					data = data + "I";
+
+				} else if (value == 12) { // a flag which wasn't deflated
+					data = data + "O";
+
+				} else if (value == 9) {  // a hidden tile
+					data = data + "H";
+
+				} else { // a revealed tile's value (after deflation)
+					data = data + value;
+				}
+			}
+		}
+
+		// get a compressor class
+		//const compressor = new Compressor();
+
+		// compress the data to base 62
+		let cWidth = this.compressor.compressNumber(width, 2);
+		let cHeight = this.compressor.compressNumber(height, 2);
+		let cMines = this.compressor.compressNumber(mines, 4);
+
+		let cBoard = this.compressor.compress(data);
+
+		let output = cWidth + cHeight + cMines + cBoard;
+
+		//console.log("Compressed data length " + output.length + " analysis=" + output);
+		//console.log("Time to compress " + (Date.now() - start) + " milliseconds");
+
+		return output;
+
+	}
 
 	getCompressedData(reduceMines) {
 
@@ -619,9 +807,9 @@ class Compressor {
 		this.BASE62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 		// this array decides how many digits to allocate to each value on the board
-		// [0, 1, 2, 3, 4, 5, 6, 7, 8, MINE, HIDDEN, FLAG]
-		this.VALUES = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "I", "H", "F"];
-		this.BASES = [10, 7, 5, 5, 4, 3, 3, 1, 1, 4, 10, 8];
+		// [0, 1, 2, 3, 4, 5, 6, 7, 8, hidden flag, HIDDEN, FLAG, overflagged]
+		this.VALUES = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "I", "H", "F", "O"];
+		this.BASES = [10, 7, 5, 5, 4, 3, 3, 1, 1, 4, 10, 8, 1];
 		this.digits = [];
 
 		let start = 0;
@@ -629,7 +817,6 @@ class Compressor {
 			this.digits.push(this.BASE62.substring(start, start + n));
 			start = start + n;
         }
-
 
 		//console.log(this.digits);
 

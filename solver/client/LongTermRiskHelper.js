@@ -317,7 +317,7 @@ export class LongTermRiskHelper {
 				const tile3 = this.board.getTileXY(i + 1, j);
 				const tile4 = this.board.getTileXY(i + 1, j + 1);
 				
-				const result = this.getBoxInfluence(tile1, maxMissingMines);
+				const result = await this.getBoxInfluence(tile1, maxMissingMines);
 
 				if (result != null) {
 					

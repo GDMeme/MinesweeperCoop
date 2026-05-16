@@ -2030,10 +2030,10 @@ export async function doAnalysis() {
         justPressedAnalyse = true;
         console.log("hints:" , hints);
         
-        if (options.playStyle ===  PLAY_STYLE_EFFICIENCY) {
+        if (options.playStyle === PLAY_STYLE_EFFICIENCY) {
             return hints;
         } else {
-            return hints.concat(solve.other);
+            return [hints.concat(solve.other), board];
         }        
 
         // window.requestAnimationFrame(() => renderHints(hints, solve.other));

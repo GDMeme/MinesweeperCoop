@@ -182,7 +182,7 @@ export function initialSetup() {
         addTeamButton();
     }
     
-    document.getElementById("removeteam").onclick = () => {
+    document.getElementById("removeteam").onclick = function() {
         if (window.numTeams > 2) {
             const lastTeamButton = document.getElementById(`jointeam${window.numTeams}`);
             lastTeamButton.remove();
@@ -194,17 +194,17 @@ export function initialSetup() {
     };
     
     //* Probability Stuff
-    document.getElementById("showprobabilities").addEventListener('click', async function() {
+    document.getElementById("showprobabilities").onclick = async function() {
         // Board lost
         // TODO maybe probabilities can still be shown when game is lost but it doesn't work in current implementation
-        if (window.noclicking) {
-            return;
-        }
+        if (window.noclicking) return;
         
         const data = HTMLtoString(document.getElementById("game").children);
         window.stopProbabilities = false;
         await dropHandler(data);
-        const bestMove = (await doAnalysis())[0];
+        const [result, board] = await doAnalysis();
+        
+        if (!Array.isArray(result)) return;
         
         // If someone revealed/flagged a cell while probabilities were being calculated, don't show probabilities
         if (window.stopProbabilities) {
@@ -212,20 +212,39 @@ export function initialSetup() {
             return;
         }
         
-        console.log("Best move:", bestMove);
+        const safeCells = result[0].prob === 1 ? result.filter(r => r.action === 1 && r.prob === 1): [];
         
-        if (bestMove !== undefined) { // Check if board is fully solved
-            if (bestMove.action === 1) { // Regular left click (clear)
-                // Green
-                document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#00FF00";
-            } else if (bestMove.action === 2) { // Regular right click (flag) (will only show for Efficiency Playstyle I think)
-                // Red
-                document.getElementById(`cell${bestMove.x}_${bestMove.y}`).style.color = "#FF0000";
-                // Maybe want to show the flag(s) and then the chord
-            } else if (bestMove.action === 3) { // Chord
-                // Immediately chord
-                // Need some way to highlight to click here
+        if (safeCells.length === 0) {
+            const bestGuess = result[0];
+            document.getElementById(`cell${bestGuess.x}_${bestGuess.y}`)?.classList.add("solver-guess"); // Yellow for forced guess
+        } else {
+            result.filter(a => a.action === 1).forEach(cell => {
+               document.getElementById(`cell${cell.x}_${cell.y}`)?.classList.add("solver-safe");
+            });
+            result.filter(a => a.action === 2).forEach(cell => {
+                document.getElementById(`cell${cell.x}_${cell.y}`)?.classList.add("solver-mine");
+            });
+            
+            // TODO Don't worry about chording yet
+        }
+        
+        // Show actual probabilities
+        for (let i = 0; i < board.tiles.length; i++) {
+            const tile = board.getTile(i);
+            
+            if (tile.probability !== 1 && tile.probability !== 0 && tile.probability !== -1) {
+                const el = document.getElementById(`cell${tile.x}_${tile.y}`);
+                const percent = (1 - tile.probability) * 100;
+
+                if (el) {
+                    el.innerHTML = Math.trunc(percent) === 0
+                        ? Math.round(percent * 100) / 100
+                        : Math.round(percent);
+                }
+            } else {
+                el.innerHTML = ""; // clear text for safe/mine tiles
             }
         }
-    });
+            
+    };
 }
