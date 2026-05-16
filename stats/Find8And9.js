@@ -3,37 +3,16 @@
 
 import { writeFile } from 'fs';
 
-import { directionArray } from "../util/constants.js";
-import { coordinateOutOfBounds } from "../util/commonFunctions.js";
-
-function calculateTileStatus(currentX, currentY) {
-    let tileStatus = 0;
-    for (const [x, y] of directionArray) {
-        const newX = currentX + x;
-        const newY = currentY + y;
-        if (coordinateOutOfBounds([newX, newY], rows, columns)) {
-            continue;
-        }
-        if (minePlacements.has(newY * columns + newX)) {
-            tileStatus++;
-        }
-    }
-    return tileStatus;
-}
+import { generateRandomMines } from "../util/commonFunctions.js";
+import { calculateTileStatus } from "./utils.js"
 
 function formatDivision(numerator, denominator) {
     return Math.round((numerator / denominator) * (10 ** denominator.toString().length)) / (10 ** denominator.toString().length);
 }
 
-let currentX;
-let currentY;
-
 const columns = 30;
 const rows = 16;
 const mines = 99;
-
-const minePlacements = new Set();
-let possibleMinePlacements;
 
 // For the Roblox Minesweeper board (25x25/99), numIterations = 1000000 took me 2.45 minutes
 const numIterations = 1000000;
@@ -56,28 +35,22 @@ for (let a = 0; a < numIterations; a++) {
         console.log(`Currently at iteration ${a} of ${numIterations}`);
         currentMinute = new Date().getMinutes();
     }
-    minePlacements.clear();
-    possibleMinePlacements = Array.from(new Array(columns * rows).keys());
-    for (let i = 0; i < mines; i++) { //
-        const randomIndex = Math.floor(Math.random() * (columns * rows - i));
-        minePlacements.add(possibleMinePlacements[randomIndex]);
-        possibleMinePlacements.splice(randomIndex, 1);
-    }
+    const minePlacements = generateRandomMines(rows, columns, mines);
     
     currentEightCounter = 0;
     currentNineCounter = 0;
     
     for (let i = 0; i < columns * rows; i++) {
-        currentX = i % columns;
-        currentY = Math.floor(i / columns);
+        const currentX = i % columns;
+        const currentY = Math.floor(i / columns);
         if (minePlacements.has(i)) { // If the tile itself is a mine, skip it
-            if (calculateTileStatus(currentX, currentY) === 8) { // Found a 9
+            if (calculateTileStatus(currentX, currentY, minePlacements, rows, columns) === 8) { // Found a 9
                 currentNineCounter++;
                 nineCounter++;
             }
             continue;
         }
-        const tileStatus = calculateTileStatus(currentX, currentY); // Guaranteed not to be a bomb
+        const tileStatus = calculateTileStatus(currentX, currentY, minePlacements, rows, columns); // Guaranteed not to be a bomb
         if (tileStatus === 8) {
             eightCounter++;
             currentEightCounter++;

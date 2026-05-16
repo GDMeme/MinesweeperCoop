@@ -1,3 +1,5 @@
+// Given a list of percentages (each guess probability of being correct), calculate the overall chance of winning (all guesses being correct).
+
 import { readFileSync } from 'fs';
 
 function syncReadFile(filename) {

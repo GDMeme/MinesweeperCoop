@@ -773,7 +773,7 @@ export async function solver(board, options) {
                     actions.push(new Action(tile.getX(), tile.getY(), tile.probability, ACTION_CLEAR));
                 }
 
-                const returnActions = tieBreak(pe, actions, null, null, false);
+                const returnActions = await tieBreak(pe, actions, null, null, false);
 
                 const recommended = returnActions[0];
                 result.push(recommended);
@@ -982,7 +982,7 @@ export async function solver(board, options) {
                     actions.push(new Action(tile.getX(), tile.getY(), tile.probability, ACTION_CLEAR));
                 }
 
-                const returnActions = tieBreak(pe, actions, partialBFDA, ltr, false);
+                const returnActions = await tieBreak(pe, actions, partialBFDA, ltr, false);
 
                 //const recommended = returnActions[0];
                 //result.push(...returnActions);

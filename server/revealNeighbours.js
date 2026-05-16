@@ -7,15 +7,13 @@ export function revealNeighbours(room, currentX, currentY, ws) {
     const board = room.findBoardFromWS(ws);
     const {rows, columns, cellsRevealed, wsPlayers, flaggedIDs} = board;
     const frontier = [[currentX, currentY].join()];
-    let tileStatus;
     const newRevealedCellsMap = new Map();
-    let cellID;
     while (frontier.length !== 0) {
         [currentX, currentY] = frontier.pop().split(",").map(e => parseInt(e));
         cellsRevealed.set([currentX, currentY].join(), 0);
         
         // If the client reveals an opening that removes a flag
-        cellID = currentY * columns + currentX;
+        const cellID = currentY * columns + currentX;
         if (flaggedIDs.has(cellID)) {
             flaggedIDs.delete(cellID);
             room.sendMessage({type: "unflag", id: `cell${currentX}_${currentY}`, numFlags: board.flaggedIDs.size}, ws);
@@ -28,7 +26,7 @@ export function revealNeighbours(room, currentX, currentY, ws) {
             if (coordinateOutOfBounds(newCoordinate, rows, columns)) {
                 continue;
             }
-            tileStatus = calculateTileStatus(board, newX, newY); // Guaranteed not to be a bomb
+            const tileStatus = calculateTileStatus(board, newX, newY); // Guaranteed not to be a bomb
             if (!cellsRevealed.has(newCoordinate.join())) {
                 newRevealedCellsMap.set(newCoordinate.join("_"), tileStatus);
                 cellsRevealed.set(newCoordinate.join(), tileStatus);
