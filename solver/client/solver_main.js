@@ -462,7 +462,7 @@ export async function solver(board, options) {
 
         console.log("Probability Engine took " + pe.duration + " milliseconds to complete");
 
-        if (pe.finalSolutionCount == 0) {
+        if (pe.finalSolutionsCount == 0) {
             console.log("The board is in an illegal state");
             return result;
         }
@@ -1834,7 +1834,7 @@ export async function solver(board, options) {
             base = pe;
         } else {
             base = runProbabilityEngine(board, null);
-            if (base.finalSolutionCount == 0) {
+            if (base.finalSolutionsCount == 0) {
                 console.log("Board is in an invalid state");
                 return;
             }
@@ -2250,7 +2250,7 @@ export async function solver(board, options) {
 
     }
 
-    function console.log(text, always) {
+    function writeToConsole(text, always) {
 
         if (always == null) {
             always = false;
